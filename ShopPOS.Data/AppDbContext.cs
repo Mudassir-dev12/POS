@@ -37,6 +37,13 @@ public class AppDbContext : DbContext
     public DbSet<NumberSequence> NumberSequences => Set<NumberSequence>();
     public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
     public DbSet<StockAdjustmentItem> StockAdjustmentItems => Set<StockAdjustmentItem>();
+    public DbSet<Shift> Shifts => Set<Shift>();
+    public DbSet<CashMovement> CashMovements => Set<CashMovement>();
+    public DbSet<Sale> Sales => Set<Sale>();
+    public DbSet<SaleItem> SaleItems => Set<SaleItem>();
+    public DbSet<SalePayment> SalePayments => Set<SalePayment>();
+    public DbSet<SaleReturn> SaleReturns => Set<SaleReturn>();
+    public DbSet<SaleReturnItem> SaleReturnItems => Set<SaleReturnItem>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

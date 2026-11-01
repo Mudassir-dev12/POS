@@ -61,5 +61,59 @@ public class ShopSetting : BaseEntity
     /// Gets or sets the default multiplier applied to ReorderLevel when calculating suggested restock quantities. Default is 2.
     /// </summary>
     public decimal DefaultReorderMultiplier { get; set; } = 2.0m;
-}
 
+    /// <summary>
+    /// Gets or sets whether completing a sale requires an active open shift. Default is true.
+    /// </summary>
+    public bool RequireOpenShiftForSales { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether sales on credit (unpaid or partially paid) are permitted. Default is true.
+    /// </summary>
+    public bool AllowCreditSales { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether selling below the product's MinSalePrice is permitted. Default is false.
+    /// </summary>
+    public bool AllowSellingBelowMinPrice { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets whether catalog selling prices already include tax. Default is false.
+    /// </summary>
+    public bool PricesIncludeTax { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the cash rounding denomination step (e.g. 0.05, 1, 5). 0 = rounding disabled. Default is 0.
+    /// </summary>
+    public decimal CashRoundingStep { get; set; } = 0m;
+
+    /// <summary>
+    /// Gets or sets whether returns can be processed without referencing the original sale receipt. Default is false.
+    /// </summary>
+    public bool AllowReturnWithoutReceipt { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets whether receipts are automatically printed upon sale completion. Default is true.
+    /// </summary>
+    public bool AutoPrintReceipt { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the configured thermal receipt printer name.
+    /// </summary>
+    public string? ReceiptPrinterName { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether the cash drawer kick pulse is sent on cash sales. Default is false.
+    /// </summary>
+    public bool OpenCashDrawerOnCashSale { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the number of receipt copies to print per transaction. Default is 1.
+    /// </summary>
+    public int ReceiptCopies { get; set; } = 1;
+
+    /// <summary>
+    /// Gets or sets the maximum window in days for customer returns against a receipt. Null = unlimited.
+    /// </summary>
+    public int? SaleReturnWindowDays { get; set; }
+}

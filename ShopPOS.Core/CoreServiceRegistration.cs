@@ -37,6 +37,13 @@ public static class CoreServiceRegistration
         services.AddScoped<IStockAdjustmentService, StockAdjustmentService>();
         services.AddScoped<IInventoryService, InventoryService>();
 
+        // Phase 5 Sales Services
+        services.AddSingleton<ISaleCalculator, SaleCalculator>();
+        services.AddScoped<IProductLookupService, ProductLookupService>();
+        services.AddScoped<IShiftService, ShiftService>();
+        services.AddScoped<ISaleReturnService, SaleReturnService>();
+        services.AddScoped<ISaleService, SaleService>();
+
         // Phase 3 Validators
         services.AddScoped<FluentValidation.IValidator<DTOs.CreatePurchaseDto>, Validators.CreatePurchaseValidator>();
         services.AddScoped<FluentValidation.IValidator<DTOs.UpdatePurchaseDto>, Validators.UpdatePurchaseValidator>();
@@ -46,6 +53,14 @@ public static class CoreServiceRegistration
         // Phase 4 Validators
         services.AddScoped<FluentValidation.IValidator<DTOs.CreateStockAdjustmentDto>, Validators.CreateStockAdjustmentValidator>();
         services.AddScoped<FluentValidation.IValidator<DTOs.UpdateStockAdjustmentDto>, Validators.UpdateStockAdjustmentValidator>();
+
+        // Phase 5 Validators
+        services.AddScoped<FluentValidation.IValidator<DTOs.SaveSaleDto>, Validators.SaveSaleValidator>();
+        services.AddScoped<FluentValidation.IValidator<DTOs.CompleteSaleDto>, Validators.CompleteSaleValidator>();
+        services.AddScoped<FluentValidation.IValidator<DTOs.CreateSaleReturnDto>, Validators.CreateSaleReturnValidator>();
+        services.AddScoped<FluentValidation.IValidator<DTOs.OpenShiftDto>, Validators.OpenShiftValidator>();
+        services.AddScoped<FluentValidation.IValidator<DTOs.CloseShiftDto>, Validators.CloseShiftValidator>();
+        services.AddScoped<FluentValidation.IValidator<DTOs.CashMovementDto>, Validators.CashMovementValidator>();
 
         return services;
     }

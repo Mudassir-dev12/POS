@@ -27,6 +27,36 @@ public class ShopSettingConfiguration : IEntityTypeConfiguration<ShopSetting>
         builder.Property(s => s.DefaultReorderMultiplier)
             .HasDefaultValue(2.0m)
             .HasPrecision(5, 2);
+
+        builder.Property(s => s.RequireOpenShiftForSales)
+            .HasDefaultValue(true);
+
+        builder.Property(s => s.AllowCreditSales)
+            .HasDefaultValue(true);
+
+        builder.Property(s => s.AllowSellingBelowMinPrice)
+            .HasDefaultValue(false);
+
+        builder.Property(s => s.PricesIncludeTax)
+            .HasDefaultValue(false);
+
+        builder.Property(s => s.CashRoundingStep)
+            .HasPrecision(5, 2)
+            .HasDefaultValue(0m);
+
+        builder.Property(s => s.AllowReturnWithoutReceipt)
+            .HasDefaultValue(false);
+
+        builder.Property(s => s.AutoPrintReceipt)
+            .HasDefaultValue(true);
+
+        builder.Property(s => s.ReceiptPrinterName)
+            .HasMaxLength(150);
+
+        builder.Property(s => s.OpenCashDrawerOnCashSale)
+            .HasDefaultValue(false);
+
+        builder.Property(s => s.ReceiptCopies)
+            .HasDefaultValue(1);
     }
 }
-

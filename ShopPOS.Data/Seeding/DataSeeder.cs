@@ -136,8 +136,28 @@ public class DataSeeder : IDataSeeder
                 CurrencySymbol = "$",
                 ReceiptFooter = "Thank you for shopping with us!",
                 ReceiptWidthMm = 80,
-                DefaultTaxPercent = 0m
+                DefaultTaxPercent = 0m,
+                RequireOpenShiftForSales = true,
+                AllowCreditSales = true,
+                AllowSellingBelowMinPrice = false,
+                PricesIncludeTax = false,
+                CashRoundingStep = 0m,
+                AllowReturnWithoutReceipt = false,
+                AutoPrintReceipt = true,
+                OpenCashDrawerOnCashSale = false,
+                ReceiptCopies = 1
             }, cancellationToken);
+        }
+
+        // 7. Seed Default NumberSequences
+        var defaultPrefixes = new[] { "INV", "HOLD", "SRET", "SHF", "PUR", "SPAY", "PRET", "ADJ" };
+        foreach (var prefix in defaultPrefixes)
+        {
+            var seq = await _context.NumberSequences.FirstOrDefaultAsync(n => n.Key == prefix, cancellationToken);
+            if (seq == null)
+            {
+                await _context.NumberSequences.AddAsync(new NumberSequence { Key = prefix, LastNumber = 0 }, cancellationToken);
+            }
         }
 
         await _context.SaveChangesAsync(cancellationToken);

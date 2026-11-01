@@ -63,4 +63,14 @@ public class Customer : BaseEntity
     /// Navigation property to Default Price Level.
     /// </summary>
     public PriceLevel? DefaultPriceLevel { get; set; }
+
+    /// <summary>
+    /// Navigation collection of sales associated with this customer.
+    /// </summary>
+    public ICollection<Sale> Sales { get; set; } = new List<Sale>();
+
+    /// <summary>
+    /// Navigation collection of sale returns associated with this customer.
+    /// </summary>
+    public ICollection<SaleReturn> SaleReturns { get; set; } = new List<SaleReturn>();
 }

@@ -8,6 +8,8 @@ public interface IProductRepository : IRepository<Product>
 {
     Task<PagedResult<ProductListItemDto>> GetPagedAsync(ProductSearchQuery query, CancellationToken cancellationToken = default);
     Task<Product?> GetWithDetailsAsync(int id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Product>> GetByIdsWithDetailsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default);
+    Task<Product?> FindByBarcodeOrSkuWithDetailsAsync(string code, CancellationToken cancellationToken = default);
     Task<bool> IsSkuExistsAsync(string sku, int? excludeId = null, CancellationToken cancellationToken = default);
     Task<ProductBarcodeConflict?> FindBarcodeConflictAsync(string barcode, int? excludeProductId = null, CancellationToken cancellationToken = default);
     Task<string> GenerateNextSkuAsync(CancellationToken cancellationToken = default);
@@ -21,4 +23,3 @@ public interface IProductRepository : IRepository<Product>
     Task<decimal> GetCurrentStockAsync(int productId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Product>> GetAllForExportAsync(ProductSearchQuery query, CancellationToken cancellationToken = default);
 }
-

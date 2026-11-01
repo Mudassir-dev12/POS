@@ -13,6 +13,7 @@ public enum StockMovementType
     Opening = 6,
     PurchaseCancel = 7,
     PurchaseReturnCancel = 8,
-    AdjustmentCancel = 9
+    AdjustmentCancel = 9,
+    SaleCancel = 10,
+    SaleReturnCancel = 11
 }
-

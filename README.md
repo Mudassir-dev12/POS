@@ -386,6 +386,92 @@ Stock status is evaluated dynamically from the ledger:
 
 ---
 
+## 8. Sales Module Backend (Phase 5A)
+
+The sales module backend provides a high-performance, transactionally secure sales, billing, shift management, and customer returns engine tailored for single-store retail counters.
+
+### 1. Sales & Checkout Workflow
+- **Product Lookup (`IProductLookupService`)**:
+  - Direct scanning of primary barcodes or additional package barcodes.
+  - SKU code search fallback.
+  - Quick quantity prefix expressions (e.g., `5*BARCODE` parses as quantity `5` of barcode).
+  - Price level and customer tier price resolution (`PriceLevelId`).
+- **Calculation Engine (`ISaleCalculator` / `SaleCalculator`)**:
+  - Operates using midpoint away from zero rounding for currency minor units ($0.01).
+  - **Line Discounts**: Specified as percentage (`DiscountPercent`) or fixed amount (`DiscountAmount`).
+  - **Bill-Level Discounts**: Proportional allocation across bill lines using integer minor unit distribution with remainder absorption into the largest line total to guarantee zero rounding divergence ($Total Lines = Bill Total$).
+  - **Tax Handling**: Supports both tax-exclusive pricing ($\text{LineTotal} \times (1 + \text{Tax\%})$) and tax-inclusive pricing ($\text{Tax} = \text{Amount} - [\text{Amount} / (1 + \text{Tax\%})]$) according to `PricesIncludeTax` store setting.
+  - **Cash Rounding**: Supports store-configurable cash rounding steps (e.g., `0.00`, `0.05`, `0.10`, `0.25`, `0.50`, `1.00`), recording the exact difference in `RoundOff`.
+- **Atomic Transaction Commit (`ISaleService.CompleteSaleAsync`)**:
+  - Re-reads product details, tax rates, and minimum allowed prices.
+  - Re-reads inventory stock from the `StockMovements` ledger *inside the active database transaction* to eliminate race conditions.
+  - Blocks sales that would cause negative stock if `AllowNegativeStock` is disabled.
+  - Non-tracked products bypass inventory deductions and negative stock blocks.
+  - Generates immutable sequential sale numbers (`INV-000001`) via atomic sequence generator.
+  - Records line snapshots (`ProductName`, `Sku`, `Barcode`, `UnitPrice`, `CostPriceSnapshot`).
+  - Writes `StockMovement` ledger entries with movement type `Sale` and links `ReferenceId` to the sale.
+  - Generates comprehensive `AuditLog` records.
+
+### 2. Held Bills (Parked Sales)
+- **Parking (`SaveHeldBillAsync`)**: Cart state is saved with status `Held` and sequential hold number (`HOLD-000001`). Held bills do not create stock movements or affect customer balances.
+- **Listing & Resuming**: Active held bills are retrieved with `GetHeldBillsAsync()`. When completing a sale originating from a held bill, the held record is cleanly consumed.
+- **Cancellation**: Discarding a held bill soft-deletes the record without affecting inventory.
+
+### 3. Credit Sales & Customer Balances
+- **Credit Policy Validation**: Credit sales (where $\text{PaidAmount} < \text{GrandTotal}$) require an active customer and require `AllowCreditSales = true`.
+- **Credit Limit Verification**: Customer outstanding balance plus new unpaid amount cannot exceed `Customer.CreditLimit` (when limit > 0).
+- **Dynamic Ledger Balance Query (`ICustomerBalanceQuery`)**: Customer balances are computed in real time:
+  $$\text{CurrentBalance} = \text{OpeningBalance} + \sum \text{Sale.DueAmount} - \sum \text{StoreCreditRefunds}$$
+
+### 4. Split Tender & Overpayment Rules
+- **Multiple Payment Tenders**: Sales support split tenders across `Cash`, `Bank`, `Cheque`, `Card`, `MobileWallet`, and `StoreCredit`.
+- **Overpayment & Change**:
+  - Overpayment ($\text{Tendered} > \text{GrandTotal}$) is strictly permitted only when payment method is `Cash`.
+  - Non-cash payment methods reject overpayment.
+  - The resulting change is recorded in `ChangeAmount`, while `PaidAmount` reflects the net revenue retained.
+
+### 5. Shifts & Expected Cash Management (`IShiftService`)
+- **Single Open Shift Rule**: Only one active shift is permitted at any given time. This rule is enforced both at the domain service layer and at the database schema level via a SQLite filtered unique index:
+  ```sql
+  CREATE UNIQUE INDEX IX_Shifts_Status ON Shifts (Status) WHERE [Status] = 1 AND [IsDeleted] = 0;
+  ```
+- **Sequential Shift Numbering**: Shifts receive formatted sequential identifiers (`SHF-000001`).
+- **Mid-Shift Cash Movements**: Cashiers can log `CashIn` (float top-ups) or `CashOut` (petty expenses) against the active shift with mandatory reasons.
+- **Expected Cash Formula**:
+  $$\text{ExpectedCash} = \text{OpeningCash} + \text{NetCashSales} - \text{CashRefunds} + \text{CashIn} - \text{CashOut}$$
+- **Shift Reconciliation & Closure**:
+  - The cashier enters `CountedCash`.
+  - System computes $\text{Difference} = \text{CountedCash} - \text{ExpectedCash}$ (overage or shortage).
+  - Shift status transitions to `Closed`, locking the shift from further modifications.
+
+### 6. Sales Returns & Refunds (`ISaleReturnService`)
+- **Return Identifiers**: Returns receive sequential identifiers (`SRET-000001`).
+- **Returnable Line Validation**: Quantities returned cannot exceed $\text{OriginalSoldQuantity} - \sum \text{PreviouslyReturnedQuantities}$.
+- **Return Window Enforcement**: Returns are blocked if the sale date exceeds `SaleReturnWindowDays` (e.g. 30 days).
+- **Non-Receipt Returns**: Returns without an invoice require `AllowReturnWithoutReceipt = true`.
+- **Restocking vs Damaged Goods**:
+  - `ReturnToStock = true`: Generates a `StockMovementType.SaleReturn` ledger entry restoring product stock.
+  - `ReturnToStock = false` (damaged/expired items): No stock is added back to active inventory.
+- **Refund Methods**: Supports refunding via original payment method, `Cash`, or issuing `StoreCredit` credited to the customer account.
+- **Return Cancellation**: If a return is cancelled, the restocked inventory is safely re-deducted, asserting that stock does not go negative if negative stock is disallowed.
+
+### 7. Store Settings Configured for Sales
+- `RequireOpenShiftForSales` (Default: `false`) - Enforces opening a shift before completing sales.
+- `AllowCreditSales` (Default: `true`) - Allows sales with outstanding balance to customers.
+- `AllowSellingBelowMinPrice` (Default: `false`) - Prevents cashiers from discounting below minimum selling price.
+- `PricesIncludeTax` (Default: `true`) - Toggles between gross (tax inclusive) and net pricing modes.
+- `CashRoundingStep` (Default: `0.00`) - Step for rounding cash totals (0.00, 0.05, 0.10, 0.25, 0.50, 1.00).
+- `AllowReturnWithoutReceipt` (Default: `false`) - Requires invoice reference for returns when disabled.
+- `SaleReturnWindowDays` (Default: `30`) - Days after purchase allowed for product returns.
+- `AutoPrintReceipt`, `ReceiptPrinterName`, `OpenCashDrawerOnCashSale`, `ReceiptCopies` - Receipt hardware options.
+
+### 8. Architectural Limitations
+- **Single-User Workstation**: Single workstation design (`ICurrentUserProvider` returns local `UserId = 1`).
+- **Phase 5A Scope**: Backend logic, services, validators, and tests only. UI screens for POS checkout, shift management, and customer returns are delivered in Phase 5B.
+- **Customer Receive Payments & Sales Reports**: Customer payment reconciliation and advanced sales reports are part of Phase 6.
+
+---
+
 ## 9. How to Add EF Core Migrations
 
 When domain entities or configurations change:

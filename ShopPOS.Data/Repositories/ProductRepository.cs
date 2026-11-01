@@ -141,6 +141,53 @@ public class ProductRepository : Repository<Product>, IProductRepository
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<Product>> GetByIdsWithDetailsAsync(IEnumerable<int> ids, CancellationToken cancellationToken = default)
+    {
+        var idList = ids.Distinct().ToList();
+        return await Context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Brand)
+            .Include(p => p.Unit)
+            .Include(p => p.AdditionalBarcodes)
+            .Include(p => p.ProductPrices).ThenInclude(pp => pp.PriceLevel)
+            .Where(p => idList.Contains(p.Id))
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<Product?> FindByBarcodeOrSkuWithDetailsAsync(string code, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(code)) return null;
+        var trimmed = code.Trim();
+
+        var prod = await Context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Brand)
+            .Include(p => p.Unit)
+            .Include(p => p.AdditionalBarcodes)
+            .Include(p => p.ProductPrices).ThenInclude(pp => pp.PriceLevel)
+            .FirstOrDefaultAsync(p => p.Barcode == trimmed, cancellationToken);
+
+        if (prod != null) return prod;
+
+        prod = await Context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Brand)
+            .Include(p => p.Unit)
+            .Include(p => p.AdditionalBarcodes)
+            .Include(p => p.ProductPrices).ThenInclude(pp => pp.PriceLevel)
+            .FirstOrDefaultAsync(p => p.AdditionalBarcodes.Any(ab => ab.Barcode == trimmed), cancellationToken);
+
+        if (prod != null) return prod;
+
+        return await Context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Brand)
+            .Include(p => p.Unit)
+            .Include(p => p.AdditionalBarcodes)
+            .Include(p => p.ProductPrices).ThenInclude(pp => pp.PriceLevel)
+            .FirstOrDefaultAsync(p => p.Sku == trimmed, cancellationToken);
+    }
+
     public async Task<bool> IsSkuExistsAsync(string sku, int? excludeId = null, CancellationToken cancellationToken = default)
     {
         var query = Context.Products.Where(p => p.Sku.ToLower() == sku.Trim().ToLower());

@@ -101,6 +101,48 @@ namespace ShopPOS.Data.Migrations
                     b.ToTable("Brands");
                 });
 
+            modelBuilder.Entity("ShopPOS.Core.Entities.CashMovement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("MovedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ShiftId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShiftId");
+
+                    b.ToTable("CashMovements", (string)null);
+                });
+
             modelBuilder.Entity("ShopPOS.Core.Entities.Category", b =>
                 {
                     b.Property<int>("Id")
@@ -800,6 +842,441 @@ namespace ShopPOS.Data.Migrations
                     b.ToTable("Roles");
                 });
 
+            modelBuilder.Entity("ShopPOS.Core.Entities.Sale", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("BillDiscountAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("ChangeAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("DueAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("GrandTotal")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("HoldNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("LineDiscountTotal")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("PaidAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("PriceLevelId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("RoundOff")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("SaleDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SaleNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ShiftId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("SubTotal")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TaxAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TotalCost")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("HoldNumber");
+
+                    b.HasIndex("PriceLevelId");
+
+                    b.HasIndex("SaleNumber")
+                        .IsUnique()
+                        .HasFilter("[SaleNumber] IS NOT NULL");
+
+                    b.HasIndex("ShiftId");
+
+                    b.HasIndex("Status", "SaleDate");
+
+                    b.ToTable("Sales", (string)null);
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.SaleItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Barcode")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CostPriceSnapshot")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("DiscountAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("DiscountPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("LineNo")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("LineTotal")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Quantity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SaleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Sku")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("TaxPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UnitPrice")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("SaleId");
+
+                    b.ToTable("SaleItems", (string)null);
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.SalePayment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("PaidAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SaleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("TenderedAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SaleId");
+
+                    b.ToTable("SalePayments", (string)null);
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.SaleReturn", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RefundMethod")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("RefundedAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("ReturnDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ReturnNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("SaleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ShiftId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("SubTotal")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TaxAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TotalAmount")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("ReturnNumber")
+                        .IsUnique();
+
+                    b.HasIndex("SaleId");
+
+                    b.HasIndex("ShiftId");
+
+                    b.ToTable("SaleReturns", (string)null);
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.SaleReturnItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Barcode")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("CostPriceSnapshot")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("LineTotal")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("Quantity")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("ReturnToStock")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<int?>("SaleItemId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SaleReturnId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Sku")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("TaxPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UnitPrice")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.HasIndex("SaleItemId");
+
+                    b.HasIndex("SaleReturnId");
+
+                    b.HasIndex("SaleReturnId", "SaleItemId");
+
+                    b.ToTable("SaleReturnItems", (string)null);
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.Shift", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("CountedCash")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("Difference")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("ExpectedCash")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("OpenedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("OpeningCash")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("ShiftNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShiftNumber")
+                        .IsUnique();
+
+                    b.HasIndex("Status")
+                        .IsUnique()
+                        .HasFilter("[Status] = 1 AND [IsDeleted] = 0");
+
+                    b.ToTable("Shifts", (string)null);
+                });
+
             modelBuilder.Entity("ShopPOS.Core.Entities.ShopSetting", b =>
                 {
                     b.Property<int>("Id")
@@ -809,8 +1286,34 @@ namespace ShopPOS.Data.Migrations
                     b.Property<string>("Address")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("AllowCreditSales")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
                     b.Property<bool>("AllowNegativeStock")
                         .HasColumnType("INTEGER");
+
+                    b.Property<bool>("AllowReturnWithoutReceipt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("AllowSellingBelowMinPrice")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("AutoPrintReceipt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<decimal>("CashRoundingStep")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(5, 2)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue(0m);
 
                     b.Property<int>("CostingMethod")
                         .HasColumnType("INTEGER");
@@ -839,14 +1342,41 @@ namespace ShopPOS.Data.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("OpenCashDrawerOnCashSale")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("Phone")
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("PricesIncludeTax")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("ReceiptCopies")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(1);
 
                     b.Property<string>("ReceiptFooter")
                         .HasMaxLength(300)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ReceiptPrinterName")
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("ReceiptWidthMm")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("RequireOpenShiftForSales")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<int?>("SaleReturnWindowDays")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ShopName")
@@ -1295,6 +1825,17 @@ namespace ShopPOS.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("ShopPOS.Core.Entities.CashMovement", b =>
+                {
+                    b.HasOne("ShopPOS.Core.Entities.Shift", "Shift")
+                        .WithMany("CashMovements")
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Shift");
+                });
+
             modelBuilder.Entity("ShopPOS.Core.Entities.Category", b =>
                 {
                     b.HasOne("ShopPOS.Core.Entities.Category", "ParentCategory")
@@ -1484,6 +2025,110 @@ namespace ShopPOS.Data.Migrations
                     b.Navigation("PurchaseReturn");
                 });
 
+            modelBuilder.Entity("ShopPOS.Core.Entities.Sale", b =>
+                {
+                    b.HasOne("ShopPOS.Core.Entities.Customer", "Customer")
+                        .WithMany("Sales")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ShopPOS.Core.Entities.PriceLevel", "PriceLevel")
+                        .WithMany()
+                        .HasForeignKey("PriceLevelId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ShopPOS.Core.Entities.Shift", "Shift")
+                        .WithMany("Sales")
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("PriceLevel");
+
+                    b.Navigation("Shift");
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.SaleItem", b =>
+                {
+                    b.HasOne("ShopPOS.Core.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShopPOS.Core.Entities.Sale", "Sale")
+                        .WithMany("Items")
+                        .HasForeignKey("SaleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("Sale");
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.SalePayment", b =>
+                {
+                    b.HasOne("ShopPOS.Core.Entities.Sale", "Sale")
+                        .WithMany("Payments")
+                        .HasForeignKey("SaleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Sale");
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.SaleReturn", b =>
+                {
+                    b.HasOne("ShopPOS.Core.Entities.Customer", "Customer")
+                        .WithMany("SaleReturns")
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ShopPOS.Core.Entities.Sale", "Sale")
+                        .WithMany("Returns")
+                        .HasForeignKey("SaleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ShopPOS.Core.Entities.Shift", "Shift")
+                        .WithMany()
+                        .HasForeignKey("ShiftId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Sale");
+
+                    b.Navigation("Shift");
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.SaleReturnItem", b =>
+                {
+                    b.HasOne("ShopPOS.Core.Entities.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ShopPOS.Core.Entities.SaleItem", "SaleItem")
+                        .WithMany()
+                        .HasForeignKey("SaleItemId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ShopPOS.Core.Entities.SaleReturn", "SaleReturn")
+                        .WithMany("Items")
+                        .HasForeignKey("SaleReturnId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+
+                    b.Navigation("SaleItem");
+
+                    b.Navigation("SaleReturn");
+                });
+
             modelBuilder.Entity("ShopPOS.Core.Entities.StockAdjustment", b =>
                 {
                     b.HasOne("ShopPOS.Core.Entities.User", "CancelledByUser")
@@ -1579,6 +2224,13 @@ namespace ShopPOS.Data.Migrations
                     b.Navigation("SubCategories");
                 });
 
+            modelBuilder.Entity("ShopPOS.Core.Entities.Customer", b =>
+                {
+                    b.Navigation("SaleReturns");
+
+                    b.Navigation("Sales");
+                });
+
             modelBuilder.Entity("ShopPOS.Core.Entities.PriceLevel", b =>
                 {
                     b.Navigation("Customers");
@@ -1614,6 +2266,27 @@ namespace ShopPOS.Data.Migrations
             modelBuilder.Entity("ShopPOS.Core.Entities.Role", b =>
                 {
                     b.Navigation("Users");
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.Sale", b =>
+                {
+                    b.Navigation("Items");
+
+                    b.Navigation("Payments");
+
+                    b.Navigation("Returns");
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.SaleReturn", b =>
+                {
+                    b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.Shift", b =>
+                {
+                    b.Navigation("CashMovements");
+
+                    b.Navigation("Sales");
                 });
 
             modelBuilder.Entity("ShopPOS.Core.Entities.StockAdjustment", b =>

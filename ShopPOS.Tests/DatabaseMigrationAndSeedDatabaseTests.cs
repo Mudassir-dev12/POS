@@ -1,6 +1,8 @@
 using AwesomeAssertions;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using ShopPOS.Core.Entities;
 using ShopPOS.Core.Enums;
 using ShopPOS.Core.Services;
@@ -220,6 +222,158 @@ public class DatabaseMigrationAndSeedDatabaseTests
             // Assert: Query with IgnoreQueryFilters includes soft deleted entities
             var allCustomers = await queryContext.Customers.IgnoreQueryFilters().ToListAsync();
             allCustomers.Should().Contain(c => c.Id == customerId && c.IsDeleted);
+        }
+    }
+
+    [Fact]
+    public async Task Phase5_Sales_Migration_AppliesPreservingAllExistingDataWithoutLoss()
+    {
+        string tempDbPath = Path.Combine(Path.GetTempPath(), $"shoppos_mig_test_{Guid.NewGuid():N}.db");
+        try
+        {
+            var options = new DbContextOptionsBuilder<AppDbContext>()
+                .UseSqlite($"Data Source={tempDbPath}")
+                .AddInterceptors(new SqlitePragmaInterceptor())
+                .Options;
+
+            // 1. Apply migrations up to RemoveStockCount (migration just before Phase5_Sales)
+            using (var ctx = new AppDbContext(options))
+            {
+                var migrator = ctx.Database.GetService<IMigrator>();
+                await migrator.MigrateAsync("20261101005706_RemoveStockCount");
+
+                var role = new Role { Name = "Owner" };
+                ctx.Roles.Add(role);
+
+                var user = new User
+                {
+                    Username = "owner",
+                    FullName = "Owner",
+                    Role = role,
+                    IsActive = true
+                };
+                ctx.Users.Add(user);
+
+                var supplier = new Supplier
+                {
+                    Name = "Migration Test Supplier",
+                    Phone = "123-555-7890",
+                    IsActive = true
+                };
+                ctx.Suppliers.Add(supplier);
+
+                var customer = new Customer
+                {
+                    Name = "Migration Customer",
+                    Phone = "555-4321",
+                    IsActive = true
+                };
+                ctx.Customers.Add(customer);
+
+                var cat = new Category { Name = "Migration Test Category", IsActive = true };
+                var unit = new Unit { Name = "Piece", ShortName = "pc", IsActive = true };
+                ctx.Categories.Add(cat);
+                ctx.Units.Add(unit);
+
+                var product = new Product
+                {
+                    Name = "Migration Test Product",
+                    Sku = "MIG-P5-001",
+                    CostPrice = 25m,
+                    SalePrice = 45m,
+                    TrackStock = true,
+                    Category = cat,
+                    Unit = unit,
+                    IsActive = true
+                };
+                ctx.Products.Add(product);
+
+                var purchase = new Purchase
+                {
+                    PurchaseNumber = "PUR-MIG-P5",
+                    Supplier = supplier,
+                    PurchaseDate = DateTime.Now,
+                    SubTotal = 250m,
+                    GrandTotal = 250m,
+                    Status = PurchaseStatus.Posted,
+                    PaidAmount = 250m
+                };
+                purchase.Items.Add(new PurchaseItem
+                {
+                    Product = product,
+                    Quantity = 10m,
+                    UnitCost = 25m,
+                    LineTotal = 250m
+                });
+                ctx.Purchases.Add(purchase);
+
+                var mov = new StockMovement
+                {
+                    Product = product,
+                    MovementType = StockMovementType.Purchase,
+                    Quantity = 10m,
+                    UnitCost = 25m,
+                    MovementDate = DateTime.Now,
+                    Note = "Pre-migration stock"
+                };
+                ctx.StockMovements.Add(mov);
+
+                await ctx.SaveChangesAsync();
+            }
+
+            // 2. Apply all pending migrations (Phase5_Sales)
+            using (var ctx = new AppDbContext(options))
+            {
+                await ctx.Database.MigrateAsync();
+            }
+
+            // 3. Verify all existing data is preserved without loss
+            using (var verifyCtx = new AppDbContext(options))
+            {
+                var prod = await verifyCtx.Products.FirstOrDefaultAsync(p => p.Sku == "MIG-P5-001");
+                prod.Should().NotBeNull();
+                prod!.CostPrice.Should().Be(25m);
+                prod.SalePrice.Should().Be(45m);
+
+                var supp = await verifyCtx.Suppliers.FirstOrDefaultAsync(s => s.Name == "Migration Test Supplier");
+                supp.Should().NotBeNull();
+
+                var cust = await verifyCtx.Customers.FirstOrDefaultAsync(c => c.Name == "Migration Customer");
+                cust.Should().NotBeNull();
+
+                var purch = await verifyCtx.Purchases.Include(p => p.Items).FirstOrDefaultAsync(p => p.PurchaseNumber == "PUR-MIG-P5");
+                purch.Should().NotBeNull();
+                purch!.Items.Should().HaveCount(1);
+                purch.GrandTotal.Should().Be(250m);
+
+                var movements = await verifyCtx.StockMovements.Where(m => m.ProductId == prod.Id).ToListAsync();
+                movements.Should().HaveCount(1);
+                movements[0].Quantity.Should().Be(10m);
+
+                // 4. Verify Phase 5 new tables exist and can accept records
+                var shift = new Shift
+                {
+                    ShiftNumber = "SHF-MIG-01",
+                    OpenedAt = DateTime.Now,
+                    OpeningCash = 50m,
+                    Status = ShiftStatus.Open,
+                    CreatedByUserId = 1
+                };
+                verifyCtx.Shifts.Add(shift);
+                await verifyCtx.SaveChangesAsync();
+
+                shift.Id.Should().BeGreaterThan(0);
+            }
+        }
+        finally
+        {
+            SqliteConnection.ClearAllPools();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            if (File.Exists(tempDbPath))
+            {
+                try { File.Delete(tempDbPath); } catch { }
+            }
         }
     }
 }

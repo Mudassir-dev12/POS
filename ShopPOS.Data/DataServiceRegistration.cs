@@ -55,6 +55,12 @@ public static class DataServiceRegistration
         services.AddScoped<IStockAdjustmentRepository, StockAdjustmentRepository>();
         services.AddScoped<IInventoryRepository, InventoryRepository>();
 
+        // Phase 5 Sales Repositories & Services
+        services.AddScoped<ISaleRepository, SaleRepository>();
+        services.AddScoped<ISaleReturnRepository, SaleReturnRepository>();
+        services.AddScoped<IShiftRepository, ShiftRepository>();
+        services.AddScoped<ICustomerBalanceQuery, ShopPOS.Data.Services.CustomerBalanceQuery>();
+
         // Register CSV Service
         services.AddScoped<ICsvProductService, ShopPOS.Data.Services.CsvProductService>();
 
@@ -64,4 +70,3 @@ public static class DataServiceRegistration
         return services;
     }
 }
-
