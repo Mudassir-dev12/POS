@@ -1,0 +1,43 @@
+## Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+## ReSharper / Rider / VS Code
+_ReSharper*/
+*.DotSettings.user
+.idea/
+.vscode/
+
+## Test results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+
+## Database and local SQLite files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+## OS-generated files
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+.DS_Store
+
+## Temporary and backup files
+*.bak
+*.tmp
+*~

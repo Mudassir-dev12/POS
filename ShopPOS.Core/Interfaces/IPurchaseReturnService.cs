@@ -1,0 +1,12 @@
+using ShopPOS.Core.DTOs;
+using ShopPOS.Core.Models;
+
+namespace ShopPOS.Core.Interfaces;
+
+public interface IPurchaseReturnService
+{
+    Task<Result<PagedResult<PurchaseReturnDto>>> GetReturnsAsync(int? supplierId, int pageNumber, int pageSize, string? userRole, CancellationToken cancellationToken = default);
+    Task<Result<PurchaseReturnDto>> PostReturnAsync(CreatePurchaseReturnDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default);
+    Task<Result<bool>> CancelPurchaseReturnAsync(int returnId, string reason, int? userId, string? userRole, CancellationToken cancellationToken = default);
+}
+

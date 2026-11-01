@@ -1,0 +1,242 @@
+<Window x:Class="ShopPOS.UI.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels"
+        xmlns:vmProd="clr-namespace:ShopPOS.UI.ViewModels.Products"
+        xmlns:vmCat="clr-namespace:ShopPOS.UI.ViewModels.Categories"
+        xmlns:vmBrand="clr-namespace:ShopPOS.UI.ViewModels.Brands"
+        xmlns:vmUnit="clr-namespace:ShopPOS.UI.ViewModels.Units"
+        xmlns:vmSupp="clr-namespace:ShopPOS.UI.ViewModels.Suppliers"
+        xmlns:vmCust="clr-namespace:ShopPOS.UI.ViewModels.Customers"
+        xmlns:vmPurch="clr-namespace:ShopPOS.UI.ViewModels.Purchases"
+        xmlns:vmPay="clr-namespace:ShopPOS.UI.ViewModels.SupplierPayments"
+        xmlns:vmRet="clr-namespace:ShopPOS.UI.ViewModels.PurchaseReturns"
+        xmlns:vmLedger="clr-namespace:ShopPOS.UI.ViewModels.SupplierLedger"
+        xmlns:vmSet="clr-namespace:ShopPOS.UI.ViewModels.Settings"
+        xmlns:vmInv="clr-namespace:ShopPOS.UI.ViewModels.Inventory"
+        xmlns:vmDash="clr-namespace:ShopPOS.UI.ViewModels.Dashboard"
+        xmlns:views="clr-namespace:ShopPOS.UI.Views"
+        mc:Ignorable="d"
+        Title="Shop POS"
+        Height="780"
+        Width="1200"
+        MinHeight="600"
+        MinWidth="960"
+        WindowStartupLocation="CenterScreen"
+        Background="#F1F5F9"
+        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+
+    <Window.Resources>
+        <DataTemplate DataType="{x:Type vmDash:DashboardViewModel}">
+            <views:DashboardView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PlaceholderViewModel}">
+            <views:PlaceholderView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmProd:ProductsViewModel}">
+            <views:ProductsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmCat:CategoriesViewModel}">
+            <views:CategoriesView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmBrand:BrandsViewModel}">
+            <views:BrandsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmUnit:UnitsViewModel}">
+            <views:UnitsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmSupp:SuppliersViewModel}">
+            <views:SuppliersView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmCust:CustomersViewModel}">
+            <views:CustomersView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmPurch:PurchasesViewModel}">
+            <views:PurchasesView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmPay:SupplierPaymentsViewModel}">
+            <views:SupplierPaymentsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmRet:PurchaseReturnsViewModel}">
+            <views:PurchaseReturnsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmLedger:SupplierLedgerViewModel}">
+            <views:SupplierLedgerView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmSet:SettingsViewModel}">
+            <views:SettingsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmInv:StockOverviewViewModel}">
+            <views:StockOverviewView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmInv:StockMovementHistoryViewModel}">
+            <views:StockMovementHistoryView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmInv:StockAdjustmentsViewModel}">
+            <views:StockAdjustmentsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmInv:ReorderListViewModel}">
+            <views:ReorderListView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmInv:StockValuationViewModel}">
+            <views:StockValuationView />
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- Top Header -->
+            <RowDefinition Height="64" />
+            <!-- Main Content Area with Sidebar -->
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- ================= TOP HEADER ================= -->
+        <Border Grid.Row="0"
+                Background="#0F172A"
+                Padding="24,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Store Brand -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="38" Height="38" CornerRadius="10" Background="#2563EB" Margin="0,0,12,0">
+                        <TextBlock Text="🛍️" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding ShopName}"
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   Foreground="White" />
+                        <TextBlock Text="Offline POS Terminal"
+                                   FontSize="11"
+                                   Foreground="#94A3B8" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Right Header: User Info -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- User Avatar -->
+                    <Border Width="36" Height="36" CornerRadius="18" Background="#334155" Margin="0,0,10,0">
+                        <TextBlock Text="👤" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+
+                    <!-- User Name -->
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding CurrentUserName}"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="White" />
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ================= MAIN BODY ================= -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <!-- Left Navigation Sidebar -->
+                <ColumnDefinition Width="240" />
+                <!-- Content Area -->
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Left Navigation Menu -->
+            <Border Grid.Column="0"
+                    Background="#1E293B"
+                    BorderBrush="#334155"
+                    BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="NAVIGATION"
+                               FontSize="11"
+                               FontWeight="Bold"
+                               Foreground="#64748B"
+                               Margin="20,20,0,10" />
+
+                    <!-- Menu ListBox -->
+                    <ListBox Grid.Row="1"
+                             ItemsSource="{Binding NavigationItems}"
+                             SelectedItem="{Binding SelectedNavigationItem, Mode=TwoWay}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="10,0">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="14,12" />
+                                <Setter Property="Margin" Value="0,2" />
+                                <Setter Property="Cursor" Value="Hand" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="ItemBorder"
+                                                    CornerRadius="8"
+                                                    Background="Transparent"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ItemBorder" Property="Background" Value="#334155" />
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="ItemBorder" Property="Background" Value="#2563EB" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+
+                        <ListBox.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:NavigationItem}">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="📁" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
+                                    <TextBlock Text="{Binding Title}"
+                                               FontSize="13"
+                                               FontWeight="Medium"
+                                               Foreground="White"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- System Status Footer -->
+                    <Border Grid.Row="2"
+                            Background="#0F172A"
+                            Padding="16,14"
+                            BorderBrush="#334155"
+                            BorderThickness="0,1,0,0">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                <Ellipse Width="8" Height="8" Fill="#10B981" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="SQLite WAL Connected" FontSize="11" Foreground="#94A3B8" />
+                            </StackPanel>
+                            <TextBlock Text="Local Offline Engine" FontSize="10" Foreground="#64748B" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- Main Content Area -->
+            <ContentControl Grid.Column="1"
+                            Content="{Binding CurrentView}"
+                            HorizontalContentAlignment="Stretch"
+                            VerticalContentAlignment="Stretch" />
+        </Grid>
+    </Grid>
+</Window>

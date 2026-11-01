@@ -1,0 +1,142 @@
+<Window x:Class="ShopPOS.UI.Views.Dialogs.SupplierPaymentDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+        xmlns:enums="clr-namespace:ShopPOS.Core.Enums;assembly=ShopPOS.Core"
+        xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.SupplierPayments"
+        xmlns:dto="clr-namespace:ShopPOS.Core.DTOs;assembly=ShopPOS.Core"
+        mc:Ignorable="d"
+        Title="{Binding Title}"
+        Height="540"
+        Width="520"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Background="#F8FAFC"
+        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+
+    <Window.Resources>
+        <ObjectDataProvider x:Key="PaymentMethods" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="enums:PaymentMethod" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+    </Window.Resources>
+
+    <Grid Margin="22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="18" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,10" />
+
+        <!-- Error Banner -->
+        <Border Grid.Row="1" Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
+                Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B91C1C" FontWeight="Bold" FontSize="12" />
+        </Border>
+
+        <!-- Form Body -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <!-- Vendor / Supplier -->
+                <TextBlock Text="VENDOR / SUPPLIER *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                <ComboBox ItemsSource="{Binding Suppliers}"
+                          SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
+                          DisplayMemberPath="Name"
+                          Padding="8,6"
+                          FontSize="13"
+                          Margin="0,0,0,12" />
+
+                <!-- Outstanding Invoice Picker (Optional) -->
+                <TextBlock Text="APPLY TO INVOICE (OPTIONAL)" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                <ComboBox ItemsSource="{Binding Invoices}"
+                          SelectedItem="{Binding SelectedInvoice, Mode=TwoWay}"
+                          Padding="8,6"
+                          FontSize="13"
+                          Margin="0,0,0,12">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding PurchaseNumber}" FontWeight="Bold" />
+                                <TextBlock Text="  •  Due: " Foreground="#64748B" />
+                                <TextBlock Text="{Binding DueDate, StringFormat='{}{0:yyyy-MM-dd}', TargetNullValue='No due date'}" />
+                                <TextBlock Text="  •  Balance: " Foreground="#64748B" />
+                                <TextBlock Text="{Binding Balance, StringFormat='{}{0:C}'}" FontWeight="Bold" Foreground="#2563EB" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <!-- Amount & Date -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="PAYMENT AMOUNT *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding Amount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}"
+                                 Padding="8,6"
+                                 FontSize="13"
+                                 FontWeight="Bold" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="PAYMENT DATE *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                        <DatePicker SelectedDate="{Binding PaymentDate, Mode=TwoWay}"
+                                    Padding="6,4"
+                                    FontSize="13" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Method & Reference -->
+                <Grid Margin="0,0,0,12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="PAYMENT METHOD *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                        <ComboBox SelectedItem="{Binding Method, Mode=TwoWay}"
+                                  ItemsSource="{Binding Source={StaticResource PaymentMethods}}"
+                                  Padding="8,6"
+                                  FontSize="13" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="REFERENCE #" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding Reference, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Padding="8,6"
+                                 FontSize="13" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Notes -->
+                <TextBlock Text="NOTES / MEMO" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                <TextBox Text="{Binding Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                         AcceptsReturn="True"
+                         Height="55"
+                         TextWrapping="Wrap"
+                         Padding="8,6"
+                         FontSize="12" />
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Actions -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+            <Button Content="Cancel" Command="{Binding CancelCommand}" Background="White" Foreground="#475569" BorderBrush="#CBD5E1" BorderThickness="1" Padding="16,8" Margin="0,0,10,0" Cursor="Hand" />
+            <Button Content="Record Payment" Command="{Binding SaveCommand}" Background="#16A34A" Foreground="White" FontWeight="Bold" Padding="20,8" BorderThickness="0" Cursor="Hand" />
+        </StackPanel>
+    </Grid>
+</Window>
+

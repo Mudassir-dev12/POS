@@ -1,0 +1,37 @@
+<Application x:Class="ShopPOS.UI.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+             xmlns:enums="clr-namespace:ShopPOS.Core.Enums;assembly=ShopPOS.Core"
+             xmlns:helpers="clr-namespace:ShopPOS.UI.Helpers">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary Theme="Light" />
+                <ui:ControlsDictionary />
+            </ResourceDictionary.MergedDictionaries>
+
+            <ObjectDataProvider x:Key="PaymentMethods" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+                <ObjectDataProvider.MethodParameters>
+                    <x:Type TypeName="enums:PaymentMethod" />
+                </ObjectDataProvider.MethodParameters>
+            </ObjectDataProvider>
+
+            <helpers:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+            <helpers:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <helpers:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
+            <helpers:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+            <helpers:StepVisibilityConverter x:Key="StepVisibilityConverter" />
+            <helpers:StepColorConverter x:Key="StepColorConverter" />
+            <helpers:LowStockBackgroundConverter x:Key="LowStockBackgroundConverter" />
+            <helpers:InactiveOpacityConverter x:Key="InactiveOpacityConverter" />
+            <helpers:PurchaseStatusBadgeColorConverter x:Key="PurchaseStatusBadgeColorConverter" />
+            <helpers:PurchaseStatusBadgeBackgroundConverter x:Key="PurchaseStatusBadgeBackgroundConverter" />
+            <helpers:PaymentStatusBadgeColorConverter x:Key="PaymentStatusBadgeColorConverter" />
+            <helpers:PaymentStatusBadgeBackgroundConverter x:Key="PaymentStatusBadgeBackgroundConverter" />
+            <helpers:BooleanToActiveStatusConverter x:Key="BooleanToActiveStatusConverter" />
+            <helpers:StockStatusDisplayConverter x:Key="StockStatusDisplayConverter" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

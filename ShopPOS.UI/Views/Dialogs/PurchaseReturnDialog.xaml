@@ -1,0 +1,127 @@
+<Window x:Class="ShopPOS.UI.Views.Dialogs.PurchaseReturnDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.PurchaseReturns"
+        mc:Ignorable="d"
+        Title="{Binding Title}"
+        Height="640"
+        Width="880"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC"
+        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+
+    <Grid Margin="22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="18" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,10" />
+
+        <!-- Error Banner -->
+        <Border Grid.Row="1" Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
+                Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B91C1C" FontWeight="Bold" FontSize="12" />
+        </Border>
+
+        <!-- Header Inputs -->
+        <Border Grid.Row="2" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="14,10" Margin="0,0,0,12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="1.2*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Supplier -->
+                <StackPanel Grid.Row="0" Grid.Column="0">
+                    <TextBlock Text="VENDOR / SUPPLIER *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <ComboBox ItemsSource="{Binding Suppliers}"
+                              SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
+                              DisplayMemberPath="Name"
+                              Padding="8,5"
+                              FontSize="13" />
+                </StackPanel>
+
+                <!-- Invoice -->
+                <StackPanel Grid.Row="0" Grid.Column="2">
+                    <TextBlock Text="LOAD ITEMS FROM INVOICE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <ComboBox ItemsSource="{Binding Invoices}"
+                              SelectedItem="{Binding SelectedInvoice, Mode=TwoWay}"
+                              DisplayMemberPath="PurchaseNumber"
+                              Padding="8,5"
+                              FontSize="13" />
+                </StackPanel>
+
+                <!-- Return Date -->
+                <StackPanel Grid.Row="0" Grid.Column="4">
+                    <TextBlock Text="RETURN DATE *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <DatePicker SelectedDate="{Binding ReturnDate, Mode=TwoWay}"
+                                Padding="6,4"
+                                FontSize="13" />
+                </StackPanel>
+
+                <!-- Reason / Notes -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Margin="0,10,0,0">
+                    <TextBlock Text="RETURN REASON / NOTES *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             Padding="8,5"
+                             FontSize="12" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Line Items Table -->
+        <Border Grid.Row="3" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1">
+            <DataGrid ItemsSource="{Binding LineItems}"
+                      AutoGenerateColumns="False"
+                      CanUserAddRows="False"
+                      SelectionMode="Single"
+                      RowHeight="36"
+                      Background="White"
+                      BorderThickness="0">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" IsReadOnly="True" Width="2*" FontWeight="SemiBold" />
+                    <DataGridTextColumn Header="Unit Cost" Binding="{Binding UnitCost, StringFormat='{}{0:0.00}'}" IsReadOnly="True" Width="90" />
+                    <DataGridTextColumn Header="Purchased" Binding="{Binding PurchasedQuantity, StringFormat='{}{0:0.###}'}" IsReadOnly="True" Width="85" />
+                    <DataGridTextColumn Header="Returnable" Binding="{Binding ReturnableQuantity, StringFormat='{}{0:0.###}'}" IsReadOnly="True" Width="85" FontWeight="Bold" />
+
+                    <!-- Editable Return Quantity -->
+                    <DataGridTextColumn Header="Return Qty"
+                                        Binding="{Binding ReturnQuantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.###}'}"
+                                        Width="100" FontWeight="Bold" />
+
+                    <DataGridTextColumn Header="Line Total" Binding="{Binding LineTotal, StringFormat='{}{0:0.00}'}" IsReadOnly="True" Width="100" FontWeight="Bold" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- Footer -->
+        <Border Grid.Row="4" Margin="0,14,0,0">
+            <Grid>
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="TOTAL RETURN CREDIT: " FontSize="13" FontWeight="Bold" Foreground="#475569" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding TotalAmount, StringFormat='{}{0:C}'}" FontSize="18" FontWeight="Bold" Foreground="#DC2626" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="Cancel" Command="{Binding CancelCommand}" Background="White" Foreground="#475569" BorderBrush="#CBD5E1" BorderThickness="1" Padding="16,8" Margin="0,0,10,0" Cursor="Hand" />
+                    <Button Content="Post Return (Debit Note)" Command="{Binding PostReturnCommand}" Background="#DC2626" Foreground="White" FontWeight="Bold" Padding="20,8" BorderThickness="0" Cursor="Hand" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
+

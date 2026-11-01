@@ -1,0 +1,173 @@
+<UserControl x:Class="ShopPOS.UI.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Settings"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:SettingsViewModel}"
+             Background="#F1F5F9"
+             FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+             Loaded="UserControl_Loaded">
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveCommand}" />
+    </UserControl.InputBindings>
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <!-- Header Bar -->
+            <RowDefinition Height="Auto" />
+            <!-- Settings Form Cards -->
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- ================= 1. HEADER ================= -->
+        <Grid Grid.Row="0" Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0">
+                <TextBlock Text="Store &amp; Inventory Settings" FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
+                <TextBlock Text="Configure store profile, thermal receipt formatting, and inventory costing valuation rules." FontSize="13" Foreground="#64748B" Margin="0,2,0,0" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="💾 Save Settings (Ctrl+S)"
+                        Command="{Binding SaveCommand}"
+                        Background="#2563EB"
+                        Foreground="White"
+                        FontWeight="Bold"
+                        Padding="16,8"
+                        BorderThickness="0"
+                        Cursor="Hand" />
+            </StackPanel>
+        </Grid>
+
+        <!-- ================= 2. SETTINGS CARDS ================= -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+            <StackPanel MaxWidth="800" HorizontalAlignment="Left">
+                <!-- Notifications -->
+                <Border Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,12"
+                        Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#B91C1C" FontWeight="Bold" />
+                </Border>
+
+                <Border Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,12"
+                        Visibility="{Binding SuccessMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                    <TextBlock Text="{Binding SuccessMessage}" Foreground="#15803D" FontWeight="Bold" />
+                </Border>
+
+                <!-- SECTION 1: Store Profile -->
+                <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Store Profile" FontSize="16" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,14" />
+
+                        <!-- Store Name & Currency -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2.5*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="1*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="STORE NAME *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding ShopName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="CURRENCY SYMBOL *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding CurrencySymbol, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Address -->
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="PHYSICAL STORE ADDRESS" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                            <TextBox Text="{Binding Address, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                        </StackPanel>
+
+                        <!-- Phone & Tax Number -->
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="CONTACT PHONE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding Phone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="TAX / VAT REGISTRATION #" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding TaxNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- SECTION 2: Inventory & Valuation -->
+                <Border Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="20" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="Inventory Costing &amp; Control" FontSize="16" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,4" />
+                        <TextBlock Text="These critical parameters dictate accounting valuation and stock validation across purchases and POS checkout."
+                                   FontSize="12" Foreground="#64748B" Margin="0,0,0,16" />
+
+                        <!-- Costing Method -->
+                        <StackPanel Margin="0,0,0,16">
+                            <TextBlock Text="INVENTORY COSTING METHOD" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding AvailableCostingMethods}"
+                                      SelectedItem="{Binding CostingMethod, Mode=TwoWay}"
+                                      IsEnabled="{Binding IsAdmin}"
+                                      Padding="8,6"
+                                      FontSize="13"
+                                      Width="280"
+                                      HorizontalAlignment="Left" />
+                            <!-- Short Explanation -->
+                            <TextBlock Text="Weighted Average recalculates the unit cost of inventory dynamically on each purchase posting. Last Cost sets the inventory unit cost directly to the most recent purchase invoice net cost."
+                                       FontSize="11" Foreground="#64748B" TextWrapping="Wrap" Margin="0,4,0,0" />
+                        </StackPanel>
+
+                        <!-- Allow Negative Stock -->
+                        <StackPanel Margin="0,0,0,8">
+                            <CheckBox Content="Allow inventory levels to drop into negative quantities"
+                                      IsChecked="{Binding AllowNegativeStock, Mode=TwoWay}"
+                                      IsEnabled="{Binding IsAdmin}"
+                                      FontWeight="Bold"
+                                      FontSize="13"
+                                      Foreground="#0F172A" />
+                            <!-- Short Explanation -->
+                            <TextBlock Text="When enabled, POS checkout allows sales even if warehouse stock is zero or insufficient. When disabled, sales exceeding available stock on hand are strictly blocked."
+                                       FontSize="11" Foreground="#64748B" TextWrapping="Wrap" Margin="22,4,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
+                <!-- SECTION 3: Receipt Formatting -->
+                <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Receipt Printing &amp; Design" FontSize="16" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,14" />
+
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="PRINTER PAPER WIDTH" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton Content="80 mm (Standard POS)" IsChecked="{Binding ReceiptWidthMm, Converter={x:Null}}" IsEnabled="True" Margin="0,0,16,0" />
+                            </StackPanel>
+                        </StackPanel>
+
+                        <StackPanel>
+                            <TextBlock Text="RECEIPT FOOTER MESSAGE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                            <TextBox Text="{Binding ReceiptFooter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>
+

@@ -1,0 +1,517 @@
+<Window x:Class="ShopPOS.UI.Views.Dialogs.PurchaseEntryWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:sys="clr-namespace:System;assembly=System.Runtime"
+        xmlns:enums="clr-namespace:ShopPOS.Core.Enums;assembly=ShopPOS.Core"
+        xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Purchases"
+        xmlns:dto="clr-namespace:ShopPOS.Core.DTOs;assembly=ShopPOS.Core"
+        mc:Ignorable="d"
+        Title="{Binding WindowTitle}"
+        Height="860"
+        Width="1280"
+        MinHeight="680"
+        MinWidth="1024"
+        WindowStartupLocation="CenterOwner"
+        Background="#F1F5F9"
+        FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+        Loaded="Window_Loaded">
+
+    <Window.Resources>
+        <ObjectDataProvider x:Key="PaymentMethods" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
+            <ObjectDataProvider.MethodParameters>
+                <x:Type TypeName="enums:PaymentMethod" />
+            </ObjectDataProvider.MethodParameters>
+        </ObjectDataProvider>
+    </Window.Resources>
+
+    <Window.InputBindings>
+        <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveDraftCommand}" />
+        <KeyBinding Key="Return" Modifiers="Ctrl" Command="{Binding PostPurchaseCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding CloseCommand}" />
+        <KeyBinding Key="F2" Command="{Binding OpenProductSearchCommand}" />
+    </Window.InputBindings>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <!-- Top Header & Meta -->
+            <RowDefinition Height="Auto" />
+            <!-- Status & Warning Banners -->
+            <RowDefinition Height="Auto" />
+            <!-- Invoice Header Inputs -->
+            <RowDefinition Height="Auto" />
+            <!-- Barcode Scanner & Line Items Grid + Stats -->
+            <RowDefinition Height="*" />
+            <!-- Footer: Totals, Immediate Payment & Buttons -->
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ================= TOP HEADER ================= -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Purchase Invoice: " FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
+                <TextBlock Text="{Binding PurchaseNumber}" FontSize="22" FontWeight="Bold" Foreground="#2563EB" Margin="4,0,12,0" />
+
+                <!-- Status Badge -->
+                <Border CornerRadius="4" Padding="8,3" VerticalAlignment="Center"
+                        Background="{Binding Status, Converter={StaticResource PurchaseStatusBadgeBackgroundConverter}}">
+                    <TextBlock Text="{Binding Status}"
+                               FontWeight="Bold"
+                               FontSize="12"
+                               Foreground="{Binding Status, Converter={StaticResource PurchaseStatusBadgeColorConverter}}" />
+                </Border>
+
+                <!-- Payment Status Badge -->
+                <Border CornerRadius="4" Padding="8,3" Margin="8,0,0,0" VerticalAlignment="Center"
+                        Background="{Binding PaymentStatus, Converter={StaticResource PaymentStatusBadgeBackgroundConverter}}">
+                    <TextBlock Text="{Binding PaymentStatus}"
+                               FontWeight="Bold"
+                               FontSize="12"
+                               Foreground="{Binding PaymentStatus, Converter={StaticResource PaymentStatusBadgeColorConverter}}" />
+                </Border>
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Text="Shortcuts: Ctrl+S = Save Draft  •  Ctrl+Enter = Post  •  F2 = Search Product  •  Esc = Close"
+                           FontSize="12" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,16,0" />
+            </StackPanel>
+        </Grid>
+
+        <!-- ================= BANNERS ================= -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,10">
+            <!-- Read-Only Posted Banner -->
+            <Border Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,6"
+                    Visibility="{Binding IsReadOnly, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="🔒 LOCKED DOCUMENT: " FontWeight="Bold" Foreground="#15803D" />
+                    <TextBlock Text="This purchase has been posted/cancelled and is immutable. Inventory movements and balances are locked."
+                               Foreground="#166534" />
+                    <TextBlock Text="{Binding PostedAt, StringFormat=' (Posted: {0:yyyy-MM-dd HH:mm})'}" Foreground="#15803D" FontWeight="SemiBold" />
+                </StackPanel>
+            </Border>
+
+            <!-- Warning Banner (Cost difference warnings) -->
+            <ItemsControl ItemsSource="{Binding Warnings}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,4">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="⚠️ Warning: " FontWeight="Bold" Foreground="#B45309" />
+                                <TextBlock Text="{Binding}" Foreground="#92400E" FontWeight="Medium" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <!-- Error Banner -->
+            <Border Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,6"
+                    Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="#B91C1C" FontWeight="Bold" />
+            </Border>
+        </StackPanel>
+
+        <!-- ================= INVOICE HEADER INPUTS ================= -->
+        <Border Grid.Row="2" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="16,12" Margin="0,0,0,12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2.5*" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="1.5*" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="1.5*" />
+                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="1.5*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Supplier Picker -->
+                <StackPanel Grid.Row="0" Grid.Column="0">
+                    <TextBlock Text="VENDOR / SUPPLIER *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <ComboBox ItemsSource="{Binding Suppliers}"
+                              SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
+                              DisplayMemberPath="Name"
+                              IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
+                              Padding="8,6"
+                              FontSize="13" />
+                </StackPanel>
+
+                <!-- Purchase Date -->
+                <StackPanel Grid.Row="0" Grid.Column="2">
+                    <TextBlock Text="PURCHASE DATE *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <DatePicker SelectedDate="{Binding PurchaseDate, Mode=TwoWay}"
+                                IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
+                                Padding="6,4"
+                                FontSize="13" />
+                </StackPanel>
+
+                <!-- Due Date -->
+                <StackPanel Grid.Row="0" Grid.Column="4">
+                    <TextBlock Text="PAYMENT DUE DATE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <DatePicker SelectedDate="{Binding DueDate, Mode=TwoWay}"
+                                IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
+                                Padding="6,4"
+                                FontSize="13" />
+                </StackPanel>
+
+                <!-- Supplier Invoice No -->
+                <StackPanel Grid.Row="0" Grid.Column="6">
+                    <TextBlock Text="SUPPLIER INVOICE #" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding SupplierInvoiceNo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             IsReadOnly="{Binding IsReadOnly}"
+                             Padding="8,5"
+                             FontSize="13" />
+                </StackPanel>
+
+                <!-- Notes / Remarks (Row 1 spanning full width) -->
+                <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="7" Margin="0,10,0,0">
+                    <TextBlock Text="NOTES / RECEIVING MEMO" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             IsReadOnly="{Binding IsReadOnly}"
+                             Padding="8,4"
+                             FontSize="12" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- ================= LINE ITEMS GRID & STATS ================= -->
+        <Grid Grid.Row="3" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" />
+                <ColumnDefinition Width="14" />
+                <ColumnDefinition Width="1*" MinWidth="260" MaxWidth="320" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Line Items Area -->
+            <Grid Grid.Column="0">
+                <Grid.RowDefinitions>
+                    <!-- Top Barcode Scan & Search Box -->
+                    <RowDefinition Height="Auto" />
+                    <!-- DataGrid -->
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Scan Bar -->
+                <Border Grid.Row="0" Background="#EEF2F6" CornerRadius="6" BorderBrush="#CBD5E1" BorderThickness="1" Padding="10,6" Margin="0,0,0,8"
+                        Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox x:Name="BarcodeScannerBox"
+                                 Grid.Column="0"
+                                 Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
+                                 Padding="8,5"
+                                 FontSize="13"
+                                 BorderBrush="#CBD5E1"
+                                 KeyDown="BarcodeScannerBox_KeyDown">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Style.Resources>
+                                        <VisualBrush x:Key="CueBannerBrush" AlignmentX="Left" AlignmentY="Center" Stretch="None">
+                                            <VisualBrush.Visual>
+                                                <TextBlock Text="📷 Scan barcode with USB scanner, or type SKU / Name and press Enter..." Foreground="#94A3B8" FontSize="12" Margin="6,0,0,0" />
+                                            </VisualBrush.Visual>
+                                        </VisualBrush>
+                                    </Style.Resources>
+                                    <Style.Triggers>
+                                        <Trigger Property="Text" Value="">
+                                            <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+
+                        <Button Grid.Column="1"
+                                Content="Add Item (Enter)"
+                                Command="{Binding AddScannedProductCommand}"
+                                Background="#0284C7"
+                                Foreground="White"
+                                FontWeight="Bold"
+                                Padding="12,5"
+                                Margin="8,0,0,0"
+                                BorderThickness="0"
+                                Cursor="Hand" />
+
+                        <Button Grid.Column="2"
+                                Content="🔍 Search Catalog (F2)"
+                                Command="{Binding OpenProductSearchCommand}"
+                                Background="#334155"
+                                Foreground="White"
+                                FontWeight="SemiBold"
+                                Padding="12,5"
+                                Margin="8,0,0,0"
+                                BorderThickness="0"
+                                Cursor="Hand" />
+                    </Grid>
+                </Border>
+
+                <!-- Table -->
+                <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1">
+                    <DataGrid x:Name="LinesGrid"
+                              ItemsSource="{Binding LineItems}"
+                              SelectedItem="{Binding SelectedLine, Mode=TwoWay}"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              IsReadOnly="{Binding IsReadOnly}"
+                              SelectionMode="Single"
+                              SelectionUnit="FullRow"
+                              RowHeight="36"
+                              Background="White"
+                              BorderThickness="0"
+                              PreviewKeyDown="LinesGrid_PreviewKeyDown">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" IsReadOnly="True" Width="100" FontWeight="Bold" />
+                            <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" IsReadOnly="True" Width="2*" FontWeight="SemiBold" />
+
+                            <!-- Editable Quantity -->
+                            <DataGridTextColumn Header="Qty"
+                                                Binding="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.###}'}"
+                                                Width="75" FontWeight="Bold" />
+
+                            <!-- Editable Unit Cost -->
+                            <DataGridTextColumn Header="Unit Cost"
+                                                Binding="{Binding UnitCost, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.00}'}"
+                                                Width="95" FontWeight="Bold" />
+
+                            <!-- Editable Discount % -->
+                            <DataGridTextColumn Header="Disc %"
+                                                Binding="{Binding DiscountPercent, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.##}'}"
+                                                Width="70" />
+
+                            <!-- Editable Tax % -->
+                            <DataGridTextColumn Header="Tax %"
+                                                Binding="{Binding TaxPercent, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.##}'}"
+                                                Width="70" />
+
+                            <!-- Computed Net Cost -->
+                            <DataGridTextColumn Header="Net Cost"
+                                                Binding="{Binding EffectiveNetUnitCost, StringFormat='{}{0:0.00}'}"
+                                                IsReadOnly="True"
+                                                Width="85" />
+
+                            <!-- Computed Line Total -->
+                            <DataGridTextColumn Header="Line Total"
+                                                Binding="{Binding LineTotal, StringFormat='{}{0:0.00}'}"
+                                                IsReadOnly="True"
+                                                Width="105"
+                                                FontWeight="Bold" />
+
+                            <!-- Remove Button Column -->
+                            <DataGridTemplateColumn Width="45">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="✕"
+                                                Click="RemoveLine_Click"
+                                                Foreground="#DC2626"
+                                                FontWeight="Bold"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                ToolTip="Remove item (or press Delete)"
+                                                Cursor="Hand" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Border>
+            </Grid>
+
+            <!-- Product Sidebar Stats -->
+            <Border Grid.Column="2" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="16">
+                <StackPanel>
+                    <TextBlock Text="Product Inventory Info" FontSize="15" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,12" />
+
+                    <!-- Selected Product Card -->
+                    <Border Background="#F8FAFC" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                        <StackPanel>
+                            <TextBlock Text="SELECTED PRODUCT" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
+                            <TextBlock Text="{Binding SelectedLine.ProductName, FallbackValue='(No line selected)'}"
+                                       FontSize="14" FontWeight="Bold" Foreground="#0F172A" TextWrapping="Wrap" Margin="0,2,0,6" />
+
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="SKU: " FontSize="11" Foreground="#64748B" />
+                                <TextBlock Text="{Binding SelectedLine.Sku, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold" Foreground="#334155" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Current Stock On Hand -->
+                    <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+                        <StackPanel>
+                            <TextBlock Text="CURRENT STOCK ON HAND" FontSize="10" FontWeight="Bold" Foreground="#1E40AF" />
+                            <TextBlock Text="{Binding SelectedProductStock, StringFormat='{}{0:0.###} units', TargetNullValue='—', FallbackValue='—'}"
+                                       FontSize="18" FontWeight="Bold" Foreground="#1D4ED8" Margin="0,4,0,2" />
+                            <TextBlock Text="(Live calculation from ledger)" FontSize="10" Foreground="#3B82F6" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Last Purchase Cost -->
+                    <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="6" Padding="12">
+                        <StackPanel>
+                            <TextBlock Text="LAST PURCHASE COST" FontSize="10" FontWeight="Bold" Foreground="#166534" />
+                            <TextBlock Text="{Binding SelectedProductLastCost, StringFormat='{}{0:C}', TargetNullValue='—', FallbackValue='—'}"
+                                       FontSize="18" FontWeight="Bold" Foreground="#15803D" Margin="0,4,0,2" />
+                            <TextBlock Text="(From previous posted invoice)" FontSize="10" Foreground="#16A34A" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ================= FOOTER ================= -->
+        <Border Grid.Row="4" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="18,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <!-- Left: Immediate Pay Now -->
+                    <ColumnDefinition Width="1.5*" />
+                    <ColumnDefinition Width="20" />
+                    <!-- Right: Summary Totals & Action Buttons -->
+                    <ColumnDefinition Width="2*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Immediate Payment Panel -->
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <CheckBox Content="Record immediate payment upon posting (Pay Now)"
+                              IsChecked="{Binding PayNowEnabled, Mode=TwoWay}"
+                              IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
+                              FontWeight="Bold"
+                              Foreground="#0F172A"
+                              Margin="0,0,0,8" />
+
+                    <Grid Visibility="{Binding PayNowEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="8" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="AMOUNT TO PAY" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,2" />
+                            <TextBox Text="{Binding PayNowAmount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}"
+                                     IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
+                                     Padding="6,4"
+                                     FontSize="13" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="PAYMENT METHOD" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,2" />
+                            <ComboBox SelectedItem="{Binding PayNowMethod, Mode=TwoWay}"
+                                      ItemsSource="{Binding Source={StaticResource PaymentMethods}}"
+                                      IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
+                                      Padding="6,4"
+                                      FontSize="13" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+
+                <!-- Summary Totals & Action Buttons -->
+                <Grid Grid.Column="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Totals Breakdown -->
+                    <Grid Grid.Row="0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="1.3*" />
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Subtotal -->
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="SUBTOTAL" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
+                            <TextBlock Text="{Binding SubTotal, StringFormat='{}{0:C}'}" FontSize="14" FontWeight="Bold" Foreground="#334155" />
+                        </StackPanel>
+
+                        <!-- Invoice Discount -->
+                        <StackPanel Grid.Column="1">
+                            <TextBlock Text="DISCOUNT" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
+                            <TextBox Text="{Binding InvoiceDiscount, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.00}'}"
+                                     IsReadOnly="{Binding IsReadOnly}"
+                                     Padding="4,2"
+                                     FontSize="12"
+                                     Width="80"
+                                     HorizontalAlignment="Left" />
+                        </StackPanel>
+
+                        <!-- Tax -->
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="TAX" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
+                            <TextBlock Text="{Binding TaxAmount, StringFormat='{}{0:C}'}" FontSize="14" FontWeight="Bold" Foreground="#334155" />
+                        </StackPanel>
+
+                        <!-- Freight -->
+                        <StackPanel Grid.Column="3">
+                            <TextBlock Text="FREIGHT" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
+                            <TextBox Text="{Binding FreightAmount, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.00}'}"
+                                     IsReadOnly="{Binding IsReadOnly}"
+                                     Padding="4,2"
+                                     FontSize="12"
+                                     Width="80"
+                                     HorizontalAlignment="Left" />
+                        </StackPanel>
+
+                        <!-- Grand Total -->
+                        <StackPanel Grid.Column="4" HorizontalAlignment="Right">
+                            <TextBlock Text="GRAND TOTAL" FontSize="11" FontWeight="Bold" Foreground="#2563EB" HorizontalAlignment="Right" />
+                            <TextBlock Text="{Binding GrandTotal, StringFormat='{}{0:C}'}" FontSize="20" FontWeight="Bold" Foreground="#1E40AF" HorizontalAlignment="Right" />
+                        </StackPanel>
+                    </Grid>
+
+                    <!-- Action Buttons -->
+                    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
+                        <Button Content="Close (Esc)"
+                                Command="{Binding CloseCommand}"
+                                Background="White"
+                                Foreground="#475569"
+                                BorderBrush="#CBD5E1"
+                                BorderThickness="1"
+                                Padding="16,8"
+                                Margin="0,0,10,0"
+                                Cursor="Hand" />
+
+                        <Button Content="Save Draft (Ctrl+S)"
+                                Command="{Binding SaveDraftCommand}"
+                                IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
+                                Background="#E2E8F0"
+                                Foreground="#0F172A"
+                                FontWeight="Bold"
+                                Padding="16,8"
+                                Margin="0,0,10,0"
+                                BorderThickness="0"
+                                Cursor="Hand" />
+
+                        <Button Content="Post Purchase (Ctrl+Enter)"
+                                Command="{Binding PostPurchaseCommand}"
+                                IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
+                                Background="#16A34A"
+                                Foreground="White"
+                                FontWeight="Bold"
+                                Padding="20,8"
+                                BorderThickness="0"
+                                Cursor="Hand" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
+

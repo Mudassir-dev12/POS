@@ -1,0 +1,63 @@
+<Window x:Class="ShopPOS.UI.Views.Dialogs.PriceHistoryDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Product Price Change History"
+        Height="450"
+        Width="680"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC"
+        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="{Binding CloseCommand}" />
+    </Window.InputBindings>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Margin="0,0,0,14" Padding="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+            <StackPanel>
+                <TextBlock Text="Price Change Audit History" FontSize="16" FontWeight="Bold" Foreground="#0F172A" />
+                <TextBlock Text="{Binding ProductTitle}" FontSize="13" Foreground="#2563EB" FontWeight="SemiBold" Margin="0,2,0,0" />
+            </StackPanel>
+        </Border>
+
+        <!-- DataGrid -->
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Histories}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  Background="White"
+                  BorderBrush="#CBD5E1"
+                  BorderThickness="1"
+                  RowHeight="32">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Date &amp; Time (UTC)" Binding="{Binding ChangedAt, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="150" />
+                <DataGridTextColumn Header="Modified By" Binding="{Binding ChangedByUserName}" Width="120" />
+                <DataGridTextColumn Header="Old Cost" Binding="{Binding OldCostPrice, StringFormat='{}{0:C}'}" Width="90" />
+                <DataGridTextColumn Header="New Cost" Binding="{Binding NewCostPrice, StringFormat='{}{0:C}'}" Width="90" />
+                <DataGridTextColumn Header="Old Sale" Binding="{Binding OldSalePrice, StringFormat='{}{0:C}'}" Width="90" />
+                <DataGridTextColumn Header="New Sale" Binding="{Binding NewSalePrice, StringFormat='{}{0:C}'}" Width="*" />
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <!-- Footer -->
+        <Button Grid.Row="2"
+                Content="Close"
+                Command="{Binding CloseCommand}"
+                HorizontalAlignment="Right"
+                Margin="0,14,0,0"
+                Padding="16,8"
+                Background="#E2E8F0"
+                Foreground="#334155"
+                FontWeight="SemiBold"
+                BorderThickness="0"
+                Cursor="Hand" />
+    </Grid>
+</Window>
+

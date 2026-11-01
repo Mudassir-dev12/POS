@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ShopPOS.Core/ShopPOS.Core.csproj" />
+  <Project Path="ShopPOS.Data/ShopPOS.Data.csproj" />
+  <Project Path="ShopPOS.Tests/ShopPOS.Tests.csproj" />
+  <Project Path="ShopPOS.UI/ShopPOS.UI.csproj" />
+</Solution>
