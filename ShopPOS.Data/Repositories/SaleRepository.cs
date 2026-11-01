@@ -92,26 +92,46 @@ public class SaleRepository : Repository<Sale>, ISaleRepository
 
         var totalCount = await query.CountAsync(cancellationToken);
 
-        var items = await query
+        var rawItems = await query
             .OrderByDescending(s => s.SaleDate)
             .Skip((criteria.PageNumber - 1) * criteria.PageSize)
             .Take(criteria.PageSize)
-            .Select(s => new SaleSummaryDto
+            .Select(s => new
             {
-                Id = s.Id,
-                SaleNumber = s.SaleNumber,
-                HoldNumber = s.HoldNumber,
-                SaleDate = s.SaleDate,
-                CustomerId = s.CustomerId,
+                s.Id,
+                s.SaleNumber,
+                s.HoldNumber,
+                s.SaleDate,
+                s.CustomerId,
                 CustomerName = s.Customer != null ? s.Customer.Name : "Walk-in",
-                Status = s.Status,
-                GrandTotal = s.GrandTotal,
-                PaidAmount = s.PaidAmount,
-                DueAmount = s.DueAmount,
-                TotalCost = s.TotalCost,
-                ShiftNumber = s.Shift != null ? s.Shift.ShiftNumber : null
+                s.Status,
+                s.GrandTotal,
+                s.PaidAmount,
+                s.DueAmount,
+                s.TotalCost,
+                ShiftNumber = s.Shift != null ? s.Shift.ShiftNumber : null,
+                ItemCount = s.Items.Count(),
+                PaymentMethods = s.Payments.Select(p => p.Method).ToList()
             })
             .ToListAsync(cancellationToken);
+
+        var items = rawItems.Select(s => new SaleSummaryDto
+        {
+            Id = s.Id,
+            SaleNumber = s.SaleNumber,
+            HoldNumber = s.HoldNumber,
+            SaleDate = s.SaleDate,
+            CustomerId = s.CustomerId,
+            CustomerName = s.CustomerName,
+            Status = s.Status,
+            GrandTotal = s.GrandTotal,
+            PaidAmount = s.PaidAmount,
+            DueAmount = s.DueAmount,
+            TotalCost = s.TotalCost,
+            ShiftNumber = s.ShiftNumber,
+            ItemCount = s.ItemCount,
+            PaymentMethodsSummary = string.Join(", ", s.PaymentMethods.Distinct())
+        }).ToList();
 
         return new PagedResult<SaleSummaryDto>(items, totalCount, criteria.PageNumber, criteria.PageSize);
     }

@@ -32,6 +32,14 @@
             <helpers:PaymentStatusBadgeBackgroundConverter x:Key="PaymentStatusBadgeBackgroundConverter" />
             <helpers:BooleanToActiveStatusConverter x:Key="BooleanToActiveStatusConverter" />
             <helpers:StockStatusDisplayConverter x:Key="StockStatusDisplayConverter" />
+            <helpers:SaleStatusBadgeColorConverter x:Key="SaleStatusBadgeColorConverter" />
+            <helpers:SaleStatusBadgeBackgroundConverter x:Key="SaleStatusBadgeBackgroundConverter" />
+            <helpers:ShiftStatusBadgeColorConverter x:Key="ShiftStatusBadgeColorConverter" />
+            <helpers:ShiftStatusBadgeBackgroundConverter x:Key="ShiftStatusBadgeBackgroundConverter" />
+            <helpers:DueColorConverter x:Key="DueColorConverter" />
+            <helpers:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
+            <helpers:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+            <helpers:DecimalGreaterThanZeroToVisibilityConverter x:Key="DecimalGreaterThanZeroToVisibilityConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

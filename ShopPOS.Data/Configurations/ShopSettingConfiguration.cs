@@ -58,5 +58,8 @@ public class ShopSettingConfiguration : IEntityTypeConfiguration<ShopSetting>
 
         builder.Property(s => s.ReceiptCopies)
             .HasDefaultValue(1);
+
+        builder.Property(s => s.PrinterMode)
+            .HasDefaultValue(ShopPOS.Core.Enums.PrinterMode.PdfPreview);
     }
 }

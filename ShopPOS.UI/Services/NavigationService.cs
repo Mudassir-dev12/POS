@@ -14,6 +14,8 @@ using ShopPOS.UI.ViewModels.Suppliers;
 using ShopPOS.UI.ViewModels.Units;
 using ShopPOS.UI.ViewModels.Inventory;
 using ShopPOS.UI.ViewModels.Dashboard;
+using ShopPOS.UI.ViewModels.Sales;
+using ShopPOS.UI.ViewModels.Shifts;
 
 namespace ShopPOS.UI.Services;
 
@@ -102,10 +104,16 @@ public class NavigationService : INavigationService
                 return _serviceProvider.GetRequiredService<StockValuationViewModel>();
 
             case "SALES" or "POS":
-                return new PlaceholderViewModel(
-                    "Point of Sale (POS)",
-                    "MoneyHand24",
-                    "High-speed checkout counter, barcode scanner support, discounts, and thermal printing.");
+                return _serviceProvider.GetRequiredService<PosSaleViewModel>();
+
+            case "SALESLIST":
+                return _serviceProvider.GetRequiredService<SalesViewModel>();
+
+            case "SALERETURNS":
+                return _serviceProvider.GetRequiredService<SaleReturnsViewModel>();
+
+            case "SHIFTS":
+                return _serviceProvider.GetRequiredService<ShiftsViewModel>();
 
             case "REPORTS":
                 return new PlaceholderViewModel(

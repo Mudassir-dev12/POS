@@ -10,6 +10,7 @@ public class CreateSaleReturnItemDto
     public decimal? UnitPrice { get; set; }
     public bool ReturnToStock { get; set; } = true;
     public string? Note { get; set; }
+    public string? Reason { get => Note; set => Note = value; }
 }
 
 public class CreateSaleReturnDto
@@ -37,6 +38,11 @@ public class ReturnableLineDto
     public decimal OriginalDiscountAmount { get; set; }
     public decimal OriginalTaxPercent { get; set; }
     public decimal LineTotal { get; set; }
+
+    public decimal AvailableReturnQuantity => RemainingQuantity;
+    public decimal UnitPrice => OriginalUnitPrice;
+    public decimal TaxPercent => OriginalTaxPercent;
+    public decimal EffectiveUnitPrice => SoldQuantity > 0m ? Math.Round(LineTotal / SoldQuantity, 2, MidpointRounding.AwayFromZero) : OriginalUnitPrice;
 }
 
 public class SaleReturnItemDetailDto

@@ -17,6 +17,8 @@
         xmlns:vmSet="clr-namespace:ShopPOS.UI.ViewModels.Settings"
         xmlns:vmInv="clr-namespace:ShopPOS.UI.ViewModels.Inventory"
         xmlns:vmDash="clr-namespace:ShopPOS.UI.ViewModels.Dashboard"
+        xmlns:vmSales="clr-namespace:ShopPOS.UI.ViewModels.Sales"
+        xmlns:vmShifts="clr-namespace:ShopPOS.UI.ViewModels.Shifts"
         xmlns:views="clr-namespace:ShopPOS.UI.Views"
         mc:Ignorable="d"
         Title="Shop POS"
@@ -82,6 +84,18 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmInv:StockValuationViewModel}">
             <views:StockValuationView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmSales:PosSaleViewModel}">
+            <views:PosSaleView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmSales:SalesViewModel}">
+            <views:SalesView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmSales:SaleReturnsViewModel}">
+            <views:SaleReturnsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmShifts:ShiftsViewModel}">
+            <views:ShiftsView />
         </DataTemplate>
     </Window.Resources>
 

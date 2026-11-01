@@ -73,6 +73,10 @@ public partial class MainWindowViewModel : ObservableObject
         var candidateItems = new List<NavigationItem>
         {
             new("Dashboard", "Dashboard", "Home24"),
+            new("Sales", "Sales (POS)", "MoneyHand24"),
+            new("SalesList", "Sales List", "DocumentBulletList24"),
+            new("SaleReturns", "Sale Returns", "ArrowUndo24"),
+            new("Shifts", "Shifts", "Clock24"),
             new("Products", "Products", "Box24"),
             new("Categories", "Categories", "Folder24"),
             new("Brands", "Brands", "Tag24"),
@@ -88,7 +92,6 @@ public partial class MainWindowViewModel : ObservableObject
             new("StockAdjustments", "Stock Adjustments", "ArrowSync24"),
             new("Reorder", "Reorder List", "CartAlert24"),
             new("Valuation", "Stock Valuation", "DataUsage24"),
-            new("Sales", "Sales (POS)", "MoneyHand24"),
             new("Reports", "Reports", "ChartMultiple24"),
             new("Settings", "Settings", "Settings24")
         };
@@ -115,4 +118,3 @@ public partial class MainWindowViewModel : ObservableObject
         }
     }
 }
-

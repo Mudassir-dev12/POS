@@ -4,13 +4,18 @@ using ShopPOS.Core.DTOs;
 using ShopPOS.UI.ViewModels.Brands;
 using ShopPOS.UI.ViewModels.Categories;
 using ShopPOS.UI.ViewModels.Customers;
+using ShopPOS.UI.ViewModels.HeldBills;
+using ShopPOS.UI.ViewModels.Inventory;
 using ShopPOS.UI.ViewModels.Products;
 using ShopPOS.UI.ViewModels.PurchaseReturns;
 using ShopPOS.UI.ViewModels.Purchases;
+using ShopPOS.UI.ViewModels.Sales;
+using ShopPOS.UI.ViewModels.Shifts;
 using ShopPOS.UI.ViewModels.SupplierPayments;
 using ShopPOS.UI.ViewModels.Suppliers;
 using ShopPOS.UI.ViewModels.Units;
 using ShopPOS.UI.Views.Dialogs;
+using ShopPOS.UI.Views.Dialogs.Sales;
 
 namespace ShopPOS.UI.Services;
 
@@ -179,9 +184,121 @@ public class DialogService : IDialogService
         return dialog.Result;
     }
 
-    public bool? ShowStockAdjustmentDialog(ShopPOS.UI.ViewModels.Inventory.StockAdjustmentDialogViewModel viewModel)
+    public bool? ShowStockAdjustmentDialog(StockAdjustmentDialogViewModel viewModel)
     {
         var dialog = new StockAdjustmentDialog(viewModel);
+        ConfigureDialogOwner(dialog);
+        return dialog.ShowDialog();
+    }
+
+    // Phase 5B Sales & POS Dialogs
+    public bool? ShowSalePaymentDialog(SalePaymentDialogViewModel viewModel)
+    {
+        var dialog = new SalePaymentDialog { DataContext = viewModel };
+        viewModel.RequestClose += () => dialog.DialogResult = viewModel.Confirmed;
+        ConfigureDialogOwner(dialog);
+        return dialog.ShowDialog();
+    }
+
+    public bool? ShowSaleDetailDialog(SaleDetailDialogViewModel viewModel)
+    {
+        var dialog = new SaleDetailDialog { DataContext = viewModel };
+        viewModel.RequestClose += () => dialog.Close();
+        ConfigureDialogOwner(dialog);
+        return dialog.ShowDialog();
+    }
+
+    public bool? ShowSaleReturnDialog(SaleReturnDialogViewModel viewModel)
+    {
+        var dialog = new SaleReturnDialog { DataContext = viewModel };
+        viewModel.RequestClose += () => dialog.DialogResult = viewModel.Confirmed;
+        ConfigureDialogOwner(dialog);
+        return dialog.ShowDialog();
+    }
+
+    public bool? ShowOpenShiftDialog(OpenShiftDialogViewModel viewModel)
+    {
+        var dialog = new OpenShiftDialog { DataContext = viewModel };
+        viewModel.RequestClose += () => dialog.DialogResult = viewModel.Confirmed;
+        ConfigureDialogOwner(dialog);
+        return dialog.ShowDialog();
+    }
+
+    public bool? ShowCloseShiftDialog(CloseShiftDialogViewModel viewModel)
+    {
+        var dialog = new CloseShiftDialog { DataContext = viewModel };
+        viewModel.RequestClose += () => dialog.DialogResult = viewModel.Confirmed;
+        ConfigureDialogOwner(dialog);
+        return dialog.ShowDialog();
+    }
+
+    public bool? ShowCashMovementDialog(CashMovementDialogViewModel viewModel)
+    {
+        var dialog = new CashMovementDialog { DataContext = viewModel };
+        viewModel.RequestClose += () => dialog.DialogResult = viewModel.Confirmed;
+        ConfigureDialogOwner(dialog);
+        return dialog.ShowDialog();
+    }
+
+    public bool? ShowHeldBillsDialog(HeldBillsDialogViewModel viewModel)
+    {
+        var dialog = new HeldBillsDialog { DataContext = viewModel };
+        viewModel.RequestClose += () => dialog.Close();
+        ConfigureDialogOwner(dialog);
+        return dialog.ShowDialog();
+    }
+
+    public bool? ShowBillDiscountDialog(BillDiscountDialogViewModel viewModel)
+    {
+        var dialog = new BillDiscountDialog { DataContext = viewModel };
+        viewModel.RequestClose += () => dialog.DialogResult = viewModel.Confirmed;
+        ConfigureDialogOwner(dialog);
+        return dialog.ShowDialog();
+    }
+
+    public bool? ShowLineDiscountDialog(LineDiscountDialogViewModel viewModel)
+    {
+        var dialog = new LineDiscountDialog { DataContext = viewModel };
+        viewModel.RequestClose += () => dialog.DialogResult = viewModel.Confirmed;
+        ConfigureDialogOwner(dialog);
+        return dialog.ShowDialog();
+    }
+
+    public void ShowPosHelpDialog(PosHelpDialogViewModel viewModel)
+    {
+        var dialog = new PosHelpDialog { DataContext = viewModel };
+        viewModel.RequestClose += () => dialog.Close();
+        ConfigureDialogOwner(dialog);
+        dialog.ShowDialog();
+    }
+
+    public CartExitAction ShowCartExitPrompt()
+    {
+        var vm = new CartExitPromptDialogViewModel();
+        var dialog = new CartExitPromptDialog { DataContext = vm };
+        vm.RequestClose += () => dialog.Close();
+        ConfigureDialogOwner(dialog);
+        dialog.ShowDialog();
+        return vm.SelectedAction;
+    }
+
+    public void ShowReceiptPreviewDialog(SalePaymentDialogViewModel? unused, ReceiptPreviewDialogViewModel viewModel)
+    {
+        ShowReceiptPreviewDialog(viewModel);
+    }
+
+    public void ShowReceiptPreviewDialog(ReceiptPreviewDialogViewModel viewModel)
+    {
+        var dialog = new ReceiptPreviewDialog { DataContext = viewModel };
+        viewModel.RequestClose += () => dialog.Close();
+        ConfigureDialogOwner(dialog);
+        dialog.ShowDialog();
+    }
+
+    public bool? ShowPrinterSettingsDialog(ViewModels.Settings.PrinterSettingsDialogViewModel viewModel)
+    {
+        var dialog = new PrinterSettingsDialog { DataContext = viewModel };
+        viewModel.RequestClose += () => dialog.DialogResult = viewModel.Confirmed;
         ConfigureDialogOwner(dialog);
         return dialog.ShowDialog();
     }
@@ -242,4 +359,3 @@ public class DialogService : IDialogService
         return window.ShowDialog();
     }
 }
-

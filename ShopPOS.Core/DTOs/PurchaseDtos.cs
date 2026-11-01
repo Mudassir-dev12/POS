@@ -212,4 +212,11 @@ public class ShopSettingDto
     public string? Phone { get; set; }
     public string? TaxNumber { get; set; }
     public string CurrencySymbol { get; set; } = "$";
+    public string? ReceiptFooterText { get; set; }
+    public int ReceiptWidthMm { get; set; } = 80;
+    public Core.Enums.PrinterMode PrinterMode { get; set; } = Core.Enums.PrinterMode.PdfPreview;
+    public string? ReceiptPrinterName { get; set; }
+    public bool AutoPrintReceipt { get; set; } = true;
+    public bool OpenCashDrawerOnCashSale { get; set; } = false;
+    public int ReceiptCopies { get; set; } = 1;
 }

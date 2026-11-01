@@ -15,120 +15,188 @@
     </UserControl.InputBindings>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="28">
+        <Grid Margin="24">
             <Grid.RowDefinitions>
-                <!-- Welcome Header -->
+                <!-- Welcome Header & Quick Action -->
                 <RowDefinition Height="Auto" />
-                <!-- Key Metric Cards Grid -->
+                <!-- POS & Sales Metrics -->
                 <RowDefinition Height="Auto" />
-                <!-- Quick Navigation & Status Section -->
+                <!-- Inventory & Purchasing Metrics -->
+                <RowDefinition Height="Auto" />
+                <!-- Operations Info -->
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <!-- 1. Welcome Header -->
-            <Grid Grid.Row="0" Margin="0,0,0,24">
+            <!-- 1. Welcome Header & Quick POS Button -->
+            <Grid Grid.Row="0" Margin="0,0,0,20">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0">
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
                     <TextBlock Text="{Binding WelcomeMessage}" FontSize="24" FontWeight="Bold" Foreground="#0F172A" />
-                    <TextBlock Text="Store overview, real-time inventory alerts, and purchasing metrics." FontSize="14" Foreground="#64748B" Margin="0,4,0,0" />
+                    <TextBlock Text="Store performance dashboard, real-time POS cash metrics, and inventory alerts." FontSize="13" Foreground="#64748B" Margin="0,3,0,0" />
                 </StackPanel>
 
-                <Button Grid.Column="1" Content="Refresh (F5)" Command="{Binding LoadStatsCommand}"
-                        Background="#E2E8F0" Foreground="#0F172A" FontWeight="SemiBold" Padding="14,8" BorderThickness="0" Cursor="Hand" />
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="🔄 Refresh (F5)" Command="{Binding LoadStatsCommand}"
+                            Background="#E2E8F0" Foreground="#0F172A" FontWeight="SemiBold" Height="42" Padding="14,0" Margin="0,0,10,0" BorderThickness="0" Cursor="Hand" />
+                    <Button Content="🛒 Start Selling (POS)" Command="{Binding QuickStartPosCommand}"
+                            Background="#16A34A" Foreground="White" FontSize="15" FontWeight="Bold" Height="42" Padding="20,0" BorderThickness="0" Cursor="Hand" />
+                </StackPanel>
             </Grid>
 
-            <!-- 2. Metric Cards Grid -->
-            <Grid Grid.Row="1" Margin="0,0,0,24">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+            <!-- 2. POS & Daily Sales Metric Cards -->
+            <StackPanel Grid.Row="1" Margin="0,0,0,16">
+                <TextBlock Text="Today's Sales &amp; Cash Drawer" FontSize="15" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,10" />
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-                <!-- CARD 1: Total Products -->
-                <Border Grid.Row="0" Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,14,14">
-                    <StackPanel>
-                        <TextBlock Text="Catalog Products" FontSize="13" FontWeight="SemiBold" Foreground="#64748B" />
-                        <TextBlock Text="{Binding Stats.TotalProducts}" FontSize="28" FontWeight="Bold" Foreground="#0F172A" Margin="0,8,0,0" />
-                        <TextBlock Text="Active items in store catalog" FontSize="11" Foreground="#94A3B8" Margin="0,4,0,0" />
-                    </StackPanel>
-                </Border>
-
-                <!-- CARD 2: Low Stock -->
-                <Border Grid.Row="0" Grid.Column="1" Background="White" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,14,14" Cursor="Hand">
-                    <Border.InputBindings>
-                        <MouseBinding Gesture="LeftClick" Command="{Binding OpenLowStockCommand}" />
-                    </Border.InputBindings>
-                    <StackPanel>
-                        <TextBlock Text="Low Stock Warnings" FontSize="13" FontWeight="SemiBold" Foreground="#D97706" />
-                        <TextBlock Text="{Binding Stats.LowStockCount}" FontSize="28" FontWeight="Bold" Foreground="#D97706" Margin="0,8,0,0" />
-                        <TextBlock Text="Products at or below reorder level (click to view)" FontSize="11" Foreground="#94A3B8" Margin="0,4,0,0" />
-                    </StackPanel>
-                </Border>
-
-                <!-- CARD 3: Out of Stock -->
-                <Border Grid.Row="0" Grid.Column="2" Background="White" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,0,14" Cursor="Hand">
-                    <Border.InputBindings>
-                        <MouseBinding Gesture="LeftClick" Command="{Binding OpenOutOfStockCommand}" />
-                    </Border.InputBindings>
-                    <StackPanel>
-                        <TextBlock Text="Out of Stock Items" FontSize="13" FontWeight="SemiBold" Foreground="#DC2626" />
-                        <TextBlock Text="{Binding Stats.OutOfStockCount}" FontSize="28" FontWeight="Bold" Foreground="#DC2626" Margin="0,8,0,0" />
-                        <TextBlock Text="Products with zero or negative stock (click to view)" FontSize="11" Foreground="#94A3B8" Margin="0,4,0,0" />
-                    </StackPanel>
-                </Border>
-
-                <!-- CARD 4: Stock Value at Cost -->
-                <Border Grid.Row="1" Grid.Column="0" Background="White" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,14,0">
-                    <StackPanel>
-                        <TextBlock Text="Total Inventory Value (Cost)" FontSize="13" FontWeight="SemiBold" Foreground="#2563EB" />
-                        <TextBlock Text="{Binding Stats.StockValueAtCost, StringFormat='${0:N2}'}" FontSize="28" FontWeight="Bold" Foreground="#2563EB" Margin="0,8,0,0" />
-                        <TextBlock Text="Valuation based on weighted unit cost" FontSize="11" Foreground="#94A3B8" Margin="0,4,0,0" />
-                    </StackPanel>
-                </Border>
-
-                <!-- CARD 5: Supplier Payables -->
-                <Border Grid.Row="1" Grid.Column="1" Background="White" BorderBrush="#DDD6FE" BorderThickness="1" CornerRadius="10" Padding="18" Margin="0,0,14,0">
-                    <StackPanel>
-                        <TextBlock Text="Total Supplier Payables" FontSize="13" FontWeight="SemiBold" Foreground="#7C3AED" />
-                        <TextBlock Text="{Binding Stats.SupplierPayableTotal, StringFormat='${0:N2}'}" FontSize="28" FontWeight="Bold" Foreground="#7C3AED" Margin="0,8,0,0" />
-                        <TextBlock Text="Outstanding balance across all suppliers" FontSize="11" Foreground="#94A3B8" Margin="0,4,0,0" />
-                    </StackPanel>
-                </Border>
-
-                <!-- CARD 6: Purchases This Month -->
-                <Border Grid.Row="1" Grid.Column="2" Background="White" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="10" Padding="18">
-                    <StackPanel>
-                        <TextBlock Text="Purchases This Month" FontSize="13" FontWeight="SemiBold" Foreground="#16A34A" />
-                        <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                            <TextBlock Text="{Binding Stats.PurchasesThisMonthAmount, StringFormat='${0:N2}'}" FontSize="28" FontWeight="Bold" Foreground="#16A34A" />
-                            <TextBlock Text="{Binding Stats.PurchasesThisMonthCount, StringFormat='{} ({0} POs)'}" FontSize="14" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center" Margin="8,0,0,0" />
-                        </StackPanel>
-                        <TextBlock Text="Total posted incoming invoices this month" FontSize="11" Foreground="#94A3B8" Margin="0,4,0,0" />
-                    </StackPanel>
-                </Border>
-            </Grid>
-
-            <!-- 3. Store Status & Instructions -->
-            <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="10" Padding="20">
-                <StackPanel>
-                    <TextBlock Text="System Status &amp; Daily Operations" FontSize="16" FontWeight="Bold" Foreground="#0F172A" />
-                    <TextBlock Text="Navigate using the sidebar to view inventory stock levels, process supplier purchases, or manage master data." FontSize="13" Foreground="#475569" Margin="0,4,0,14" />
-
-                    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14">
+                    <!-- Today's Sales -->
+                    <Border Grid.Column="0" Background="White" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,10,0" Cursor="Hand">
+                        <Border.InputBindings>
+                            <MouseBinding Gesture="LeftClick" Command="{Binding OpenSalesCommand}" />
+                        </Border.InputBindings>
                         <StackPanel>
-                            <TextBlock Text="Quick Recommendations:" FontWeight="SemiBold" Foreground="#1E293B" Margin="0,0,0,6" />
-                            <TextBlock Text="• Check the Reorder List for items below threshold to prepare purchase orders." Foreground="#64748B" Margin="0,2" />
-                            <TextBlock Text="• Review Stock Movement History for complete traceability of adjustments and receipts." Foreground="#64748B" Margin="0,2" />
-                            <TextBlock Text="• Manage inventory adjustments directly using Stock Adjustments." Foreground="#64748B" Margin="0,2" />
+                            <TextBlock Text="Today's Sales" FontSize="12" FontWeight="SemiBold" Foreground="#2563EB" />
+                            <TextBlock Text="{Binding TodaySalesTotal, StringFormat='${0:N2}'}" FontSize="22" FontWeight="Bold" Foreground="#2563EB" Margin="0,6,0,0" />
+                            <TextBlock Text="{Binding TodaySalesCount, StringFormat='{} {0} transactions'}" FontSize="11" Foreground="#64748B" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Today's Profit -->
+                    <Border Grid.Column="1" Background="White" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,10,0">
+                        <StackPanel>
+                            <TextBlock Text="Today's Profit" FontSize="12" FontWeight="SemiBold" Foreground="#16A34A" />
+                            <TextBlock Text="{Binding TodayProfit, StringFormat='${0:N2}'}" FontSize="22" FontWeight="Bold" Foreground="#16A34A" Margin="0,6,0,0" />
+                            <TextBlock Text="Gross margin over COGS" FontSize="11" Foreground="#64748B" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Expected Cash in Drawer -->
+                    <Border Grid.Column="2" Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,10,0" Cursor="Hand">
+                        <Border.InputBindings>
+                            <MouseBinding Gesture="LeftClick" Command="{Binding OpenShiftsCommand}" />
+                        </Border.InputBindings>
+                        <StackPanel>
+                            <TextBlock Text="Cash in Drawer" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A" />
+                            <TextBlock Text="{Binding CashInDrawerExpected, StringFormat='${0:N2}'}" FontSize="22" FontWeight="Bold" Foreground="#0F172A" Margin="0,6,0,0" />
+                            <TextBlock Text="Current active shift float" FontSize="11" Foreground="#64748B" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Held Bills -->
+                    <Border Grid.Column="3" Background="White" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,10,0" Cursor="Hand">
+                        <Border.InputBindings>
+                            <MouseBinding Gesture="LeftClick" Command="{Binding OpenHeldBillsCommand}" />
+                        </Border.InputBindings>
+                        <StackPanel>
+                            <TextBlock Text="Held Bills (Parked)" FontSize="12" FontWeight="SemiBold" Foreground="#D97706" />
+                            <TextBlock Text="{Binding HeldBillsCount}" FontSize="22" FontWeight="Bold" Foreground="#D97706" Margin="0,6,0,0" />
+                            <TextBlock Text="Parked sales in memory" FontSize="11" Foreground="#64748B" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Customers Owing -->
+                    <Border Grid.Column="4" Background="White" BorderBrush="#FECDD3" BorderThickness="1" CornerRadius="8" Padding="16" Cursor="Hand">
+                        <Border.InputBindings>
+                            <MouseBinding Gesture="LeftClick" Command="{Binding OpenCustomersOwingCommand}" />
+                        </Border.InputBindings>
+                        <StackPanel>
+                            <TextBlock Text="Customers Owing" FontSize="12" FontWeight="SemiBold" Foreground="#E11D48" />
+                            <TextBlock Text="{Binding CustomersOwingTotal, StringFormat='${0:N2}'}" FontSize="22" FontWeight="Bold" Foreground="#E11D48" Margin="0,6,0,0" />
+                            <TextBlock Text="Total receivable balances" FontSize="11" Foreground="#64748B" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+
+            <!-- 3. Inventory & Purchasing Metrics -->
+            <StackPanel Grid.Row="2" Margin="0,0,0,16">
+                <TextBlock Text="Inventory &amp; Supplier Payables" FontSize="15" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,10" />
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Low Stock -->
+                    <Border Grid.Column="0" Background="White" BorderBrush="#FED7AA" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,10,0" Cursor="Hand">
+                        <Border.InputBindings>
+                            <MouseBinding Gesture="LeftClick" Command="{Binding OpenLowStockCommand}" />
+                        </Border.InputBindings>
+                        <StackPanel>
+                            <TextBlock Text="Low Stock Warnings" FontSize="12" FontWeight="SemiBold" Foreground="#D97706" />
+                            <TextBlock Text="{Binding Stats.LowStockCount}" FontSize="22" FontWeight="Bold" Foreground="#D97706" Margin="0,6,0,0" />
+                            <TextBlock Text="At or below reorder level" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Out of Stock -->
+                    <Border Grid.Column="1" Background="White" BorderBrush="#FECACA" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,10,0" Cursor="Hand">
+                        <Border.InputBindings>
+                            <MouseBinding Gesture="LeftClick" Command="{Binding OpenOutOfStockCommand}" />
+                        </Border.InputBindings>
+                        <StackPanel>
+                            <TextBlock Text="Out of Stock Items" FontSize="12" FontWeight="SemiBold" Foreground="#DC2626" />
+                            <TextBlock Text="{Binding Stats.OutOfStockCount}" FontSize="22" FontWeight="Bold" Foreground="#DC2626" Margin="0,6,0,0" />
+                            <TextBlock Text="Zero or negative stock" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Total Products -->
+                    <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,10,0">
+                        <StackPanel>
+                            <TextBlock Text="Catalog Products" FontSize="12" FontWeight="SemiBold" Foreground="#64748B" />
+                            <TextBlock Text="{Binding Stats.TotalProducts}" FontSize="22" FontWeight="Bold" Foreground="#0F172A" Margin="0,6,0,0" />
+                            <TextBlock Text="Active items in store" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Stock Value at Cost -->
+                    <Border Grid.Column="3" Background="White" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,10,0">
+                        <StackPanel>
+                            <TextBlock Text="Stock Value (Cost)" FontSize="12" FontWeight="SemiBold" Foreground="#2563EB" />
+                            <TextBlock Text="{Binding Stats.StockValueAtCost, StringFormat='${0:N2}'}" FontSize="22" FontWeight="Bold" Foreground="#2563EB" Margin="0,6,0,0" />
+                            <TextBlock Text="Weighted unit cost" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Supplier Payables -->
+                    <Border Grid.Column="4" Background="White" BorderBrush="#DDD6FE" BorderThickness="1" CornerRadius="8" Padding="16">
+                        <StackPanel>
+                            <TextBlock Text="Supplier Payables" FontSize="12" FontWeight="SemiBold" Foreground="#7C3AED" />
+                            <TextBlock Text="{Binding Stats.SupplierPayableTotal, StringFormat='${0:N2}'}" FontSize="22" FontWeight="Bold" Foreground="#7C3AED" Margin="0,6,0,0" />
+                            <TextBlock Text="Total owed to suppliers" FontSize="11" Foreground="#94A3B8" Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </StackPanel>
+
+            <!-- 4. Quick Recommendations Card -->
+            <Border Grid.Row="3" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="18">
+                <StackPanel>
+                    <TextBlock Text="Operational Status &amp; Daily Checklist" FontSize="15" FontWeight="Bold" Foreground="#0F172A" />
+                    <TextBlock Text="Ensure your shift is opened before starting POS transactions, check low stock alerts, and reconcile drawer before closing." FontSize="13" Foreground="#475569" Margin="0,3,0,10" />
+
+                    <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
+                        <StackPanel>
+                            <TextBlock Text="• Start Selling (POS): High-speed barcode scanning, fast search, multi-tenders and receipts." Foreground="#64748B" Margin="0,2" />
+                            <TextBlock Text="• Shifts &amp; Drawer: Reconcile opening float, manage cash in/out, print X/Z reports." Foreground="#64748B" Margin="0,2" />
+                            <TextBlock Text="• Customer Returns: Select previous invoice or process refund lines with automatic stock restoration." Foreground="#64748B" Margin="0,2" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -136,4 +204,3 @@
         </Grid>
     </ScrollViewer>
 </UserControl>
-

@@ -7,6 +7,7 @@ public class Result
 {
     public bool Success { get; protected set; }
     public string? ErrorMessage { get; protected set; }
+    public string? Error => ErrorMessage;
     public IDictionary<string, string[]> ValidationErrors { get; protected set; } = new Dictionary<string, string[]>();
 
     public bool IsFailure => !Success;

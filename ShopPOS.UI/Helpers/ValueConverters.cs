@@ -279,3 +279,143 @@ public class StockStatusDisplayConverter : IValueConverter
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
+
+public class SaleStatusBadgeColorConverter : IValueConverter
+{
+    public static readonly SaleStatusBadgeColorConverter Instance = new();
+    private static readonly Brush CompletedBrush = new SolidColorBrush(Color.FromRgb(22, 163, 74));
+    private static readonly Brush CancelledBrush = new SolidColorBrush(Color.FromRgb(220, 38, 38));
+    private static readonly Brush ParkedBrush = new SolidColorBrush(Color.FromRgb(202, 138, 4));
+    private static readonly Brush DefaultBrush = new SolidColorBrush(Color.FromRgb(100, 116, 139));
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        string s = value?.ToString() ?? string.Empty;
+        return s switch
+        {
+            "Completed" => CompletedBrush,
+            "Cancelled" => CancelledBrush,
+            "Parked" => ParkedBrush,
+            _ => DefaultBrush
+        };
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class SaleStatusBadgeBackgroundConverter : IValueConverter
+{
+    public static readonly SaleStatusBadgeBackgroundConverter Instance = new();
+    private static readonly Brush CompletedBg = new SolidColorBrush(Color.FromRgb(220, 252, 231));
+    private static readonly Brush CancelledBg = new SolidColorBrush(Color.FromRgb(254, 226, 226));
+    private static readonly Brush ParkedBg = new SolidColorBrush(Color.FromRgb(254, 249, 195));
+    private static readonly Brush DefaultBg = new SolidColorBrush(Color.FromRgb(241, 245, 249));
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        string s = value?.ToString() ?? string.Empty;
+        return s switch
+        {
+            "Completed" => CompletedBg,
+            "Cancelled" => CancelledBg,
+            "Parked" => ParkedBg,
+            _ => DefaultBg
+        };
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class ShiftStatusBadgeColorConverter : IValueConverter
+{
+    public static readonly ShiftStatusBadgeColorConverter Instance = new();
+    private static readonly Brush OpenBrush = new SolidColorBrush(Color.FromRgb(22, 163, 74));
+    private static readonly Brush ClosedBrush = new SolidColorBrush(Color.FromRgb(71, 85, 105));
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        string s = value?.ToString() ?? string.Empty;
+        return s == "Open" ? OpenBrush : ClosedBrush;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class ShiftStatusBadgeBackgroundConverter : IValueConverter
+{
+    public static readonly ShiftStatusBadgeBackgroundConverter Instance = new();
+    private static readonly Brush OpenBg = new SolidColorBrush(Color.FromRgb(220, 252, 231));
+    private static readonly Brush ClosedBg = new SolidColorBrush(Color.FromRgb(241, 245, 249));
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        string s = value?.ToString() ?? string.Empty;
+        return s == "Open" ? OpenBg : ClosedBg;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class DueColorConverter : IValueConverter
+{
+    public static readonly DueColorConverter Instance = new();
+    private static readonly Brush DueBrush = new SolidColorBrush(Color.FromRgb(234, 88, 12));
+    private static readonly Brush OkBrush = new SolidColorBrush(Color.FromRgb(30, 41, 59));
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is decimal d && d > 0m) return DueBrush;
+        return OkBrush;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class EnumToBooleanConverter : IValueConverter
+{
+    public static readonly EnumToBooleanConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value == null || parameter == null) return false;
+        return value.ToString()!.Equals(parameter.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool b && b && parameter != null)
+        {
+            if (targetType.IsEnum)
+                return Enum.Parse(targetType, parameter.ToString()!);
+        }
+        return Binding.DoNothing;
+    }
+}
+
+public class NullToVisibilityConverter : IValueConverter
+{
+    public static readonly NullToVisibilityConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        bool isNullOrEmpty = value == null || (value is string s && string.IsNullOrWhiteSpace(s));
+        return isNullOrEmpty ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class DecimalGreaterThanZeroToVisibilityConverter : IValueConverter
+{
+    public static readonly DecimalGreaterThanZeroToVisibilityConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is decimal d && d > 0m) return Visibility.Visible;
+        if (value is double dbl && dbl > 0.0) return Visibility.Visible;
+        if (value is int i && i > 0) return Visibility.Visible;
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}

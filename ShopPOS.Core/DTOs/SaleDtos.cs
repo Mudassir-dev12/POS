@@ -99,6 +99,8 @@ public class SaleDetailDto
     public string? Notes { get; set; }
     public int? ShiftId { get; set; }
     public string? ShiftNumber { get; set; }
+    public int ItemCount { get; set; }
+    public string PaymentMethodsSummary { get; set; } = string.Empty;
     public DateTime? CompletedAt { get; set; }
     public DateTime? CancelledAt { get; set; }
     public string? CancelReason { get; set; }
@@ -123,6 +125,8 @@ public class SaleSummaryDto
     public decimal TotalCost { get; set; }
     public decimal Profit => GrandTotal - TotalCost;
     public string? ShiftNumber { get; set; }
+    public int ItemCount { get; set; }
+    public string PaymentMethodsSummary { get; set; } = string.Empty;
 }
 
 public class SaleSearchDto

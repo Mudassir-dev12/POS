@@ -1,3 +1,4 @@
+using CommunityToolkit.Mvvm.Input;
 using ShopPOS.Core.DTOs;
 using ShopPOS.Core.Interfaces;
 using ShopPOS.UI.Services;
@@ -10,6 +11,8 @@ public partial class CustomersViewModel : BaseCrudViewModel<CustomerDto>
     private readonly ICustomerService _customerService;
     private readonly IPriceLevelService _priceLevelService;
     private readonly IDialogService _dialogService;
+    private readonly ICustomerBalanceQuery? _customerBalanceQuery;
+    private readonly INavigationService? _navigationService;
 
     public CustomersViewModel(
         ICustomerService customerService,
@@ -17,12 +20,16 @@ public partial class CustomersViewModel : BaseCrudViewModel<CustomerDto>
         IAuthService authService,
         IPermissionService permissionService,
         IShopSettingService shopSettingService,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        ICustomerBalanceQuery? customerBalanceQuery = null,
+        INavigationService? navigationService = null)
         : base(authService, permissionService, shopSettingService)
     {
         _customerService = customerService;
         _priceLevelService = priceLevelService;
         _dialogService = dialogService;
+        _customerBalanceQuery = customerBalanceQuery;
+        _navigationService = navigationService;
     }
 
     protected override void ApplyPermissions()
@@ -54,9 +61,17 @@ public partial class CustomersViewModel : BaseCrudViewModel<CustomerDto>
             var res = await _customerService.GetPagedCustomersAsync(query, cancellationToken);
             if (res.Success && res.Data != null)
             {
+                Dictionary<int, decimal>? balances = null;
+                if (_customerBalanceQuery != null)
+                {
+                    var customerIds = res.Data.Items.Select(c => c.Id).ToList();
+                    balances = await _customerBalanceQuery.GetCustomerBalancesBatchAsync(customerIds, cancellationToken);
+                }
+
                 Items.Clear();
                 foreach (var c in res.Data.Items)
                 {
+                    c.CurrentBalance = balances != null ? balances.GetValueOrDefault(c.Id, c.OpeningBalance) : c.OpeningBalance;
                     Items.Add(c);
                 }
 
@@ -75,6 +90,13 @@ public partial class CustomersViewModel : BaseCrudViewModel<CustomerDto>
         {
             IsLoading = false;
         }
+    }
+
+    [RelayCommand]
+    public void ViewSalesHistory()
+    {
+        if (SelectedItem == null) return;
+        _navigationService?.NavigateTo("SalesList");
     }
 
     public override async Task AddAsync()

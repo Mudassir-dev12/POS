@@ -1,0 +1,81 @@
+<UserControl x:Class="ShopPOS.UI.Views.SaleReturnsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Sales"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:SaleReturnsViewModel}"
+             Background="#F8FAFC"
+             FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- TITLE & ACTION BUTTONS -->
+        <Grid Grid.Row="0" Margin="0,0,0,14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Customer Returns" FontSize="20" FontWeight="Bold" Foreground="#0F172A" />
+                <TextBlock Text="Process customer refunds, restock undamaged items, track return reasons." FontSize="12" Foreground="#64748B" Margin="0,2,0,0" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="+ New Return" Command="{Binding NewReturnCommand}" Height="34" Margin="0,0,8,0" Background="#DC2626" Foreground="White" FontWeight="SemiBold" BorderThickness="0" />
+                <Button Content="Cancel Selected Return" Command="{Binding CancelReturnCommand}" Height="34" Background="#FFF1F2" Foreground="#E11D48" BorderBrush="#FECDD3" />
+            </StackPanel>
+        </Grid>
+
+        <!-- FILTER BAR -->
+        <Border Grid.Row="1" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,12">
+            <WrapPanel VerticalAlignment="Center">
+                <StackPanel Margin="0,0,14,0">
+                    <TextBlock Text="Search:" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,3" />
+                    <TextBox Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="180" Height="30" VerticalContentAlignment="Center" Padding="6,2">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Return" Command="{Binding LoadReturnsCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+                </StackPanel>
+
+                <StackPanel Margin="0,0,14,0">
+                    <TextBlock Text="From Date:" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,3" />
+                    <DatePicker SelectedDate="{Binding DateFrom, Mode=TwoWay}" Width="120" Height="30" />
+                </StackPanel>
+
+                <StackPanel Margin="0,0,14,0">
+                    <TextBlock Text="To Date:" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,3" />
+                    <DatePicker SelectedDate="{Binding DateTo, Mode=TwoWay}" Width="120" Height="30" />
+                </StackPanel>
+
+                <Button Content="Filter / Refresh (F5)" Command="{Binding LoadReturnsCommand}" Width="130" Height="30" Margin="0,16,0,0"
+                        Background="#2563EB" Foreground="White" FontWeight="SemiBold" BorderThickness="0" />
+            </WrapPanel>
+        </Border>
+
+        <!-- RETURNS GRID -->
+        <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8">
+            <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
+                      GridLinesVisibility="Horizontal" HeadersVisibility="Column" Background="Transparent" BorderThickness="0">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Return #" Binding="{Binding ReturnNumber}" Width="130" FontWeight="SemiBold" />
+                    <DataGridTextColumn Header="Date" Binding="{Binding ReturnDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="140" />
+                    <DataGridTextColumn Header="Orig Sale #" Binding="{Binding SaleNumber}" Width="130" />
+                    <DataGridTextColumn Header="Customer" Binding="{Binding CustomerName, TargetNullValue='Walk-in'}" Width="*" />
+                    <DataGridTextColumn Header="Refund Total" Binding="{Binding TotalRefundAmount, StringFormat='${0:N2}'}" Width="110" FontWeight="Bold" Foreground="#DC2626" />
+                    <DataGridTextColumn Header="Refund Method" Binding="{Binding RefundMethod}" Width="120" />
+                    <DataGridTextColumn Header="Reason" Binding="{Binding Reason}" Width="180" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+    </Grid>
+</UserControl>
+

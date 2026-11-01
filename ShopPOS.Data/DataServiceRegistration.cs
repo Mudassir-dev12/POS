@@ -60,6 +60,10 @@ public static class DataServiceRegistration
         services.AddScoped<ISaleReturnRepository, SaleReturnRepository>();
         services.AddScoped<IShiftRepository, ShiftRepository>();
         services.AddScoped<ICustomerBalanceQuery, ShopPOS.Data.Services.CustomerBalanceQuery>();
+        services.AddScoped<ISalesExportService, ShopPOS.Data.Services.SalesExportService>();
+#pragma warning disable CA1416
+        services.AddScoped<IReceiptPrinterService, ShopPOS.Data.Services.ReceiptPrinterService>();
+#pragma warning restore CA1416
 
         // Register CSV Service
         services.AddScoped<ICsvProductService, ShopPOS.Data.Services.CsvProductService>();

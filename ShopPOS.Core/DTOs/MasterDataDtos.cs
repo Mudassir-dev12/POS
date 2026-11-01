@@ -127,6 +127,7 @@ public class CustomerDto
     public string? Address { get; set; }
     public string? Notes { get; set; }
     public decimal CreditLimit { get; set; }
+    public decimal CurrentBalance { get; set; }
     public decimal OpeningBalance { get; set; }
     public int? DefaultPriceLevelId { get; set; }
     public string? DefaultPriceLevelName { get; set; }
@@ -143,6 +144,7 @@ public class CreateCustomerDto
     public string? Address { get; set; }
     public string? Notes { get; set; }
     public decimal CreditLimit { get; set; }
+    public decimal CurrentBalance { get; set; }
     public decimal OpeningBalance { get; set; }
     public int? DefaultPriceLevelId { get; set; }
 }
@@ -157,6 +159,7 @@ public class UpdateCustomerDto
     public string? Address { get; set; }
     public string? Notes { get; set; }
     public decimal CreditLimit { get; set; }
+    public decimal CurrentBalance { get; set; }
     public decimal OpeningBalance { get; set; }
     public int? DefaultPriceLevelId { get; set; }
     public bool IsActive { get; set; } = true;

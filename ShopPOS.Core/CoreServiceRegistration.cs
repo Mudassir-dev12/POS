@@ -43,6 +43,7 @@ public static class CoreServiceRegistration
         services.AddScoped<IShiftService, ShiftService>();
         services.AddScoped<ISaleReturnService, SaleReturnService>();
         services.AddScoped<ISaleService, SaleService>();
+        services.AddSingleton<IReceiptBuilder, ReceiptBuilder>();
 
         // Phase 3 Validators
         services.AddScoped<FluentValidation.IValidator<DTOs.CreatePurchaseDto>, Validators.CreatePurchaseValidator>();

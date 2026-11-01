@@ -17,18 +17,22 @@ using ShopPOS.UI.ViewModels;
 using ShopPOS.UI.ViewModels.Brands;
 using ShopPOS.UI.ViewModels.Categories;
 using ShopPOS.UI.ViewModels.Customers;
+using ShopPOS.UI.ViewModels.HeldBills;
+using ShopPOS.UI.ViewModels.Inventory;
 using ShopPOS.UI.ViewModels.Products;
 using ShopPOS.UI.ViewModels.PurchaseReturns;
 using ShopPOS.UI.ViewModels.Purchases;
+using ShopPOS.UI.ViewModels.Sales;
 using ShopPOS.UI.ViewModels.Settings;
+using ShopPOS.UI.ViewModels.Shifts;
 using ShopPOS.UI.ViewModels.SupplierLedger;
 using ShopPOS.UI.ViewModels.SupplierPayments;
 using ShopPOS.UI.ViewModels.Suppliers;
 using ShopPOS.UI.ViewModels.Units;
-using ShopPOS.UI.ViewModels.Inventory;
 using ShopPOS.UI.ViewModels.Dashboard;
 using ShopPOS.UI.Views;
 using ShopPOS.UI.Views.Dialogs;
+using ShopPOS.UI.Views.Dialogs.Sales;
 using Xunit;
 
 namespace ShopPOS.Tests;
@@ -112,6 +116,21 @@ public class UiSmokeTests
                     (typeof(PriceHistoryDialog), typeof(PriceHistoryDialogViewModel)),
                     (typeof(CsvImportWizardDialog), typeof(CsvImportWizardViewModel)),
                     (typeof(StockAdjustmentDialog), typeof(StockAdjustmentDialogViewModel)),
+
+                    // Phase 5B Windows and Dialogs
+                    (typeof(SalePaymentDialog), typeof(SalePaymentDialogViewModel)),
+                    (typeof(SaleDetailDialog), typeof(SaleDetailDialogViewModel)),
+                    (typeof(SaleReturnDialog), typeof(SaleReturnDialogViewModel)),
+                    (typeof(OpenShiftDialog), typeof(OpenShiftDialogViewModel)),
+                    (typeof(CloseShiftDialog), typeof(CloseShiftDialogViewModel)),
+                    (typeof(CashMovementDialog), typeof(CashMovementDialogViewModel)),
+                    (typeof(HeldBillsDialog), typeof(HeldBillsDialogViewModel)),
+                    (typeof(BillDiscountDialog), typeof(BillDiscountDialogViewModel)),
+                    (typeof(LineDiscountDialog), typeof(LineDiscountDialogViewModel)),
+                    (typeof(PosHelpDialog), typeof(PosHelpDialogViewModel)),
+                    (typeof(CartExitPromptDialog), typeof(CartExitPromptDialogViewModel)),
+                    (typeof(PrinterSettingsDialog), typeof(PrinterSettingsDialogViewModel)),
+                    (typeof(ReceiptPreviewDialog), typeof(ReceiptPreviewDialogViewModel)),
                 };
 
                 foreach (var (viewType, vmType) in windowTests)
@@ -154,7 +173,13 @@ public class UiSmokeTests
                     (typeof(StockAdjustmentsView), typeof(StockAdjustmentsViewModel)),
                     (typeof(ReorderListView), typeof(ReorderListViewModel)),
                     (typeof(StockValuationView), typeof(StockValuationViewModel)),
-                    (typeof(DashboardView), typeof(DashboardViewModel))
+                    (typeof(DashboardView), typeof(DashboardViewModel)),
+
+                    // Phase 5B Views
+                    (typeof(PosSaleView), typeof(PosSaleViewModel)),
+                    (typeof(SalesView), typeof(SalesViewModel)),
+                    (typeof(SaleReturnsView), typeof(SaleReturnsViewModel)),
+                    (typeof(ShiftsView), typeof(ShiftsViewModel)),
                 };
 
                 foreach (var (viewType, vmType) in userControlTests)

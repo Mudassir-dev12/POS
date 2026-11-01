@@ -1355,6 +1355,11 @@ namespace ShopPOS.Data.Migrations
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(false);
 
+                    b.Property<int>("PrinterMode")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(0);
+
                     b.Property<int>("ReceiptCopies")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")

@@ -1,0 +1,40 @@
+<Window x:Class="ShopPOS.UI.Views.Dialogs.Sales.PosHelpDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Sales"
+        mc:Ignorable="d"
+        Title="POS Keyboard Shortcuts Help (F1)"
+        Height="540"
+        Width="640"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC"
+        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+
+    <Grid Margin="22">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,14">
+            <TextBlock Text="⌨️ POS Keyboard Shortcuts Reference" FontSize="18" FontWeight="Bold" Foreground="#0F172A" />
+            <TextBlock Text="Speed up checkout operations by navigating entirely with your keyboard." FontSize="13" Foreground="#64748B" Margin="0,3,0,0" />
+        </StackPanel>
+
+        <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1">
+            <DataGrid ItemsSource="{Binding Shortcuts}" AutoGenerateColumns="False" IsReadOnly="True" BorderThickness="0" Background="Transparent" RowHeight="36">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Key / Shortcut" Binding="{Binding Key}" Width="150" FontWeight="Bold" />
+                    <DataGridTextColumn Header="Function" Binding="{Binding Description}" Width="*" />
+                    <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="110" Foreground="#64748B" />
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <Button Grid.Row="2" Content="Close (Escape)" Command="{Binding CloseCommand}" IsCancel="True" HorizontalAlignment="Right" Background="#2563EB" Foreground="White" FontWeight="Bold" Padding="16,8" Margin="0,16,0,0" BorderThickness="0" Cursor="Hand" />
+    </Grid>
+</Window>
+

@@ -74,6 +74,8 @@ public partial class CustomerDialogViewModel : ObservableObject
 
     public ObservableCollection<PriceLevelDto> PriceLevels { get; } = new();
 
+    public int? CreatedCustomerId { get; private set; }
+
     public event Action<bool>? RequestClose;
 
     public CustomerDialogViewModel(
@@ -163,6 +165,8 @@ public partial class CustomerDialogViewModel : ObservableObject
                 ApplyErrors(res);
                 return;
             }
+
+            CreatedCustomerId = res.Data?.Id;
         }
         else
         {
@@ -186,6 +190,8 @@ public partial class CustomerDialogViewModel : ObservableObject
                 ApplyErrors(res);
                 return;
             }
+
+            CreatedCustomerId = Id;
         }
 
         RequestClose?.Invoke(true);
@@ -205,4 +211,3 @@ public partial class CustomerDialogViewModel : ObservableObject
         if (res.ValidationErrors.TryGetValue("Email", out var eErrs)) EmailError = string.Join("; ", eErrs);
     }
 }
-

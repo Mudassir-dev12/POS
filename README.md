@@ -465,14 +465,186 @@ The sales module backend provides a high-performance, transactionally secure sal
 - `SaleReturnWindowDays` (Default: `30`) - Days after purchase allowed for product returns.
 - `AutoPrintReceipt`, `ReceiptPrinterName`, `OpenCashDrawerOnCashSale`, `ReceiptCopies` - Receipt hardware options.
 
-### 8. Architectural Limitations
+### 8. POS & Sales Screens (Phase 5B)
+
+The POS frontend provides an ultra-fast, keyboard-driven checkout interface optimized for high-throughput retail counters at screen resolutions of 1366x768 and higher. All window transitions and popups are strictly decoupled through `IDialogService`.
+
+#### 1. POS Selling Screen (`PosSaleView.xaml` / `PosSaleViewModel.cs`)
+- **Barcode & Multiplier Scanning**:
+  - Top barcode input keeps focus after every operation.
+  - Multiplier prefix support (`"5*123456"`) adds 5 units of product in a single scan.
+  - Live 300 ms debounced product suggestions appear when typing product names.
+  - `F2` opens the multi-select Product Search dialog with live stock counts and categories.
+- **Cart Management**:
+  - Quantity `+` and `-` buttons, direct quantity edits, and line removal.
+  - Stock badges: Out of stock (red), Low stock (amber), Negative (dark red), OK (green), Not tracked (grey).
+  - Minimum selling price validation blocks discounted pricing below cost/minimum allowed price.
+  - Line-level (`F6`) and Bill-level (`F7`) discount dialogs with percent or fixed minor unit values.
+  - Cart totals (Subtotal, Tax, Bill Discount, Round-off, Grand Total) are derived strictly from `ISaleCalculator`.
+- **Customer Selection (`F3`)**:
+  - Quick walk-in default or select an existing customer.
+  - Displays real-time outstanding customer balance and credit limit.
+- **Park & Resume Bills (`F4` / `F5`)**:
+  - Park cart to held bills (`F4`) to serve another customer without losing cart items.
+  - Held bills dialog (`F5`) lists parked carts with line counts, customer names, and resume/delete options.
+  - Closing or navigating away from a non-empty cart displays an exit prompt asking to **Hold**, **Discard**, or **Keep**.
+- **Checkout & Payment Dialog (`F12` / `Ctrl+Enter`)**:
+  - Split tender payment across `Cash`, `Card`, `Bank`, and `MobileWallet`.
+  - Quick cash note buttons automatically rounded up to common currency steps (e.g., $10, $20, $50, $100).
+  - Accurate change calculation for cash overpayments; rejects non-cash over-tender.
+  - Enforces customer selection and credit limits for credit sales (sales with an outstanding balance).
+- **Post-Sale Overlay**:
+  - Displays change due, total paid, and sale number.
+  - One-click receipt reprint and PDF receipt preview via QuestPDF.
+  - Auto-print receipt upon transaction completion when enabled in settings.
+- **Shift Enforcement**:
+  - When `RequireOpenShiftForSales = true`, completing a sale or scanning an item without an open shift prompts the cashier to open a shift with initial drawer float cash.
+
+#### 2. Keyboard Shortcut Matrix
+| Shortcut | Action | Description |
+|:---|:---|:---|
+| **F1** | Help | Opens POS shortcut cheat-sheet dialog |
+| **F2** | Product Search | Multi-select product search popup |
+| **F3** | Customer | Select customer / view customer credit balance |
+| **F4** | Hold Bill | Park current cart to held bills |
+| **F5** | Resume Bill | View and resume parked held bills |
+| **F6** | Line Discount | Apply percentage or fixed discount to selected line |
+| **F7** | Bill Discount | Apply invoice-level discount |
+| **F8** | Cash In/Out | Log float cash in or petty expense cash out |
+| **F9** | Returns | Navigate to Sale Returns screen |
+| **F10** | Drawer | Trigger cash drawer kick |
+| **F12** / **Ctrl+Enter** | Checkout | Open payment dialog |
+| **Ctrl+D** / **Esc** | Clear Cart | Prompt to Hold, Discard, or Keep non-empty cart |
+| **Delete** | Delete Line | Remove selected cart line item |
+| **+** / **-** | Qty +/- | Increment or decrement selected cart line quantity |
+
+#### 3. Sales List Screen (`SalesView.xaml` / `SalesViewModel.cs`)
+- **Paging & Filtering**: 50 items/page, date range filter, customer filter, sale status, "With Due Only" toggle, and text search.
+- **Summary Totals**: Running summary of filtered sales count, gross revenue, collected payments, and total due amount.
+- **Actions**:
+  - *View Details*: Opens sale invoice modal with complete line item breakdown, tax details, and payment tenders.
+  - *Reprint Receipt*: Generates 80mm thermal receipt PDF via QuestPDF.
+  - *Cancel Sale*: Cancels sale with mandatory reason prompt, reversing stock movements in the ledger.
+  - *Process Return*: Quick navigation to Sale Return dialog with pre-loaded invoice lines.
+  - *Export*: Export filtered list to UTF-8 BOM CSV or printable PDF report.
+
+#### 4. Sale Returns Screen & Dialog (`SaleReturnsView.xaml` / `SaleReturnDialog.xaml`)
+- **Invoice Search**: Search sale by invoice number to load returnable line items.
+- **Quantity Limits**: Return quantity is strictly clamped to $\text{SoldQty} - \sum \text{PreviouslyReturnedQty}$.
+- **Restock vs Write-off**: Cashier specifies per item whether returned item should be returned to inventory (`ReturnToStock = true`) or written off as damaged/expired goods.
+- **Refund Method**: Cash, Card, Bank, or Store Credit added to customer balance.
+
+#### 5. Shifts Screen & Dialogs (`ShiftsView.xaml` / `ShiftsViewModel.cs`)
+- **Active Shift Card**: Real-time display of shift number, open time, opening float, cash sales, non-cash sales, returns, cash in/out, and expected cash drawer total.
+- **Mid-Shift Cash Movements (`CashMovementDialog.xaml`)**: Log float additions (`CashIn`) or petty cash withdrawals (`CashOut`) with mandatory justification notes.
+- **Shift Reconciliation & Closure (`CloseShiftDialog.xaml`)**:
+  - Cashier enters actual counted cash.
+  - System computes difference ($\text{Discrepancy} = \text{Counted} - \text{Expected}$) and badges overage (blue) or shortage (red).
+- **Shift Reports**:
+  - *X-Report*: Mid-shift interim audit report PDF without closing the register.
+  - *Z-Report*: Official end-of-shift closure report PDF summarizing financial breakdown, payment methods, and cash discrepancy.
+- **Shift History**: Past shifts table with status, opening cash, closing cash, discrepancy, and historical Z-Report reprint.
+
+#### 6. Customer Ledger & Settings Integration
+- **Customer Screen (`CustomersView.xaml`)**: Includes real-time "Balance" column computed from ledger; "Sales History" button filters sales list for selected customer.
+- **Settings Screen (`SettingsView.xaml`)**: Configures POS policies: `RequireOpenShiftForSales`, `AllowCreditSales`, `AllowSellingBelowMinPrice`, `PricesIncludeTax`, `CashRoundingStep`, `SaleReturnWindowDays`, `AllowReturnWithoutReceipt`, `AutoPrintReceipt`, and `ReceiptPrinterName`.
+- **Dashboard Screen (`DashboardView.xaml`)**: Adds live POS metric cards: Today's Sales Count & Total, Today's Profit, Drawer Expected Cash, Held Bills Count, and Customers Owing Total, with a 1-click "Start POS Sale" button.
+
+---
+
+## 9. Receipt Printing, Reprint & Cash Drawer Hardware (Phase 5C)
+
+ShopPOS features a production-grade, 3-tier offline printing subsystem designed for reliability, speed, and zero physical dependency blockers.
+
+```
+                    ┌────────────────────────┐
+                    │    ReceiptDocument     │
+                    │   (Printer-Agnostic)   │
+                    └───────────┬────────────┘
+                                │
+               ┌────────────────┼────────────────┐
+               ▼                ▼                ▼
+       ┌───────────────┐ ┌───────────────┐ ┌───────────────┐
+       │  PdfPreview   │ │ WindowsDriver │ │   EscPosRaw   │
+       │   (QuestPDF)  │ │ (GDI Spooler) │ │ (winspool.drv)│
+       └───────┬───────┘ └───────┬───────┘ └───────┬───────┘
+               │                 │                 │
+       ┌───────▼───────┐         ▼                 ▼
+       │ ReceiptPreview│    Windows Print    Direct ESC/POS
+       │ Dialog (WPF)  │    Queue Spooler    Thermal Printer
+       └───────────────┘                     & RJ11 Drawer
+```
+
+### 1. Architectural Layers
+
+1. **`ReceiptDocument` Model (`ShopPOS.Core/Models/ReceiptDocument.cs`)**:
+   - Clean, printer-independent data structure built via `IReceiptBuilder`.
+   - Populated from completed Sales, Sale Returns, Shift Z-Reports, or hardware Diagnostic Test Slips.
+   - Includes: Shop branding & tax registration, invoice header, word-wrapped item lines, discounts, tax breakdowns, cash rounding, multi-tender payments, change, customer due balance, footer notice, reprint watermark banner (`*** DUPLICATE COPY ***`), and Code 128 barcode value.
+   - Native width layout handling: 58mm (32 chars) and 80mm (48 chars).
+
+2. **Renderers & Dispatching (`ShopPOS.Data/Services/ReceiptPrinterService.cs`)**:
+   - **`PdfPreview` (Guaranteed Fallback)**:
+     - Uses QuestPDF to render high-DPI vector documents.
+     - Supports 58mm roll, 80mm roll, and full corporate A4 tax invoices.
+     - Displays directly inside `ReceiptPreviewDialog.xaml` as rendered page images, with 1-click system printing and "Save PDF" file export.
+     - Runs without any physical printer installed or connected.
+   - **`WindowsDriver`**:
+     - Prints directly through any standard Windows printer driver using `System.Drawing.Printing.PrintDocument`.
+     - Supports network shared printers, USB receipt printers with Windows drivers, and virtual PDF printers.
+   - **`EscPosRaw`**:
+     - Pure ESC/POS thermal command generator (`EscPosGenerator.cs`) bypasses driver rendering for instant printing speeds.
+     - Sends raw byte buffers directly to the Windows Spooler queue via Win32 `winspool.drv` P/Invoke (`RawPrinterHelper.cs`).
+     - Supported hardware commands: Initialization (`ESC @`), text alignment (`ESC a n`), bold (`ESC E n`), Code 128 barcode generation (`GS k 73`), paper cut (`GS V 66 0`), and cash drawer kick pulses (`ESC p 0/1`).
+     - Automated currency symbol normalization (e.g. converting non-CP437 symbols like `Rs.` or `$` safely for standard thermal codepages).
+
+### 2. Cash Drawer Integration
+- **Universal Dual-Pin RJ11 Kick Pulse**: Thermal printers use either RJ11 Pin 2 (`\x1B\x70\x00\x19\xFA`) or Pin 5 (`\x1B\x70\x01\x19\xFA`) to fire the cash drawer solenoid. `EscPosGenerator.GenerateDrawerPulse()` sends both pulses in sequence to guarantee compatibility across Epson, Star, Citizen, Munbyn, Bixolon, Xprinter, POSBANK, and generic ESC/POS printers.
+- **Automated Trigger**: The drawer is triggered automatically upon completing a sale if `OpenCashDrawerOnCashSale = true` and the sale includes cash tender.
+- **Manual Control**: Accessible anytime via the **F10** hotkey in POS, the dedicated "Open Drawer" button in the Settings screen, and diagnostic controls in the Printer Settings Dialog.
+
+### 3. Reprint Tracking & Audit Trail
+- Receipts can be reprinted from:
+  - POS Checkout Success Panel (**Reprint (Duplicate)** button)
+  - Sales List screen (**Print Receipt** action)
+  - Sale Detail dialog (**Reprint Receipt** and **Print A4 Invoice** buttons)
+- Every reprint automatically enables `IsDuplicateCopy = true`, adding a prominent bold banner:
+  ```
+  *** DUPLICATE COPY ***
+  Reprint #1 on 2026-11-01 10:15
+  ```
+- All reprints write an entry to `AuditLog` capturing `UserId`, action `"ReprintReceipt"`, entity `"Sale"`, sale ID/number, and timestamp.
+
+### 4. Non-Blocking Resilience & Safety
+- **Sales Never Roll Back on Print Failure**: Printing runs off the WPF UI thread via `Task.Run()`. Any spooler error, disconnected cable, paper jam, or missing printer displays a clear non-blocking notice (`IDialogService.ShowMessage`) informing the cashier that the sale was saved successfully and can be reprinted anytime.
+- **Safe Spooler Enumeration**: Printer discovery safely catches cases where the Windows Print Spooler service (`spoolsv.exe`) is stopped or unavailable, returning friendly guidance rather than throwing unhandled exceptions.
+
+### 5. Manual Hardware Verification Checklist
+
+When deploying ShopPOS on a new physical counter, run this verification checklist:
+
+| Step | Test Item | Verification Procedure | Expected Outcome |
+|:---:|:---|:---|:---|
+| 1 | **Printer Discovery** | Open Settings -> Hardware & Printing -> View Printer dropdown | All installed Windows printers are visible in the dropdown. If Spooler is stopped, a warning banner appears. |
+| 2 | **Paper Width Test (80mm)** | Select 80mm, set mode to `PdfPreview`, click **Test Print** | Preview dialog opens showing 48-column test receipt with aligned totals and Code 128 barcode. |
+| 3 | **Paper Width Test (58mm)** | Select 58mm, click **Test Print** | Preview dialog opens showing 32-column test receipt with correct compact word wrapping. |
+| 4 | **ESC/POS Raw Thermal Test** | Select installed USB/Network thermal printer, set mode to `EscPosRaw`, click **Test Print** | Printer immediately feeds slip, prints formatted text, bold headers, barcode, and performs a clean partial/full paper cut. |
+| 5 | **Cash Drawer Kick Test** | Connect cash drawer via RJ11 cable to printer receipt port; click **Open Drawer** (or press **F10** on POS screen) | Drawer solenoid fires instantly and drawer pops open. |
+| 6 | **Auto-Print on Cash Sale** | Enable `AutoPrintReceipt` and `OpenCashDrawerOnCashSale`. Complete a cash sale in POS | Receipt prints automatically and drawer pops open without any blocking dialogs or UI delays. |
+| 7 | **Drawer Suppression on Card/Credit Sale** | Complete a 100% Card or 100% Credit sale in POS | Receipt prints normally, but cash drawer does NOT kick open. |
+| 8 | **Printer Disconnect Resilience** | Unplug thermal printer USB cable; complete a sale in POS | Sale completes instantly and successfully; non-blocking notice appears ("Receipt could not be printed: ... You can reprint anytime from the Sales list"). |
+| 9 | **Reprint Duplicate Watermark** | Reconnect printer; go to Sales List or POS Success Panel and click **Reprint (Duplicate)** | Receipt prints with `*** DUPLICATE COPY ***` banner; entry is written to `AuditLogs` table in `shop.db`. |
+| 10 | **A4 Tax Invoice Export** | Open any sale in Sales List -> View Details -> **Print A4 Invoice** | Full-page corporate invoice opens in PDF preview with customer tax details, item breakdown, and print/save buttons. |
+
+---
+
+## 10. Architectural Limitations
 - **Single-User Workstation**: Single workstation design (`ICurrentUserProvider` returns local `UserId = 1`).
-- **Phase 5A Scope**: Backend logic, services, validators, and tests only. UI screens for POS checkout, shift management, and customer returns are delivered in Phase 5B.
 - **Customer Receive Payments & Sales Reports**: Customer payment reconciliation and advanced sales reports are part of Phase 6.
 
 ---
 
-## 9. How to Add EF Core Migrations
+## 11. How to Add EF Core Migrations
 
 When domain entities or configurations change:
 
@@ -489,7 +661,7 @@ dotnet ef database update --project ShopPOS.Data --startup-project ShopPOS.Data
 
 ---
 
-## 10. How to Build, Test & Run
+## 12. How to Build, Test & Run
 
 ### Prerequisites
 - Windows 10 or 11
@@ -513,7 +685,7 @@ dotnet run --project ShopPOS.UI
 
 ---
 
-## 11. Database Verification & Location
+## 13. Database Verification & Location
 
 The SQLite database file is stored at:
 ```

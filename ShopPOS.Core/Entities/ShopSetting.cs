@@ -36,11 +36,18 @@ public class ShopSetting : BaseEntity
     /// Gets or sets the custom text printed at the bottom of customer receipts.
     /// </summary>
     public string? ReceiptFooter { get; set; } = "Thank you for your business!";
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public string? ReceiptFooterText { get => ReceiptFooter; set => ReceiptFooter = value; }
 
     /// <summary>
     /// Gets or sets the thermal receipt printer paper width in mm (58 or 80).
     /// </summary>
     public int ReceiptWidthMm { get; set; } = 80;
+
+    /// <summary>
+    /// Gets or sets the receipt printing output mode (PdfPreview, WindowsDriver, EscPosRaw). Default is PdfPreview.
+    /// </summary>
+    public ShopPOS.Core.Enums.PrinterMode PrinterMode { get; set; } = ShopPOS.Core.Enums.PrinterMode.PdfPreview;
 
     /// <summary>
     /// Gets or sets the default sales tax percentage.

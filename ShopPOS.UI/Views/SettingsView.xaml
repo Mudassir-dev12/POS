@@ -30,8 +30,8 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="Store &amp; Inventory Settings" FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Configure store profile, thermal receipt formatting, and inventory costing valuation rules." FontSize="13" Foreground="#64748B" Margin="0,2,0,0" />
+                <TextBlock Text="Store, POS &amp; Inventory Settings" FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
+                <TextBlock Text="Configure store profile, POS cashier rules, shift enforcement, thermal receipt formatting, and valuation." FontSize="13" Foreground="#64748B" Margin="0,2,0,0" />
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
@@ -48,7 +48,7 @@
 
         <!-- ================= 2. SETTINGS CARDS ================= -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-            <StackPanel MaxWidth="800" HorizontalAlignment="Left">
+            <StackPanel MaxWidth="820" HorizontalAlignment="Left">
                 <!-- Notifications -->
                 <Border Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,12"
                         Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
@@ -111,8 +111,42 @@
                     </StackPanel>
                 </Border>
 
-                <!-- SECTION 2: Inventory & Valuation -->
-                <Border Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="20" Margin="0,0,0,16">
+                <!-- SECTION 2: POS & Sales Policy -->
+                <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="POS Checkout &amp; Sales Policies" FontSize="16" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,4,4" />
+                        <TextBlock Text="Controls cash register constraints, shift rules, discounts, and customer credit." FontSize="12" Foreground="#64748B" Margin="0,0,0,14" />
+
+                        <!-- Toggles -->
+                        <CheckBox Content="Require an active open shift before allowing sales" IsChecked="{Binding RequireOpenShiftForSales, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
+                        <CheckBox Content="Allow sales on credit (unpaid or partial balance)" IsChecked="{Binding AllowCreditSales, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
+                        <CheckBox Content="Allow selling below product minimum sale price" IsChecked="{Binding AllowSellingBelowMinPrice, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
+                        <CheckBox Content="Selling prices in product catalog already include tax / VAT" IsChecked="{Binding PricesIncludeTax, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
+                        <CheckBox Content="Allow customer returns without original invoice receipt" IsChecked="{Binding AllowReturnWithoutReceipt, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,14" />
+
+                        <!-- Rounding & Return Window -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="CASH ROUNDING STEP (0 = DISABLED)" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding CashRoundingStep, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="RETURN WINDOW (DAYS, EMPTY = UNLIMITED)" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding SaleReturnWindowDays, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- SECTION 3: Inventory & Costing -->
+                <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="Inventory Costing &amp; Control" FontSize="16" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,4" />
                         <TextBlock Text="These critical parameters dictate accounting valuation and stock validation across purchases and POS checkout."
@@ -128,9 +162,6 @@
                                       FontSize="13"
                                       Width="280"
                                       HorizontalAlignment="Left" />
-                            <!-- Short Explanation -->
-                            <TextBlock Text="Weighted Average recalculates the unit cost of inventory dynamically on each purchase posting. Last Cost sets the inventory unit cost directly to the most recent purchase invoice net cost."
-                                       FontSize="11" Foreground="#64748B" TextWrapping="Wrap" Margin="0,4,0,0" />
                         </StackPanel>
 
                         <!-- Allow Negative Stock -->
@@ -141,33 +172,85 @@
                                       FontWeight="Bold"
                                       FontSize="13"
                                       Foreground="#0F172A" />
-                            <!-- Short Explanation -->
-                            <TextBlock Text="When enabled, POS checkout allows sales even if warehouse stock is zero or insufficient. When disabled, sales exceeding available stock on hand are strictly blocked."
-                                       FontSize="11" Foreground="#64748B" TextWrapping="Wrap" Margin="22,4,0,0" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
 
-                <!-- SECTION 3: Receipt Formatting -->
-                <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20">
+                <!-- SECTION 4: Receipt Printing & Hardware -->
+                <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,24">
                     <StackPanel>
-                        <TextBlock Text="Receipt Printing &amp; Design" FontSize="16" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,14" />
+                        <TextBlock Text="Receipt Printing &amp; Cash Drawer" FontSize="16" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,14" />
 
-                        <StackPanel Margin="0,0,0,12">
-                            <TextBlock Text="PRINTER PAPER WIDTH" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
-                            <StackPanel Orientation="Horizontal">
-                                <RadioButton Content="80 mm (Standard POS)" IsChecked="{Binding ReceiptWidthMm, Converter={x:Null}}" IsEnabled="True" Margin="0,0,16,0" />
-                            </StackPanel>
+                        <!-- Printing Mode -->
+                        <StackPanel Margin="0,0,0,14">
+                            <TextBlock Text="PRINTING MODE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                            <ComboBox ItemsSource="{Binding AvailablePrinterModes}"
+                                      SelectedItem="{Binding PrinterMode, Mode=TwoWay}"
+                                      Padding="8,6" FontSize="13" Width="320" HorizontalAlignment="Left" />
                         </StackPanel>
 
-                        <StackPanel>
+                        <!-- Printer Queue Selection -->
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2.5*" />
+                                <ColumnDefinition Width="10" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="1*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="RECEIPT PRINTER QUEUE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding InstalledPrinters}"
+                                          SelectedItem="{Binding ReceiptPrinterName, Mode=TwoWay}"
+                                          IsEditable="True"
+                                          Padding="8,6" FontSize="13" />
+                            </StackPanel>
+
+                            <Button Grid.Column="2" Content="Refresh"
+                                    Command="{Binding RefreshPrintersCommand}"
+                                    Padding="12,6" FontSize="12" VerticalAlignment="Bottom" Height="34" Background="#F1F5F9" />
+
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="RECEIPT COPIES" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding ReceiptCopies, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                            </StackPanel>
+                        </Grid>
+
+                        <!-- Paper Width -->
+                        <StackPanel Margin="0,0,0,14">
+                            <TextBlock Text="PAPER ROLL WIDTH" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                            <ComboBox SelectedValuePath="Tag"
+                                      SelectedValue="{Binding ReceiptWidthMm, Mode=TwoWay}"
+                                      Padding="8,6" FontSize="13" Width="240" HorizontalAlignment="Left">
+                                <ComboBoxItem Content="80 mm (Standard Thermal)" Tag="80" />
+                                <ComboBoxItem Content="58 mm (Compact Thermal)" Tag="58" />
+                            </ComboBox>
+                        </StackPanel>
+
+                        <CheckBox Content="Automatically print receipt when sale completes" IsChecked="{Binding AutoPrintReceipt, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
+                        <CheckBox Content="Trigger cash drawer kick pulse on cash sales" IsChecked="{Binding OpenCashDrawerOnCashSale, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,14" />
+
+                        <StackPanel Margin="0,0,0,16">
                             <TextBlock Text="RECEIPT FOOTER MESSAGE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
                             <TextBox Text="{Binding ReceiptFooter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
                         </StackPanel>
+
+                        <!-- Hardware Diagnostics -->
+                        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
+                            <StackPanel>
+                                <TextBlock Text="HARDWARE DIAGNOSTICS" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,8" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Test Print Receipt" Command="{Binding TestPrintCommand}"
+                                            Padding="14,8" FontWeight="SemiBold" Background="#E2E8F0" Margin="0,0,10,0" />
+                                    <Button Content="Open Cash Drawer" Command="{Binding OpenCashDrawerCommand}"
+                                            Padding="14,8" FontWeight="SemiBold" Background="#E2E8F0" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Border>
             </StackPanel>
         </ScrollViewer>
     </Grid>
 </UserControl>
-
