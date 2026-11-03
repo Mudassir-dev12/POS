@@ -104,6 +104,13 @@ public partial class ReceiptPreviewDialogViewModel : ObservableObject
         try
         {
             var settings = await _shopSettingService.GetSettingsAsync();
+
+            // When user explicitly clicks Print from the preview window, route to WindowsDriver if in PdfPreview mode
+            if (settings.PrinterMode == Core.Enums.PrinterMode.PdfPreview && !string.IsNullOrWhiteSpace(settings.ReceiptPrinterName))
+            {
+                settings.PrinterMode = Core.Enums.PrinterMode.WindowsDriver;
+            }
+
             var result = await _receiptPrinterService.PrintReceiptAsync(Document, settings);
 
             if (result.Success)

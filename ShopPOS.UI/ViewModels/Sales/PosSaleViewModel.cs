@@ -50,6 +50,7 @@ public partial class PosSaleViewModel : ObservableObject
     private readonly INavigationService _navigationService;
     private readonly IReceiptPrinterService _receiptPrinterService;
     private readonly IReceiptBuilder? _receiptBuilder;
+    private readonly IPdfReportService? _pdfReportService;
     private readonly IAuditLogService? _auditLogService;
     private readonly ICurrentUserProvider? _currentUserProvider;
     private readonly IProductSearchService? _productSearchService;
@@ -189,7 +190,8 @@ public partial class PosSaleViewModel : ObservableObject
         IReceiptBuilder? receiptBuilder = null,
         IAuditLogService? auditLogService = null,
         ICurrentUserProvider? currentUserProvider = null,
-        IProductSearchService? productSearchService = null)
+        IProductSearchService? productSearchService = null,
+        IPdfReportService? pdfReportService = null)
     {
         _saleService = saleService;
         _saleCalculator = saleCalculator;
@@ -202,6 +204,7 @@ public partial class PosSaleViewModel : ObservableObject
         _navigationService = navigationService;
         _receiptPrinterService = receiptPrinterService;
         _receiptBuilder = receiptBuilder;
+        _pdfReportService = pdfReportService;
         _auditLogService = auditLogService;
         _currentUserProvider = currentUserProvider;
         _productSearchService = productSearchService;
@@ -778,10 +781,8 @@ public partial class PosSaleViewModel : ObservableObject
             LastChangeAmount = paymentVm.ChangeAmount;
             IsSaleSuccess = true;
 
-            if (AutoPrintReceipt)
-            {
-                _ = PrintLastReceiptAsync();
-            }
+            // In POS: before printing, show slip view and then print
+            await ShowReceiptSlipAsync(LastCompletedSale, isDuplicate: false);
 
             await LoadSettingsAndPriceLevelsAsync();
         }
@@ -791,19 +792,34 @@ public partial class PosSaleViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
-    public async Task PrintLastReceiptAsync()
+    public async Task ShowReceiptSlipAsync(SaleDetailDto sale, bool isDuplicate = false)
     {
-        if (LastCompletedSale == null) return;
-
-        await Task.Run(async () =>
+        try
         {
-            try
-            {
-                var settings = await _shopSettingService.GetSettingsAsync();
-                var printResult = await _receiptPrinterService.PrintSaleReceiptAsync(LastCompletedSale, settings, isDuplicate: false);
+            var settings = await _shopSettingService.GetSettingsAsync();
 
-                if (!printResult.Success)
+            if (_receiptBuilder != null && _pdfReportService != null)
+            {
+                var doc = _receiptBuilder.BuildFromSale(sale, settings, isDuplicate);
+                byte[] pdfBytes = await _pdfReportService.GenerateReceiptPdfAsync(doc);
+                var previewVm = new ReceiptPreviewDialogViewModel(
+                    doc,
+                    pdfBytes,
+                    _pdfReportService,
+                    _receiptPrinterService,
+                    _shopSettingService);
+
+                _dialogService.ShowReceiptPreviewDialog(previewVm);
+            }
+            else
+            {
+                var printResult = await _receiptPrinterService.PrintSaleReceiptAsync(sale, settings, isDuplicate: isDuplicate);
+
+                if (isDuplicate && printResult.Success)
+                {
+                    _dialogService.ShowMessage(printResult.NoticeMessage ?? "Duplicate receipt printed.", "Receipt Reprint");
+                }
+                else if (!printResult.Success)
                 {
                     var err = string.IsNullOrWhiteSpace(printResult.ErrorMessage) ? "Unknown error" : printResult.ErrorMessage.TrimEnd('.');
                     _dialogService.ShowMessage(
@@ -811,13 +827,20 @@ public partial class PosSaleViewModel : ObservableObject
                         "Printer Notice");
                 }
             }
-            catch (Exception ex)
-            {
-                _dialogService.ShowMessage(
-                    $"Receipt print error: {ex.Message}. You can reprint anytime from the Sales list.",
-                    "Printer Notice");
-            }
-        });
+        }
+        catch (Exception ex)
+        {
+            _dialogService.ShowMessage(
+                $"Receipt error: {ex.Message}. You can reprint anytime from the Sales list.",
+                "Printer Notice");
+        }
+    }
+
+    [RelayCommand]
+    public async Task PrintLastReceiptAsync()
+    {
+        if (LastCompletedSale == null) return;
+        await ShowReceiptSlipAsync(LastCompletedSale, isDuplicate: false);
     }
 
     [RelayCommand]
@@ -825,38 +848,17 @@ public partial class PosSaleViewModel : ObservableObject
     {
         if (LastCompletedSale == null) return;
 
-        await Task.Run(async () =>
+        if (_auditLogService != null && _currentUserProvider != null)
         {
-            try
-            {
-                var settings = await _shopSettingService.GetSettingsAsync();
+            await _auditLogService.LogAsync(
+                _currentUserProvider.UserId,
+                "ReprintReceipt",
+                "Sale",
+                LastCompletedSale.Id,
+                $"Reprinted receipt for {LastCompletedSale.SaleNumber} from POS success panel (marked DUPLICATE)");
+        }
 
-                if (_auditLogService != null && _currentUserProvider != null)
-                {
-                    await _auditLogService.LogAsync(
-                        _currentUserProvider.UserId,
-                        "ReprintReceipt",
-                        "Sale",
-                        LastCompletedSale.Id,
-                        $"Reprinted receipt for {LastCompletedSale.SaleNumber} from POS success panel (marked DUPLICATE)");
-                }
-
-                var printResult = await _receiptPrinterService.PrintSaleReceiptAsync(LastCompletedSale, settings, isDuplicate: true);
-
-                if (printResult.Success)
-                {
-                    _dialogService.ShowMessage(printResult.NoticeMessage ?? "Duplicate receipt printed.", "Receipt Reprint");
-                }
-                else
-                {
-                    _dialogService.ShowMessage($"Receipt could not be printed: {printResult.ErrorMessage}", "Printer Notice");
-                }
-            }
-            catch (Exception ex)
-            {
-                _dialogService.ShowMessage($"Reprint error: {ex.Message}", "Printer Notice");
-            }
-        });
+        await ShowReceiptSlipAsync(LastCompletedSale, isDuplicate: true);
     }
 
     [RelayCommand]
@@ -866,7 +868,7 @@ public partial class PosSaleViewModel : ObservableObject
         var vm = new SaleDetailDialogViewModel(
             LastCompletedSale.Id,
             _saleService,
-            null!,
+            _pdfReportService ?? null!,
             _shopSettingService,
             _receiptPrinterService,
             _receiptBuilder,

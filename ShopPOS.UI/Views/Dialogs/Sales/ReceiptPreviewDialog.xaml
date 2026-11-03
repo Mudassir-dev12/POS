@@ -11,6 +11,12 @@
         Style="{DynamicResource DialogWindowStyle}"
         WindowStartupLocation="CenterScreen">
 
+    <Window.InputBindings>
+        <KeyBinding Key="P" Modifiers="Control" Command="{Binding PrintCommand}" />
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SavePdfCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding CloseCommand}" />
+    </Window.InputBindings>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -32,12 +38,12 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="Save PDF" Command="{Binding SavePdfCommand}"
+                    <Button Content="Save PDF (Ctrl+S)" Command="{Binding SavePdfCommand}"
                             Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,8,0" />
-                    <Button Content="Print Document" Command="{Binding PrintCommand}"
-                            Style="{DynamicResource PrimaryButtonStyle}" Margin="0,0,8,0" />
-                    <Button Content="Close" Command="{Binding CloseCommand}"
-                            Style="{DynamicResource SecondaryButtonStyle}" />
+                    <Button Content="Print Document (Enter)" Command="{Binding PrintCommand}"
+                            Style="{DynamicResource PrimaryButtonStyle}" IsDefault="True" Margin="0,0,8,0" />
+                    <Button Content="Close (Esc)" Command="{Binding CloseCommand}"
+                            Style="{DynamicResource SecondaryButtonStyle}" IsCancel="True" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -65,7 +71,7 @@
 
         <!-- Status Bottom Bar -->
         <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" Padding="14,8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
-            <TextBlock Text="{Binding StatusMessage, FallbackValue='Preview Ready. Click Print or Save PDF.'}"
+            <TextBlock Text="{Binding StatusMessage, FallbackValue='Slip Preview Ready. Press Enter or click Print Document to print.'}"
                        FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
         </Border>
     </Grid>

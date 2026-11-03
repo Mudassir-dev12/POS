@@ -355,6 +355,47 @@ public class ReceiptPrintingTests
     }
 
     [Fact]
+    public async Task PosSaleViewModel_PrintLastReceiptAsync_ShowsReceiptSlipPreviewDialog_BeforePrinting()
+    {
+        // Arrange
+        var mockSaleService = new Mock<ISaleService>();
+        var mockPrinterService = new Mock<IReceiptPrinterService>();
+        var mockDialogService = new Mock<IDialogService>();
+        var mockShopSettingService = new Mock<IShopSettingService>();
+        var mockPdfService = new Mock<IPdfReportService>();
+        var receiptBuilder = new ReceiptBuilder();
+
+        mockShopSettingService.Setup(s => s.GetSettingsAsync()).ReturnsAsync(_defaultSetting);
+        mockPdfService.Setup(p => p.GenerateReceiptPdfAsync(It.IsAny<ReceiptDocument>(), default))
+            .ReturnsAsync(new byte[] { 1, 2, 3 });
+        mockPdfService.Setup(p => p.RenderDocumentPageImages(It.IsAny<ReceiptDocument>()))
+            .Returns(new List<byte[]>());
+
+        var vm = new PosSaleViewModel(
+            mockSaleService.Object,
+            new SaleCalculator(),
+            new Mock<IProductLookupService>().Object,
+            new Mock<IProductService>().Object,
+            new Mock<IPriceLevelService>().Object,
+            new Mock<IStockLedgerQuery>().Object,
+            mockShopSettingService.Object,
+            mockDialogService.Object,
+            new Mock<INavigationService>().Object,
+            mockPrinterService.Object,
+            receiptBuilder: receiptBuilder,
+            pdfReportService: mockPdfService.Object);
+
+        vm.LastCompletedSale = CreateSampleSale();
+
+        // Act: Click Print Receipt
+        await vm.PrintLastReceiptAsync();
+
+        // Assert: Shows Slip View (ReceiptPreviewDialog) before sending print
+        mockDialogService.Verify(d => d.ShowReceiptPreviewDialog(It.IsNotNull<ReceiptPreviewDialogViewModel>()), Times.Once);
+        mockPrinterService.Verify(p => p.PrintSaleReceiptAsync(It.IsAny<SaleDetailDto>(), It.IsAny<ShopSetting>(), false, It.IsAny<int>(), default), Times.Never);
+    }
+
+    [Fact]
     public async Task SaleDetailDialogViewModel_ReprintReceipt_LogsAuditEntryAndMarksDuplicate()
     {
         // Arrange
