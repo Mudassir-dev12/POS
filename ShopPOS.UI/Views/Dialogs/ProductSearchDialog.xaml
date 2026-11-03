@@ -9,9 +9,7 @@
         Title="Search Product Catalog (F2)"
         Height="550"
         Width="860"
-        WindowStartupLocation="CenterOwner"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+        Style="{StaticResource DialogWindowStyle}"
         Loaded="Window_Loaded">
 
     <Window.InputBindings>
@@ -28,11 +26,11 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <TextBlock Grid.Row="0" Text="Select Product(s)" FontSize="18" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,4" />
-        <TextBlock Grid.Row="0" Text="Select products using checkboxes or press Enter on an item, Esc to close" FontSize="12" Foreground="#64748B" HorizontalAlignment="Right" VerticalAlignment="Center" />
+        <TextBlock Grid.Row="0" Text="Select Product(s)" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,4" />
+        <TextBlock Grid.Row="0" Text="Select products using checkboxes or press Enter on an item, Esc to close" Style="{StaticResource SubTitleStyle}" HorizontalAlignment="Right" VerticalAlignment="Center" />
 
         <!-- Search Input -->
-        <Border Grid.Row="1" Background="White" CornerRadius="6" BorderBrush="#CBD5E1" BorderThickness="1" Padding="12,8" Margin="0,8,0,12">
+        <Border Grid.Row="1" Style="{StaticResource FilterBarStyle}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -40,43 +38,30 @@
                 </Grid.ColumnDefinitions>
 
                 <TextBox x:Name="SearchBox"
-                          Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
-                          FontSize="14"
-                          BorderThickness="0"
-                          VerticalAlignment="Center">
-                    <TextBox.Style>
-                        <Style TargetType="TextBox">
-                            <Style.Resources>
-                                <VisualBrush x:Key="CueBannerBrush" AlignmentX="Left" AlignmentY="Center" Stretch="None">
-                                    <VisualBrush.Visual>
-                                        <TextBlock Text="🔍 Type SKU, Barcode, or Product Name..." Foreground="#94A3B8" FontSize="13" />
-                                    </VisualBrush.Visual>
-                                </VisualBrush>
-                            </Style.Resources>
-                            <Style.Triggers>
-                                <Trigger Property="Text" Value="">
-                                    <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBox.Style>
+                         Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource InputTextBoxStyle}"
+                         VerticalAlignment="Center">
+                    <TextBox.Resources>
+                        <VisualBrush x:Key="CueBannerBrush" AlignmentX="Left" AlignmentY="Center" Stretch="None">
+                            <VisualBrush.Visual>
+                                <TextBlock Text=" Type SKU, Barcode, or Product Name..." Foreground="{DynamicResource TextMutedBrush}" FontSize="13" />
+                            </VisualBrush.Visual>
+                        </VisualBrush>
+                    </TextBox.Resources>
                 </TextBox>
 
-                <ProgressBar Grid.Column="1" IsIndeterminate="True" Width="80" Height="4" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Center" />
+                <ProgressBar Grid.Column="1" IsIndeterminate="True" Width="80" Height="4" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}" VerticalAlignment="Center" Margin="8,0,0,0" />
             </Grid>
         </Border>
 
         <!-- Product Table -->
-        <Border Grid.Row="2" Background="White" CornerRadius="6" BorderBrush="#CBD5E1" BorderThickness="1">
+        <Border Grid.Row="2" Style="{StaticResource TableContainerBorderStyle}">
             <DataGrid x:Name="ProductGrid"
                       ItemsSource="{Binding Products}"
                       SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                      AutoGenerateColumns="False"
+                      Style="{StaticResource AppDataGridStyle}"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
-                      RowHeight="36"
-                      BorderThickness="0"
-                      Background="White"
                       MouseDoubleClick="DataGrid_MouseDoubleClick">
                 <DataGrid.Columns>
                     <!-- Checkbox Column with Select All in Header -->
@@ -95,8 +80,10 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="100" FontWeight="Bold" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="120" IsReadOnly="True" />
+                    <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="100"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="120"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
                     <DataGridTextColumn Header="Product Name" Binding="{Binding Name}" Width="2*" FontWeight="SemiBold" IsReadOnly="True" />
 
                     <!-- Status Column (shows "Already Added" badge) -->
@@ -104,8 +91,8 @@
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Border Visibility="{Binding IsAlreadyInDocument, Converter={StaticResource BooleanToVisibilityConverter}}"
-                                        Background="#E2E8F0" CornerRadius="3" Padding="6,2" HorizontalAlignment="Center">
-                                    <TextBlock Text="Added" Foreground="#475569" FontSize="11" FontWeight="Bold" />
+                                        Background="{DynamicResource SurfaceCardSubtleBrush}" CornerRadius="3" Padding="6,2" HorizontalAlignment="Center">
+                                    <TextBlock Text="Added" Foreground="{DynamicResource TextMutedBrush}" FontSize="11" FontWeight="Bold" />
                                 </Border>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
@@ -113,8 +100,10 @@
 
                     <DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="*" IsReadOnly="True" />
                     <DataGridTextColumn Header="Unit" Binding="{Binding UnitName}" Width="70" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Cost Price" Binding="{Binding CostPrice, StringFormat='{}{0:0.00}'}" Width="90" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Stock" Binding="{Binding CurrentStock, StringFormat='{}{0:0.###}'}" Width="80" FontWeight="Bold" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Cost Price" Binding="{Binding CostPrice, Converter={StaticResource MoneyConverter}}" Width="100"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Stock" Binding="{Binding CurrentStock, StringFormat='{}{0:0.###}'}" Width="80"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
@@ -122,10 +111,10 @@
         <!-- Footer Buttons -->
         <Grid Grid.Row="3" Margin="0,14,0,0">
             <TextBlock Text="Check items or press Enter to add. Products already in document are disabled."
-                       Foreground="#64748B" FontSize="12" VerticalAlignment="Center" />
+                       Style="{StaticResource MutedLabelStyle}" VerticalAlignment="Center" />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Cancel (Esc)" Click="Cancel_Click" Background="White" Foreground="#475569" BorderBrush="#CBD5E1" BorderThickness="1" Padding="16,7" Margin="0,0,8,0" Cursor="Hand" />
-                <Button Content="Add Selected" Click="Select_Click" Background="#2563EB" Foreground="White" FontWeight="Bold" Padding="18,7" BorderThickness="0" Cursor="Hand" />
+                <Button Content="Cancel (Esc)" Click="Cancel_Click" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
+                <Button Content="Add Selected" Click="Select_Click" Style="{StaticResource PrimaryButtonStyle}" />
             </StackPanel>
         </Grid>
     </Grid>

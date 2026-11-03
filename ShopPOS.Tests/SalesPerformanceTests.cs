@@ -30,7 +30,6 @@ public class SalesPerformanceTests
                 .AddInterceptors(new SqlitePragmaInterceptor())
                 .Options;
 
-            int shiftId;
             using (var initCtx = new AppDbContext(options))
             {
                 await initCtx.Database.MigrateAsync();
@@ -52,25 +51,10 @@ public class SalesPerformanceTests
                 initCtx.Categories.Add(cat);
                 initCtx.Units.Add(unit);
 
-                var customer = new Customer { Name = "Walk-in Retail Customer", Phone = "555-0000", IsActive = true };
-                initCtx.Customers.Add(customer);
-
-                var shift = new Shift
-                {
-                    ShiftNumber = "SHF-0001",
-                    OpenedAt = DateTime.Today.AddHours(8),
-                    OpeningCash = 100m,
-                    Status = ShiftStatus.Open,
-                    CreatedByUserId = 1
-                };
-                initCtx.Shifts.Add(shift);
-
                 await initCtx.SaveChangesAsync();
-                shiftId = shift.Id;
 
                 int catId = cat.Id;
                 int unitId = unit.Id;
-                int customerId = customer.Id;
 
                 using var conn = (SqliteConnection)initCtx.Database.GetDbConnection();
                 await conn.OpenAsync();
@@ -109,7 +93,7 @@ public class SalesPerformanceTests
                     int bEnd = Math.Min(b + batchSize - 1, totalSales);
 
                     var saleSb = new StringBuilder();
-                    saleSb.Append("INSERT INTO Sales (Id, SaleNumber, HoldNumber, SaleDate, CustomerId, PriceLevelId, Status, SubTotal, LineDiscountTotal, BillDiscountAmount, TaxAmount, RoundOff, GrandTotal, PaidAmount, ChangeAmount, DueAmount, TotalCost, ShiftId, CompletedAt, IsDeleted, CreatedAt, UpdatedAt, CreatedByUserId) VALUES ");
+                    saleSb.Append("INSERT INTO Sales (Id, SaleNumber, HoldNumber, SaleDate, PriceLevelId, Status, SubTotal, LineDiscountTotal, BillDiscountAmount, TaxAmount, RoundOff, GrandTotal, PaidAmount, ChangeAmount, DueAmount, TotalCost, CompletedAt, IsDeleted, CreatedAt, UpdatedAt, CreatedByUserId) VALUES ");
 
                     var itemSb = new StringBuilder();
                     itemSb.Append("INSERT INTO SaleItems (Id, SaleId, ProductId, ProductName, Sku, Barcode, Quantity, UnitPrice, CostPriceSnapshot, DiscountPercent, DiscountAmount, TaxPercent, LineTotal, LineNo, IsDeleted, CreatedAt, UpdatedAt) VALUES ");
@@ -127,7 +111,7 @@ public class SalesPerformanceTests
                         firstSale = false;
 
                         // Subtotal 10000 ($100), GrandTotal 10000, Paid 10000, Cost 5000
-                        saleSb.Append($"({s}, 'INV-{s:D6}', NULL, '{nowIso}', {customerId}, NULL, 2, 10000, 0, 0, 0, 0, 10000, 10000, 0, 0, 5000, {shiftId}, '{nowIso}', 0, '{nowIso}', '{nowIso}', 1)");
+                        saleSb.Append($"({s}, 'INV-{s:D6}', NULL, '{nowIso}', NULL, 2, 10000, 0, 0, 0, 0, 10000, 10000, 0, 0, 5000, '{nowIso}', 0, '{nowIso}', '{nowIso}', 1)");
 
                         // 10 lines per sale
                         for (int lineNo = 1; lineNo <= 10; lineNo++)
@@ -192,22 +176,25 @@ public class SalesPerformanceTests
                 sw.ElapsedMilliseconds.Should().BeLessThan(500, $"Today sales list search took {sw.ElapsedMilliseconds}ms, expected under 500ms");
             }
 
-            // Test 2: Shift summary query under 500ms
+            // Test 2: Filtered payment breakdown query across 5,000 sales under 500ms
             using (var testCtx = new AppDbContext(options))
             {
-                var shiftRepo = new ShiftRepository(testCtx);
+                var saleRepo = new SaleRepository(testCtx);
+                var breakdownDto = new SaleSearchDto
+                {
+                    DateFrom = DateTime.Today,
+                    DateTo = DateTime.Today.AddDays(1).AddTicks(-1)
+                };
 
                 // Warm-up
-                _ = await shiftRepo.GetShiftSummaryAsync(shiftId);
+                _ = await saleRepo.GetFilteredPaymentBreakdownAsync(breakdownDto);
 
                 var sw = Stopwatch.StartNew();
-                var summary = await shiftRepo.GetShiftSummaryAsync(shiftId);
+                var breakdown = await saleRepo.GetFilteredPaymentBreakdownAsync(breakdownDto);
                 sw.Stop();
 
-                summary.SalesCount.Should().Be(5000);
-                summary.NetSales.Should().Be(500000m); // 5000 * $100
-                summary.ExpectedCash.Should().Be(500100m); // $100 opening + $500,000 cash sales
-                sw.ElapsedMilliseconds.Should().BeLessThan(500, $"Shift summary took {sw.ElapsedMilliseconds}ms, expected under 500ms");
+                breakdown.TotalCash.Should().Be(500000m); // 5000 * $100
+                sw.ElapsedMilliseconds.Should().BeLessThan(500, $"Payment breakdown took {sw.ElapsedMilliseconds}ms, expected under 500ms");
             }
         }
         finally

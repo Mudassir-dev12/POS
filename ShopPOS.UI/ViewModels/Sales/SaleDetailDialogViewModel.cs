@@ -30,7 +30,7 @@ public partial class SaleDetailDialogViewModel : ObservableObject
     private string? _statusMessage;
 
     [ObservableProperty]
-    private string _currencySymbol = "$";
+    private string _currencySymbol = "Rs";
 
     public event Action? RequestClose;
 

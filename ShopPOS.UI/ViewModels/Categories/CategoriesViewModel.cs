@@ -17,11 +17,9 @@ public partial class CategoriesViewModel : BaseCrudViewModel<CategoryDto>
 
     public CategoriesViewModel(
         ICategoryService categoryService,
-        IAuthService authService,
-        IPermissionService permissionService,
         IShopSettingService shopSettingService,
         IDialogService dialogService)
-        : base(authService, permissionService, shopSettingService)
+        : base(shopSettingService, dialogService)
     {
         _categoryService = categoryService;
         _dialogService = dialogService;
@@ -29,13 +27,10 @@ public partial class CategoriesViewModel : BaseCrudViewModel<CategoryDto>
 
     protected override void ApplyPermissions()
     {
-        string? role = GetCurrentRole();
-        bool canManage = PermissionService.CanManageCatalog(role);
-
-        CanAdd = canManage;
-        CanEdit = canManage;
-        CanDelete = canManage;
-        CanDeactivate = canManage;
+        CanAdd = true;
+        CanEdit = true;
+        CanDelete = true;
+        CanDeactivate = true;
     }
 
     public override async Task LoadDataAsync(CancellationToken cancellationToken = default)
@@ -140,4 +135,20 @@ public partial class CategoriesViewModel : BaseCrudViewModel<CategoryDto>
             ErrorMessage = delRes.ErrorMessage;
         }
     }
+
+    protected override async Task<IReadOnlyList<int>> FetchAllFilteredIdsAsync()
+    {
+        return await _categoryService.GetFilteredCategoryIdsAsync(SearchTerm, ShowInactive);
+    }
+
+    protected override async Task<BulkOperationResult> ExecuteBulkDeleteAsync(IReadOnlyList<int> ids)
+    {
+        return await _categoryService.BulkDeleteAsync(ids, GetCurrentUserId());
+    }
+
+    protected override async Task<BulkOperationResult> ExecuteBulkDeactivateAsync(IReadOnlyList<int> ids)
+    {
+        return await _categoryService.BulkDeactivateAsync(ids, GetCurrentUserId());
+    }
+
 }

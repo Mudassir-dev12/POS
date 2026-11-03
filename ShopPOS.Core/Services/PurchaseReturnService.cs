@@ -16,7 +16,6 @@ public class PurchaseReturnService : IPurchaseReturnService
     private readonly IShopSettingRepository _shopSettingRepo;
     private readonly INumberSequenceService _sequenceService;
     private readonly IAuditLogService _auditLogService;
-    private readonly IPermissionService _permissionService;
     private readonly IValidator<CreatePurchaseReturnDto> _validator;
 
     public PurchaseReturnService(
@@ -27,7 +26,6 @@ public class PurchaseReturnService : IPurchaseReturnService
         IShopSettingRepository shopSettingRepo,
         INumberSequenceService sequenceService,
         IAuditLogService auditLogService,
-        IPermissionService permissionService,
         IValidator<CreatePurchaseReturnDto> validator)
     {
         _transactionRunner = transactionRunner;
@@ -37,16 +35,12 @@ public class PurchaseReturnService : IPurchaseReturnService
         _shopSettingRepo = shopSettingRepo;
         _sequenceService = sequenceService;
         _auditLogService = auditLogService;
-        _permissionService = permissionService;
         _validator = validator;
     }
 
     public async Task<Result<PagedResult<PurchaseReturnDto>>> GetReturnsAsync(int? supplierId, int pageNumber, int pageSize, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<PagedResult<PurchaseReturnDto>>("Permission denied. You do not have access to Purchase Returns.");
-        }
+        // single-user: no permission check needed
 
         var result = await _returnRepo.GetReturnsAsync(supplierId, pageNumber, pageSize, cancellationToken);
         return Result.Ok(result);
@@ -54,10 +48,7 @@ public class PurchaseReturnService : IPurchaseReturnService
 
     public async Task<Result<PurchaseReturnDto>> PostReturnAsync(CreatePurchaseReturnDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<PurchaseReturnDto>("Permission denied. Only Admins and Managers can post purchase returns.");
-        }
+        // single-user: no permission check needed
 
         var val = await _validator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -228,10 +219,7 @@ public class PurchaseReturnService : IPurchaseReturnService
 
     public async Task<Result<bool>> CancelPurchaseReturnAsync(int returnId, string reason, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<bool>("Permission denied. Only Admins and Managers can cancel purchase returns.");
-        }
+        // single-user: no permission check needed
 
         if (string.IsNullOrWhiteSpace(reason))
         {
@@ -285,4 +273,38 @@ public class PurchaseReturnService : IPurchaseReturnService
             return Result.Ok(true);
         }, cancellationToken);
     }
+
+    public async Task<BulkOperationResult> BulkCancelReturnsAsync(IEnumerable<int> ids, string reason, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var r = await _returnRepo.GetReturnByIdAsync(id, cancellationToken);
+            if (r == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Purchase return not found." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            var cancelRes = await CancelPurchaseReturnAsync(id, reason, userId, null, cancellationToken);
+            if (cancelRes.Success)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = r.ReturnNumber, Success = true });
+                result.SuccessCount++;
+            }
+            else
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = r.ReturnNumber, Success = false, Message = cancelRes.ErrorMessage ?? "Cannot cancel return." });
+                result.SkippedCount++;
+            }
+        }
+        return result;
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredReturnIdsAsync(int? supplierId, CancellationToken cancellationToken = default)
+    {
+        return await _returnRepo.GetFilteredIdsAsync(supplierId, cancellationToken);
+    }
+
 }

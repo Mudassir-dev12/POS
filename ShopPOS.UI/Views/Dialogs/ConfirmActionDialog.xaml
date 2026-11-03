@@ -4,10 +4,8 @@
         Title="Confirm Action"
         Height="250"
         Width="460"
-        WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+        Style="{StaticResource DialogWindowStyle}"
+        ResizeMode="NoResize">
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -17,12 +15,12 @@
 
         <!-- Header -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,16">
-            <Border Width="40" Height="40" CornerRadius="20" Background="#FEE2E2" Margin="0,0,12,0">
-                <TextBlock x:Name="IconTextBlock" Text="⚠️" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
+            <Border Width="40" Height="40" CornerRadius="20" Background="{DynamicResource DangerBackgroundBrush}" Margin="0,0,12,0">
+                <TextBlock x:Name="IconTextBlock" Text="!" FontWeight="Bold" FontSize="18" Foreground="{DynamicResource DangerBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
             </Border>
             <StackPanel VerticalAlignment="Center">
-                <TextBlock x:Name="TitleTextBlock" Text="Confirm Deletion" FontSize="16" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Master Data Management" FontSize="11" Foreground="#64748B" />
+                <TextBlock x:Name="TitleTextBlock" Text="Confirm Deletion" Style="{StaticResource SectionHeaderStyle}" />
+                <TextBlock Text="Master Data Management" Style="{StaticResource SubTitleStyle}" />
             </StackPanel>
         </StackPanel>
 
@@ -32,61 +30,27 @@
                    Text="Are you sure you want to perform this action?"
                    TextWrapping="Wrap"
                    FontSize="13"
-                   Foreground="#334155"
+                   Foreground="{DynamicResource TextPrimaryBrush}"
                    LineHeight="20" />
 
         <!-- Action Buttons -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button x:Name="DeleteButton"
                     Content="Delete Record"
-                    Background="#DC2626"
-                    Foreground="White"
-                    FontWeight="SemiBold"
-                    Padding="16,8"
+                    Style="{StaticResource DangerButtonStyle}"
                     Margin="0,0,8,0"
-                    BorderThickness="0"
-                    Cursor="Hand"
-                    Click="DeleteButton_Click">
-                <Button.Resources>
-                    <Style TargetType="Border">
-                        <Setter Property="CornerRadius" Value="6" />
-                    </Style>
-                </Button.Resources>
-            </Button>
+                    Click="DeleteButton_Click" />
 
             <Button x:Name="DeactivateButton"
                     Content="Deactivate Instead"
-                    Background="#D97706"
-                    Foreground="White"
-                    FontWeight="SemiBold"
-                    Padding="16,8"
+                    Style="{StaticResource SecondaryButtonStyle}"
                     Margin="0,0,8,0"
-                    BorderThickness="0"
-                    Cursor="Hand"
-                    Click="DeactivateButton_Click">
-                <Button.Resources>
-                    <Style TargetType="Border">
-                        <Setter Property="CornerRadius" Value="6" />
-                    </Style>
-                </Button.Resources>
-            </Button>
+                    Click="DeactivateButton_Click" />
 
             <Button Content="Cancel"
-                    Background="#E2E8F0"
-                    Foreground="#334155"
-                    FontWeight="SemiBold"
-                    Padding="16,8"
-                    BorderThickness="0"
-                    Cursor="Hand"
+                    Style="{StaticResource SecondaryButtonStyle}"
                     IsCancel="True"
-                    Click="CancelButton_Click">
-                <Button.Resources>
-                    <Style TargetType="Border">
-                        <Setter Property="CornerRadius" Value="6" />
-                    </Style>
-                </Button.Resources>
-            </Button>
+                    Click="CancelButton_Click" />
         </StackPanel>
     </Grid>
 </Window>
-

@@ -7,11 +7,12 @@
              xmlns:dto="clr-namespace:ShopPOS.Core.DTOs;assembly=ShopPOS.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:PurchaseReturnsViewModel}"
-             Background="#F1F5F9"
-             FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+             Background="{DynamicResource PageBackgroundBrush}"
+             FontFamily="{StaticResource AppFontFamily}"
              Loaded="UserControl_Loaded">
 
     <UserControl.InputBindings>
+        <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllOnPageCommand}" />
         <KeyBinding Key="N" Modifiers="Ctrl" Command="{Binding NewReturnCommand}" />
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
     </UserControl.InputBindings>
@@ -36,45 +37,30 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="Purchase Returns (Debit Notes)" FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Manage outbound product returns, debit notes, and inventory write-backs." FontSize="13" Foreground="#64748B" Margin="0,2,0,0" />
+                <TextBlock Text="Purchase Returns (Debit Notes)" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Manage outbound product returns, debit notes, and inventory write-backs." Style="{StaticResource SubTitleStyle}" />
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <Button Content="+ New Return (Ctrl+N)"
                         Command="{Binding NewReturnCommand}"
                         IsEnabled="{Binding CanAdd}"
-                        Background="#DC2626"
-                        Foreground="White"
-                        FontWeight="Bold"
-                        Padding="14,8"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource PrimaryButtonStyle}" />
 
                 <Button Content="Cancel Return"
                         Command="{Binding CancelSelectedReturnCommand}"
-                        Background="#FEE2E2"
-                        Foreground="#DC2626"
-                        FontWeight="Bold"
-                        Padding="12,8"
-                        Margin="8,0,0,0"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource DangerButtonStyle}"
+                        Margin="8,0,0,0" />
 
-                <Button Content="🔄 Refresh (F5)"
+                <Button Content="Refresh (F5)"
                         Command="{Binding RefreshCommand}"
-                        Background="#E2E8F0"
-                        Foreground="#334155"
-                        FontWeight="SemiBold"
-                        Padding="12,8"
-                        Margin="8,0,0,0"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Margin="8,0,0,0" />
             </StackPanel>
         </Grid>
 
         <!-- ================= 2. FILTERS ================= -->
-        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="16,12" Margin="0,0,0,14" BorderBrush="#E2E8F0" BorderThickness="1">
+        <Border Grid.Row="1" Style="{StaticResource FilterBarStyle}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="280" />
@@ -86,24 +72,14 @@
                 <!-- Search Box -->
                 <TextBox Grid.Column="0"
                          Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
-                         Padding="8,6"
-                         FontSize="13">
-                    <TextBox.Style>
-                        <Style TargetType="TextBox">
-                            <Style.Resources>
-                                <VisualBrush x:Key="CueBannerBrush" AlignmentX="Left" AlignmentY="Center" Stretch="None">
-                                    <VisualBrush.Visual>
-                                        <TextBlock Text="🔍 Search return #, notes..." Foreground="#94A3B8" FontSize="12" Margin="6,0,0,0" />
-                                    </VisualBrush.Visual>
-                                </VisualBrush>
-                            </Style.Resources>
-                            <Style.Triggers>
-                                <Trigger Property="Text" Value="">
-                                    <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBox.Style>
+                         Style="{StaticResource InputTextBoxStyle}">
+                    <TextBox.Resources>
+                        <VisualBrush x:Key="CueBannerBrush" AlignmentX="Left" AlignmentY="Center" Stretch="None">
+                            <VisualBrush.Visual>
+                                <TextBlock Text="Search return #, notes..." Foreground="{DynamicResource TextMutedBrush}" FontSize="12" Margin="6,0,0,0" />
+                            </VisualBrush.Visual>
+                        </VisualBrush>
+                    </TextBox.Resources>
                 </TextBox>
 
                 <!-- Supplier Filter -->
@@ -112,13 +88,12 @@
                           SelectedValue="{Binding SelectedSupplierId, Mode=TwoWay}"
                           SelectedValuePath="Id"
                           DisplayMemberPath="Name"
-                          Padding="8,6"
-                          FontSize="13" />
+                          Style="{StaticResource InputComboBoxStyle}" />
 
                 <!-- Error Message -->
                 <TextBlock Grid.Column="3"
                            Text="{Binding ErrorMessage}"
-                           Foreground="#DC2626"
+                           Foreground="{DynamicResource DangerBrush}"
                            FontWeight="SemiBold"
                            HorizontalAlignment="Right"
                            VerticalAlignment="Center" />
@@ -126,73 +101,138 @@
         </Border>
 
         <!-- ================= 3. DATA GRID ================= -->
-        <Border Grid.Row="2" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1">
-            <DataGrid ItemsSource="{Binding Items}"
-                      SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      SelectionMode="Single"
-                      Background="White"
-                      BorderThickness="0"
-                      RowHeight="38">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Return #" Binding="{Binding ReturnNumber}" Width="120" FontWeight="Bold" />
-                    <DataGridTextColumn Header="Date" Binding="{Binding ReturnDate, StringFormat='{}{0:dd MMM yyyy HH:mm}'}" Width="135" />
-                    <DataGridTextColumn Header="Supplier" Binding="{Binding SupplierName}" Width="1.5*" FontWeight="SemiBold" />
-                    <DataGridTextColumn Header="Invoice Ref" Binding="{Binding PurchaseNumber, TargetNullValue='Manual'}" Width="120" />
-                    <DataGridTextColumn Header="Total Amount" Binding="{Binding TotalAmount, StringFormat='{}{0:0.00}'}" Width="110" FontWeight="Bold" />
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-                    <!-- Status Column -->
-                    <DataGridTemplateColumn Header="Status" Width="95">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate DataType="{x:Type dto:PurchaseReturnDto}">
-                                <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Setter Property="Background" Value="#DCFCE7" />
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Status}" Value="Cancelled">
-                                                    <Setter Property="Background" Value="#FEE2E2" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <TextBlock FontSize="11" FontWeight="Bold">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Text" Value="Posted" />
-                                                <Setter Property="Foreground" Value="#16A34A" />
+            <!-- Bulk Selection Banner & Toolbar -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SurfaceCardSubtleBrush}"
+                    BorderBrush="{DynamicResource TableSelectedBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SelectionStatusText}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        <Button Content="Clear selection" Command="{Binding ClearSelectionCommand}"
+                                Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Delete Selected" Command="{Binding DeleteSelectedCommand}"
+                                Visibility="{Binding CanShowDeleteSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0" />
+                        <Button Content="Cancel Selected" Command="{Binding CancelSelectedCommand}"
+                                Visibility="{Binding CanShowCancelSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Select All Filtered Results Banner -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource WarningBackgroundBrush}"
+                    BorderBrush="{DynamicResource WarningBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding ShowSelectAllResultsBanner, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding SelectAllResultsBannerText}" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Medium" VerticalAlignment="Center" />
+                    <Button Content="Click here to select all matching results" Command="{Binding SelectAllFilteredResultsCommand}"
+                            Style="{StaticResource GhostButtonStyle}" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Bold" Margin="8,0,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2" Style="{StaticResource TableContainerBorderStyle}">
+                <DataGrid ItemsSource="{Binding Items}"
+                          SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                          Style="{StaticResource AppDataGridStyle}">
+                    <DataGrid.Columns>
+                        <!-- Selection Checkbox Column -->
+                        <DataGridTemplateColumn Width="40" CanUserResize="False">
+                            <DataGridTemplateColumn.Header>
+                                <CheckBox IsChecked="{Binding DataContext.IsAllOnPageSelected, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
+                                          Command="{Binding DataContext.ToggleSelectAllOnPageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                              Command="{Binding DataContext.ItemSelectionChangedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                              CommandParameter="{Binding}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="Return #" Binding="{Binding ReturnNumber}" Width="130"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" />
+                        <DataGridTextColumn Header="Date" Binding="{Binding ReturnDate, Converter={StaticResource DateDisplayConverter}}" Width="140" />
+                        <DataGridTextColumn Header="Supplier" Binding="{Binding SupplierName}" Width="1.5*" FontWeight="Medium" />
+                        <DataGridTextColumn Header="Invoice Ref" Binding="{Binding PurchaseNumber, TargetNullValue='Manual'}" Width="120" />
+                        <DataGridTextColumn Header="Total Amount" Binding="{Binding TotalAmount, Converter={StaticResource MoneyConverter}}" Width="120"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" />
+
+                        <!-- Status Column -->
+                        <DataGridTemplateColumn Header="Status" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate DataType="{x:Type dto:PurchaseReturnDto}">
+                                    <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Setter Property="Background" Value="{DynamicResource SuccessBackgroundBrush}" />
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Status}" Value="Cancelled">
-                                                        <Setter Property="Text" Value="Cancelled" />
-                                                        <Setter Property="Foreground" Value="#DC2626" />
+                                                        <Setter Property="Background" Value="{DynamicResource DangerBackgroundBrush}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </Border>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                                        </Border.Style>
+                                        <TextBlock FontSize="11" FontWeight="Bold">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="Posted" />
+                                                    <Setter Property="Foreground" Value="{DynamicResource SuccessTextBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="Cancelled">
+                                                            <Setter Property="Text" Value="Cancelled" />
+                                                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                    <DataGridTextColumn Header="Reason / Notes" Binding="{Binding Notes, TargetNullValue='—'}" Width="*" />
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
+                        <DataGridTextColumn Header="Reason / Notes" Binding="{Binding Notes, TargetNullValue='—'}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+        </Grid>
 
         <!-- ================= 4. FOOTER PAGING ================= -->
-        <Border Grid.Row="3" Margin="0,14,0,0">
+        <Border Grid.Row="3" Style="{StaticResource PaginationBarStyle}">
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding RowCountText}" FontWeight="SemiBold" Foreground="#334155" FontSize="13" />
+                    <TextBlock Text="{Binding RowCountText}" Style="{StaticResource MutedLabelStyle}" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="◀ Prev" Command="{Binding PreviousPageCommand}" Padding="12,6" Background="White" BorderBrush="#CBD5E1" BorderThickness="1" Cursor="Hand" />
+                    <Button Content="&lt; Prev" Command="{Binding PreviousPageCommand}" Style="{StaticResource PaginationButtonStyle}" />
                     <TextBlock Text="{Binding CurrentPage, StringFormat='Page {0}'}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="8,0" />
-                    <TextBlock Text="{Binding TotalPages, StringFormat='of {0}'}" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,8,0" />
-                    <Button Content="Next ▶" Command="{Binding NextPageCommand}" Padding="12,6" Background="White" BorderBrush="#CBD5E1" BorderThickness="1" Cursor="Hand" />
+                    <TextBlock Text="{Binding TotalPages, StringFormat='of {0}'}" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                    <Button Content="Next >" Command="{Binding NextPageCommand}" Style="{StaticResource PaginationButtonStyle}" />
                 </StackPanel>
             </Grid>
         </Border>

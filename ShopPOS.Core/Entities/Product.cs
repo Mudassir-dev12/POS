@@ -24,6 +24,37 @@ public class Product : BaseEntity
     public string? Barcode { get; set; }
 
     /// <summary>
+    /// Gets or sets the normalized, lowercase search text combining Name, SKU, and all Barcodes for high-speed POS search.
+    /// </summary>
+    public string SearchText { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Computes the normalized lowercase search string from product properties and optional barcodes.
+    /// </summary>
+    public string ComputeSearchText(IEnumerable<string>? extraBarcodes = null)
+    {
+        var parts = new List<string>(4);
+        if (!string.IsNullOrWhiteSpace(Name)) parts.Add(Name.Trim().ToLowerInvariant());
+        if (!string.IsNullOrWhiteSpace(Sku)) parts.Add(Sku.Trim().ToLowerInvariant());
+        if (!string.IsNullOrWhiteSpace(Barcode)) parts.Add(Barcode.Trim().ToLowerInvariant());
+        if (extraBarcodes != null)
+        {
+            foreach (var b in extraBarcodes)
+            {
+                if (!string.IsNullOrWhiteSpace(b)) parts.Add(b.Trim().ToLowerInvariant());
+            }
+        }
+        else if (AdditionalBarcodes != null)
+        {
+            foreach (var ab in AdditionalBarcodes.Where(b => !b.IsDeleted && !string.IsNullOrWhiteSpace(b.Barcode)))
+            {
+                parts.Add(ab.Barcode.Trim().ToLowerInvariant());
+            }
+        }
+        return string.Join(" ", parts);
+    }
+
+    /// <summary>
     /// Gets or sets the optional detailed description.
     /// </summary>
     public string? Description { get; set; }

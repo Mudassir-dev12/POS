@@ -1,0 +1,195 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- ========================================================
+         DARK THEME - Dark Navy Background, Muted Teal Accents, High Contrast
+         ======================================================== -->
+
+    <!-- Page & Backgrounds -->
+    <Color x:Key="PageBackgroundColor">#0E1722</Color>
+    <SolidColorBrush x:Key="PageBackgroundBrush" Color="{StaticResource PageBackgroundColor}" />
+
+    <Color x:Key="CardBackgroundColor">#15222E</Color>
+    <SolidColorBrush x:Key="CardBackgroundBrush" Color="{StaticResource CardBackgroundColor}" />
+
+    <Color x:Key="CardBackgroundTranslucentColor">#192937</Color>
+    <SolidColorBrush x:Key="CardBackgroundTranslucentBrush" Color="{StaticResource CardBackgroundTranslucentColor}" />
+
+    <Color x:Key="CardBorderColor">#233546</Color>
+    <SolidColorBrush x:Key="CardBorderBrush" Color="{StaticResource CardBorderColor}" />
+
+    <!-- Sidebar Colors -->
+    <Color x:Key="SidebarBackgroundColor">#081017</Color>
+    <SolidColorBrush x:Key="SidebarBackgroundBrush" Color="{StaticResource SidebarBackgroundColor}" />
+
+    <Color x:Key="SidebarActiveColor">#134E63</Color>
+    <SolidColorBrush x:Key="SidebarActiveBrush" Color="{StaticResource SidebarActiveColor}" />
+
+    <Color x:Key="SidebarHoverColor">#12222E</Color>
+    <SolidColorBrush x:Key="SidebarHoverBrush" Color="{StaticResource SidebarHoverColor}" />
+
+    <Color x:Key="SidebarTextColor">#94A3B8</Color>
+    <SolidColorBrush x:Key="SidebarTextBrush" Color="{StaticResource SidebarTextColor}" />
+
+    <Color x:Key="SidebarTextActiveColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="SidebarTextActiveBrush" Color="{StaticResource SidebarTextActiveColor}" />
+
+    <Color x:Key="SidebarHeaderColor">#64748B</Color>
+    <SolidColorBrush x:Key="SidebarHeaderBrush" Color="{StaticResource SidebarHeaderColor}" />
+
+    <Color x:Key="SidebarBorderColor">#1C2A38</Color>
+    <SolidColorBrush x:Key="SidebarBorderBrush" Color="{StaticResource SidebarBorderColor}" />
+
+    <!-- Primary Action (Muted Deep Teal) -->
+    <Color x:Key="PrimaryColor">#1A6882</Color>
+    <SolidColorBrush x:Key="PrimaryBrush" Color="{StaticResource PrimaryColor}" />
+
+    <Color x:Key="PrimaryHoverColor">#237F9E</Color>
+    <SolidColorBrush x:Key="PrimaryHoverBrush" Color="{StaticResource PrimaryHoverColor}" />
+
+    <Color x:Key="PrimaryPressedColor">#134E63</Color>
+    <SolidColorBrush x:Key="PrimaryPressedBrush" Color="{StaticResource PrimaryPressedColor}" />
+
+    <Color x:Key="PrimaryTextColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="PrimaryTextBrush" Color="{StaticResource PrimaryTextColor}" />
+
+    <!-- Secondary / Outlined -->
+    <Color x:Key="SecondaryBackgroundColor">#15222E</Color>
+    <SolidColorBrush x:Key="SecondaryBackgroundBrush" Color="{StaticResource SecondaryBackgroundColor}" />
+
+    <Color x:Key="SecondaryHoverBackgroundColor">#1E3142</Color>
+    <SolidColorBrush x:Key="SecondaryHoverBackgroundBrush" Color="{StaticResource SecondaryHoverBackgroundColor}" />
+
+    <Color x:Key="SecondaryPressedBackgroundColor">#284055</Color>
+    <SolidColorBrush x:Key="SecondaryPressedBackgroundBrush" Color="{StaticResource SecondaryPressedBackgroundColor}" />
+
+    <Color x:Key="SecondaryBorderColor">#384F66</Color>
+    <SolidColorBrush x:Key="SecondaryBorderBrush" Color="{StaticResource SecondaryBorderColor}" />
+
+    <Color x:Key="SecondaryTextColor">#F1F5F9</Color>
+    <SolidColorBrush x:Key="SecondaryTextBrush" Color="{StaticResource SecondaryTextColor}" />
+
+    <Color x:Key="SecondaryHoverTextColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="SecondaryHoverTextBrush" Color="{StaticResource SecondaryHoverTextColor}" />
+
+    <Color x:Key="SecondaryPressedTextColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="SecondaryPressedTextBrush" Color="{StaticResource SecondaryPressedTextColor}" />
+
+    <!-- Danger / Destructive -->
+    <Color x:Key="DangerColor">#DC2626</Color>
+    <SolidColorBrush x:Key="DangerBrush" Color="{StaticResource DangerColor}" />
+
+    <Color x:Key="DangerHoverColor">#B91C1C</Color>
+    <SolidColorBrush x:Key="DangerHoverBrush" Color="{StaticResource DangerHoverColor}" />
+
+    <Color x:Key="DangerPressedColor">#991B1B</Color>
+    <SolidColorBrush x:Key="DangerPressedBrush" Color="{StaticResource DangerPressedColor}" />
+
+    <Color x:Key="DangerTextColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="DangerTextBrush" Color="{StaticResource DangerTextColor}" />
+
+    <Color x:Key="DangerOutlineColor">#EF4444</Color>
+    <SolidColorBrush x:Key="DangerOutlineBrush" Color="{StaticResource DangerOutlineColor}" />
+
+    <Color x:Key="DangerOutlineTextColor">#F87171</Color>
+    <SolidColorBrush x:Key="DangerOutlineTextBrush" Color="{StaticResource DangerOutlineTextColor}" />
+
+    <!-- Warning / Amber (Low Stock) -->
+    <Color x:Key="WarningColor">#F59E0B</Color>
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource WarningColor}" />
+
+    <Color x:Key="WarningTextColor">#FCD34D</Color>
+    <SolidColorBrush x:Key="WarningTextBrush" Color="{StaticResource WarningTextColor}" />
+
+    <Color x:Key="WarningBackgroundColor">#451A03</Color>
+    <SolidColorBrush x:Key="WarningBackgroundBrush" Color="{StaticResource WarningBackgroundColor}" />
+
+    <!-- Success / Active (Green Dot) -->
+    <Color x:Key="SuccessColor">#22C55E</Color>
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}" />
+
+    <Color x:Key="SuccessTextColor">#86EFAC</Color>
+    <SolidColorBrush x:Key="SuccessTextBrush" Color="{StaticResource SuccessTextColor}" />
+
+    <Color x:Key="SuccessBackgroundColor">#052E16</Color>
+    <SolidColorBrush x:Key="SuccessBackgroundBrush" Color="{StaticResource SuccessBackgroundColor}" />
+
+    <!-- General Typography & Borders -->
+    <Color x:Key="TextPrimaryColor">#F8FAFC</Color>
+    <SolidColorBrush x:Key="TextPrimaryBrush" Color="{StaticResource TextPrimaryColor}" />
+
+    <Color x:Key="TextSecondaryColor">#CBD5E1</Color>
+    <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}" />
+
+    <Color x:Key="TextMutedColor">#94A3B8</Color>
+    <SolidColorBrush x:Key="TextMutedBrush" Color="{StaticResource TextMutedColor}" />
+
+    <Color x:Key="BorderColor">#233546</Color>
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}" />
+
+    <Color x:Key="ThinRuleColor">#233546</Color>
+    <SolidColorBrush x:Key="ThinRuleBrush" Color="{StaticResource ThinRuleColor}" />
+
+    <!-- Table Colors -->
+    <Color x:Key="TableHeaderBackgroundColor">#121C26</Color>
+    <SolidColorBrush x:Key="TableHeaderBackgroundBrush" Color="{StaticResource TableHeaderBackgroundColor}" />
+
+    <Color x:Key="TableHeaderTextColor">#94A3B8</Color>
+    <SolidColorBrush x:Key="TableHeaderTextBrush" Color="{StaticResource TableHeaderTextColor}" />
+
+    <Color x:Key="TableRowHoverBackgroundColor">#1E3142</Color>
+    <SolidColorBrush x:Key="TableRowHoverBackgroundBrush" Color="{StaticResource TableRowHoverBackgroundColor}" />
+
+    <Color x:Key="TableRowHoverTextColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="TableRowHoverTextBrush" Color="{StaticResource TableRowHoverTextColor}" />
+
+    <Color x:Key="TableRowSelectedBackgroundColor">#233B50</Color>
+    <SolidColorBrush x:Key="TableRowSelectedBackgroundBrush" Color="{StaticResource TableRowSelectedBackgroundColor}" />
+
+    <Color x:Key="TableRowSelectedTextColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="TableRowSelectedTextBrush" Color="{StaticResource TableRowSelectedTextColor}" />
+
+    <!-- Inputs & Focus -->
+    <Color x:Key="InputBackgroundColor">#101A24</Color>
+    <SolidColorBrush x:Key="InputBackgroundBrush" Color="{StaticResource InputBackgroundColor}" />
+
+    <Color x:Key="InputBorderColor">#2A3F55</Color>
+    <SolidColorBrush x:Key="InputBorderBrush" Color="{StaticResource InputBorderColor}" />
+
+    <Color x:Key="InputFocusBorderColor">#38BDF8</Color>
+    <SolidColorBrush x:Key="InputFocusBorderBrush" Color="{StaticResource InputFocusBorderColor}" />
+
+    <Color x:Key="InputTextColor">#F8FAFC</Color>
+    <SolidColorBrush x:Key="InputTextBrush" Color="{StaticResource InputTextColor}" />
+
+    <!-- Disabled State -->
+    <Color x:Key="DisabledBackgroundColor">#1E293B</Color>
+    <SolidColorBrush x:Key="DisabledBackgroundBrush" Color="{StaticResource DisabledBackgroundColor}" />
+
+    <Color x:Key="DisabledBorderColor">#334155</Color>
+    <SolidColorBrush x:Key="DisabledBorderBrush" Color="{StaticResource DisabledBorderColor}" />
+
+    <Color x:Key="DisabledTextColor">#94A3B8</Color>
+    <SolidColorBrush x:Key="DisabledTextBrush" Color="{StaticResource DisabledTextColor}" />
+
+    <!-- Scrollbar & Tooltip -->
+    <Color x:Key="ScrollBarThumbColor">#475569</Color>
+    <SolidColorBrush x:Key="ScrollBarThumbBrush" Color="{StaticResource ScrollBarThumbColor}" />
+
+    <Color x:Key="ToolTipBackgroundColor">#0B1F2A</Color>
+    <SolidColorBrush x:Key="ToolTipBackgroundBrush" Color="{StaticResource ToolTipBackgroundColor}" />
+
+    <Color x:Key="ToolTipTextColor">#FFFFFF</Color>
+    <SolidColorBrush x:Key="ToolTipTextBrush" Color="{StaticResource ToolTipTextColor}" />
+
+    <Color x:Key="ContextMenuBackgroundColor">#15222E</Color>
+    <SolidColorBrush x:Key="ContextMenuBackgroundBrush" Color="{StaticResource ContextMenuBackgroundColor}" />
+
+    <Color x:Key="ContextMenuBorderColor">#2A3F55</Color>
+    <SolidColorBrush x:Key="ContextMenuBorderBrush" Color="{StaticResource ContextMenuBorderColor}" />
+
+    <Color x:Key="OverlayBackgroundColor">#66000000</Color>
+    <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="{StaticResource OverlayBackgroundColor}" />
+
+</ResourceDictionary>
+

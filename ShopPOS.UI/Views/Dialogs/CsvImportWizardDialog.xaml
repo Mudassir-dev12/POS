@@ -6,9 +6,7 @@
         Width="780"
         MinHeight="500"
         MinWidth="700"
-        WindowStartupLocation="CenterOwner"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+        Style="{StaticResource DialogWindowStyle}">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -21,14 +19,14 @@
         </Grid.RowDefinitions>
 
         <!-- Breadcrumbs -->
-        <Border Grid.Row="0" Margin="0,0,0,16" Padding="0,0,0,12" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+        <Border Grid.Row="0" Margin="0,0,0,16" Padding="0,0,0,12" BorderBrush="{DynamicResource SeparatorBorderBrush}" BorderThickness="0,0,0,1">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
                 <TextBlock Text="1. Pick File" FontWeight="Bold" Foreground="{Binding CurrentStep, Converter={StaticResource StepColorConverter}, ConverterParameter=1}" />
-                <TextBlock Text="➔" Foreground="#94A3B8" />
+                <TextBlock Text=" -> " Foreground="{DynamicResource TextMutedBrush}" />
                 <TextBlock Text="2. Preview" FontWeight="Bold" Foreground="{Binding CurrentStep, Converter={StaticResource StepColorConverter}, ConverterParameter=2}" />
-                <TextBlock Text="➔" Foreground="#94A3B8" />
+                <TextBlock Text=" -> " Foreground="{DynamicResource TextMutedBrush}" />
                 <TextBlock Text="3. Validation" FontWeight="Bold" Foreground="{Binding CurrentStep, Converter={StaticResource StepColorConverter}, ConverterParameter=3}" />
-                <TextBlock Text="➔" Foreground="#94A3B8" />
+                <TextBlock Text=" -> " Foreground="{DynamicResource TextMutedBrush}" />
                 <TextBlock Text="4. Confirm &amp; Import" FontWeight="Bold" Foreground="{Binding CurrentStep, Converter={StaticResource StepColorConverter}, ConverterParameter=4}" />
             </StackPanel>
         </Border>
@@ -36,14 +34,14 @@
         <!-- STEP 1: PICK FILE -->
         <Border Grid.Row="1" Visibility="{Binding CurrentStep, Converter={StaticResource StepVisibilityConverter}, ConverterParameter=1}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="580">
-                <Border Width="64" Height="64" CornerRadius="32" Background="#EFF6FF" HorizontalAlignment="Center" Margin="0,0,0,12">
-                    <TextBlock Text="📊" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Border Width="64" Height="64" CornerRadius="32" Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" HorizontalAlignment="Center" Margin="0,0,0,12">
+                    <TextBlock Text="CSV" FontFamily="{StaticResource AppMonospaceFontFamily}" FontWeight="Bold" FontSize="18" Foreground="{DynamicResource PrimaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Border>
-                <TextBlock Text="Import Products from Excel (.xlsx) or CSV (.csv)" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#0F172A" />
+                <TextBlock Text="Import Products from Excel (.xlsx) or CSV (.csv)" Style="{StaticResource SectionHeaderStyle}" HorizontalAlignment="Center" />
                 <TextBlock Text="Easily import or bulk-update your product catalog. Columns are automatically mapped by header names (e.g. SKU, Barcode, Product Name, Sale Price)."
                            TextWrapping="Wrap"
                            TextAlignment="Center"
-                           Foreground="#64748B"
+                           Style="{StaticResource SubTitleStyle}"
                            Margin="0,4,0,16" />
 
                 <!-- File Picker Row -->
@@ -53,44 +51,32 @@
                         <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBox Grid.Column="0" Text="{Binding SelectedFilePath}" IsReadOnly="True" Padding="10,8" FontSize="13" VerticalAlignment="Center" />
+                    <TextBox Grid.Column="0" Text="{Binding SelectedFilePath}" IsReadOnly="True" Style="{StaticResource InputTextBoxStyle}" VerticalAlignment="Center" />
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
-                        <Button Content="📂 Browse..." Command="{Binding BrowseFileCommand}" Background="#2563EB" Foreground="White" FontWeight="SemiBold" Padding="12,8" BorderThickness="0" Cursor="Hand" Margin="0,0,6,0" />
-                        <Button Content="Excel (.xlsx)" Command="{Binding BrowseExcelFileCommand}" Background="#16A34A" Foreground="White" FontWeight="SemiBold" Padding="10,8" BorderThickness="0" Cursor="Hand" Margin="0,0,6,0" />
-                        <Button Content="CSV (.csv)" Command="{Binding BrowseCsvFileCommand}" Background="#0284C7" Foreground="White" FontWeight="SemiBold" Padding="10,8" BorderThickness="0" Cursor="Hand" />
+                        <Button Content="Browse..." Command="{Binding BrowseFileCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,6,0" />
+                        <Button Content="Excel (.xlsx)" Command="{Binding BrowseExcelFileCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,6,0" />
+                        <Button Content="CSV (.csv)" Command="{Binding BrowseCsvFileCommand}" Style="{StaticResource SecondaryButtonStyle}" />
                     </StackPanel>
                 </Grid>
 
                 <!-- Template Download Buttons -->
-                <Border Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,10">
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,10">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="Download sample catalog template with pre-filled formatting:" FontSize="12" Foreground="#475569" HorizontalAlignment="Center" Margin="0,0,0,8" />
+                        <TextBlock Text="Download sample catalog template with pre-filled formatting:" Style="{StaticResource MutedLabelStyle}" HorizontalAlignment="Center" Margin="0,0,0,8" />
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                            <Button Content="📥 Download Excel Template (.xlsx)"
+                            <Button Content="Download Excel Template (.xlsx)"
                                     Command="{Binding DownloadExcelTemplateCommand}"
-                                    Background="#DCFCE7"
-                                    Foreground="#166534"
-                                    FontWeight="SemiBold"
-                                    BorderThickness="1"
-                                    BorderBrush="#86EFAC"
-                                    Padding="12,6"
-                                    Cursor="Hand"
+                                    Style="{StaticResource SecondaryButtonStyle}"
                                     Margin="0,0,10,0" />
-                            <Button Content="📥 Download CSV Template (.csv)"
+                            <Button Content="Download CSV Template (.csv)"
                                     Command="{Binding DownloadCsvTemplateCommand}"
-                                    Background="#E0F2FE"
-                                    Foreground="#0369A1"
-                                    FontWeight="SemiBold"
-                                    BorderThickness="1"
-                                    BorderBrush="#7DD3FC"
-                                    Padding="12,6"
-                                    Cursor="Hand" />
+                                    Style="{StaticResource SecondaryButtonStyle}" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
 
-                <TextBlock Text="{Binding StatusMessage}" Foreground="#10B981" HorizontalAlignment="Center" FontWeight="SemiBold" Margin="0,4,0,0" />
-                <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626" HorizontalAlignment="Center" FontWeight="SemiBold" Margin="0,4,0,0" />
+                <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource SuccessTextBrush}" HorizontalAlignment="Center" FontWeight="SemiBold" Margin="0,4,0,0" />
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerBrush}" HorizontalAlignment="Center" FontWeight="SemiBold" Margin="0,4,0,0" />
             </StackPanel>
         </Border>
 
@@ -100,37 +86,36 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <Border Grid.Row="0" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,10">
+            <Border Grid.Row="0" Style="{StaticResource FilterBarStyle}" Margin="0,0,0,10">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="Product Data Preview" FontSize="15" FontWeight="Bold" Foreground="#0F172A" />
+                        <TextBlock Text="Product Data Preview" Style="{StaticResource SectionHeaderStyle}" />
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
-                            <TextBlock Text="{Binding PreviewRowCount, StringFormat='Found {0} total records in file.  |  Format: '}" FontSize="12" Foreground="#475569" />
-                            <TextBlock Text="{Binding DetectedFileType}" FontSize="12" FontWeight="SemiBold" Foreground="#2563EB" />
+                            <TextBlock Text="{Binding PreviewRowCount, StringFormat='Found {0} total records in file.  |  Format: '}" Style="{StaticResource MutedLabelStyle}" />
+                            <TextBlock Text="{Binding DetectedFileType}" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" />
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding DetectedNameColumn, StringFormat='✅ Product Name mapped to: {0}'}"
-                                   FontWeight="SemiBold" Foreground="#16A34A" FontSize="12"
+                        <TextBlock Text="{Binding DetectedNameColumn, StringFormat=' Product Name mapped to: {0}'}"
+                                   FontWeight="SemiBold" Foreground="{DynamicResource SuccessTextBrush}" FontSize="12"
                                    Visibility="{Binding IsNameColumnDetected, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <TextBlock Text="⚠️ Warning: 'Product Name' column not detected!"
-                                   FontWeight="SemiBold" Foreground="#DC2626" FontSize="12"
+                        <TextBlock Text=" Warning: 'Product Name' column not detected!"
+                                   FontWeight="SemiBold" Foreground="{DynamicResource DangerBrush}" FontSize="12"
                                    Visibility="{Binding IsNameColumnDetected, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
                     </StackPanel>
                 </Grid>
             </Border>
-            <DataGrid Grid.Row="1"
-                      ItemsSource="{Binding PreviewDataTable}"
-                      AutoGenerateColumns="True"
-                      IsReadOnly="True"
-                      CanUserAddRows="False"
-                      Background="White"
-                      BorderBrush="#CBD5E1"
-                      BorderThickness="1" />
+            <Border Grid.Row="1" Style="{StaticResource TableContainerBorderStyle}">
+                <DataGrid ItemsSource="{Binding PreviewDataTable}"
+                          AutoGenerateColumns="True"
+                          IsReadOnly="True"
+                          CanUserAddRows="False"
+                          Style="{StaticResource AppDataGridStyle}" />
+            </Border>
         </Grid>
 
         <!-- STEP 3: VALIDATION REPORT -->
@@ -140,21 +125,22 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Margin="0,0,0,12">
-                <TextBlock Text="Pre-Import Validation Report" FontSize="15" FontWeight="Bold" Foreground="#0F172A" />
+                <TextBlock Text="Pre-Import Validation Report" Style="{StaticResource SectionHeaderStyle}" />
                 <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                    <TextBlock Text="{Binding TotalValidatedRows, StringFormat='Total Rows: {0}'}" FontWeight="SemiBold" Foreground="#334155" />
-                    <TextBlock Text="{Binding ValidRowCount, StringFormat='Valid: {0}'}" FontWeight="SemiBold" Foreground="#16A34A" />
-                    <TextBlock Text="{Binding ErrorRowCount, StringFormat='Invalid / Ignored: {0}'}" FontWeight="SemiBold" Foreground="#DC2626" />
+                    <TextBlock Text="{Binding TotalValidatedRows, StringFormat='Total Rows: {0}'}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,12,0" />
+                    <TextBlock Text="{Binding ValidRowCount, StringFormat='Valid: {0}'}" FontWeight="SemiBold" Foreground="{DynamicResource SuccessTextBrush}" Margin="0,0,12,0" />
+                    <TextBlock Text="{Binding ErrorRowCount, StringFormat='Invalid / Ignored: {0}'}" FontWeight="SemiBold" Foreground="{DynamicResource DangerBrush}" />
                 </StackPanel>
             </StackPanel>
 
-            <Border Grid.Row="1" Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6">
+            <Border Grid.Row="1" Style="{StaticResource TableContainerBorderStyle}">
                 <DataGrid ItemsSource="{Binding ValidationErrors}"
                           AutoGenerateColumns="False"
                           IsReadOnly="True"
-                          BorderThickness="0">
+                          Style="{StaticResource AppDataGridStyle}">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Row #" Binding="{Binding RowNumber}" Width="80" />
+                        <DataGridTextColumn Header="Row #" Binding="{Binding RowNumber}" Width="80"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" />
                         <DataGridTextColumn Header="Validation Error" Binding="{Binding Error}" Width="*" />
                     </DataGrid.Columns>
                 </DataGrid>
@@ -164,100 +150,71 @@
         <!-- STEP 4: CONFIRM & EXECUTE -->
         <Grid Grid.Row="1" Visibility="{Binding CurrentStep, Converter={StaticResource StepVisibilityConverter}, ConverterParameter=4}">
             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" MaxWidth="520">
-                <TextBlock Text="Ready to Import" FontSize="18" FontWeight="Bold" HorizontalAlignment="Center" Foreground="#0F172A" />
+                <TextBlock Text="Ready to Import" Style="{StaticResource SectionHeaderStyle}" HorizontalAlignment="Center" Margin="0,0,0,12" />
 
                 <!-- Match Existing Option -->
-                <Border Background="#F1F5F9" Padding="16" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1">
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,12">
                     <StackPanel>
-                        <TextBlock Text="Matching Strategy for Existing Products (by SKU / Barcode):" FontWeight="Bold" Foreground="#1E293B" />
-                        <RadioButton Content="Update existing product details (Prices, category, active status)" IsChecked="{Binding UpdateExisting}" FontWeight="Medium" />
+                        <TextBlock Text="Matching Strategy for Existing Products (by SKU / Barcode):" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,8" />
+                        <RadioButton Content="Update existing product details (Prices, category, active status)" IsChecked="{Binding UpdateExisting}" FontWeight="Medium" Margin="0,0,0,4" />
                         <RadioButton Content="Skip matching products (keep existing data unchanged)" IsChecked="{Binding UpdateExisting, Converter={StaticResource InverseBooleanConverter}}" FontWeight="Medium" />
                     </StackPanel>
                 </Border>
 
                 <!-- Progress Bar -->
-                <StackPanel Visibility="{Binding IsImporting, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="#2563EB" FontWeight="SemiBold" Margin="0,0,0,4" />
-                    <ProgressBar Height="20" Value="{Binding ImportProgress}" Minimum="0" Maximum="100" />
+                <StackPanel Visibility="{Binding IsImporting, Converter={StaticResource BooleanToVisibilityConverter}}" Margin="0,0,0,12">
+                    <TextBlock Text="{Binding StatusMessage}" FontSize="12" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold" Margin="0,0,0,4" />
+                    <ProgressBar Height="16" Value="{Binding ImportProgress}" Minimum="0" Maximum="100" />
                     <TextBlock Text="{Binding ImportProgress, StringFormat='{}{0}%'}" HorizontalAlignment="Center" FontSize="11" Margin="0,4,0,0" />
                 </StackPanel>
 
                 <!-- Summary Text -->
-                <Border Background="#ECFDF5" BorderBrush="#A7F3D0" BorderThickness="1" CornerRadius="8" Padding="14" Visibility="{Binding ImportCompleted, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Border Background="{DynamicResource SuccessBackgroundBrush}" BorderBrush="{DynamicResource SuccessBrush}" BorderThickness="1" CornerRadius="8" Padding="14" Visibility="{Binding ImportCompleted, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <StackPanel>
-                        <TextBlock Text="{Binding ImportSummaryText}" Foreground="#065F46" FontWeight="Medium" LineHeight="20" />
-                        <Button Content="✔ Done (Close Wizard)"
+                        <TextBlock Text="{Binding ImportSummaryText}" Foreground="{DynamicResource SuccessTextBrush}" FontWeight="Medium" LineHeight="20" />
+                        <Button Content="Done (Close Wizard)"
                                 Command="{Binding CloseDialogCommand}"
                                 CommandParameter="True"
-                                Background="#10B981"
-                                Foreground="White"
-                                FontWeight="Bold"
-                                Padding="16,8"
+                                Style="{StaticResource PrimaryButtonStyle}"
                                 Margin="0,12,0,0"
-                                BorderThickness="0"
-                                Cursor="Hand"
                                 HorizontalAlignment="Center" />
                     </StackPanel>
                 </Border>
 
                 <!-- Error Display -->
-                <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,8,0,0" />
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerBrush}" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,8,0,0" />
             </StackPanel>
         </Grid>
 
         <!-- Footer Navigation -->
-        <Border Grid.Row="2" Margin="0,16,0,0" Padding="0,12,0,0" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
+        <Border Grid.Row="2" Margin="0,16,0,0" Padding="0,12,0,0" BorderBrush="{DynamicResource SeparatorBorderBrush}" BorderThickness="0,1,0,0">
             <Grid>
                 <Button Content="Close"
                         Command="{Binding CloseDialogCommand}"
                         CommandParameter="False"
                         HorizontalAlignment="Left"
-                        Padding="16,8"
-                        Background="#E2E8F0"
-                        Foreground="#334155"
-                        FontWeight="SemiBold"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource SecondaryButtonStyle}" />
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="◀ Back"
+                    <Button Content="&lt; Back"
                             Command="{Binding PreviousStepCommand}"
-                            Padding="16,8"
-                            Background="#E2E8F0"
-                            Foreground="#334155"
-                            FontWeight="SemiBold"
-                            BorderThickness="0"
-                            Cursor="Hand"
+                            Style="{StaticResource SecondaryButtonStyle}"
+                            Margin="0,0,8,0"
                             Visibility="{Binding CurrentStep, Converter={StaticResource StepVisibilityConverter}, ConverterParameter=2;3}" />
 
-                    <Button Content="Next ▶"
+                    <Button Content="Next &gt;"
                             Command="{Binding NextStepCommand}"
-                            Padding="20,8"
-                            Background="#2563EB"
-                            Foreground="White"
-                            FontWeight="Bold"
-                            BorderThickness="0"
-                            Cursor="Hand"
+                            Style="{StaticResource PrimaryButtonStyle}"
                             Visibility="{Binding CurrentStep, Converter={StaticResource StepVisibilityConverter}, ConverterParameter=1;2;3}" />
 
                     <Button Content="Cancel Import"
                             Command="{Binding CancelImportCommand}"
-                            Padding="16,8"
-                            Background="#DC2626"
-                            Foreground="White"
-                            FontWeight="SemiBold"
-                            BorderThickness="0"
-                            Cursor="Hand"
+                            Style="{StaticResource DangerButtonStyle}"
                             Visibility="{Binding IsImporting, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
                     <Button Content="Start Import"
                             Command="{Binding StartImportCommand}"
-                            Padding="24,8"
-                            Background="#16A34A"
-                            Foreground="White"
-                            FontWeight="Bold"
-                            BorderThickness="0"
-                            Cursor="Hand"
+                            Style="{StaticResource PrimaryButtonStyle}"
                             Visibility="{Binding CurrentStep, Converter={StaticResource StepVisibilityConverter}, ConverterParameter=4}" />
                 </StackPanel>
             </Grid>

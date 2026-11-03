@@ -21,7 +21,8 @@ public class BrandConfiguration : IEntityTypeConfiguration<Brand>
             .HasDefaultValue(true);
 
         builder.HasIndex(b => b.Name)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("IsDeleted = 0");
     }
 }
 

@@ -4,7 +4,7 @@ using ShopPOS.Core.Enums;
 namespace ShopPOS.Core.Entities;
 
 /// <summary>
-/// Represents a customer return of sold goods with refund or credit adjustment.
+/// Represents a return of sold goods with refund adjustment.
 /// </summary>
 public class SaleReturn : BaseEntity
 {
@@ -13,12 +13,6 @@ public class SaleReturn : BaseEntity
 
     public int? SaleId { get; set; }
     public Sale? Sale { get; set; }
-
-    public int? CustomerId { get; set; }
-    public Customer? Customer { get; set; }
-
-    public int? ShiftId { get; set; }
-    public Shift? Shift { get; set; }
 
     public SaleReturnStatus Status { get; set; } = SaleReturnStatus.Posted;
 
@@ -34,4 +28,3 @@ public class SaleReturn : BaseEntity
 
     public ICollection<SaleReturnItem> Items { get; set; } = new List<SaleReturnItem>();
 }
-

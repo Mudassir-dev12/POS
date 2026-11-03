@@ -51,13 +51,25 @@ public class ProductRepository : Repository<Product>, IProductRepository
                 p.AdditionalBarcodes.Any(ab => ab.Barcode.ToLower().Contains(term)));
         }
 
-        // 5. Filter by Low Stock Only
+        // 5. Filter by Low Stock / Out of Stock
         if (query.LowStockOnly)
         {
             baseQuery = baseQuery.Where(p =>
                 p.TrackStock &&
                 (p.StockMovements.Where(sm => !sm.IsDeleted).Sum(sm => (decimal?)sm.Quantity) ?? 0m) > 0m &&
                 (p.StockMovements.Where(sm => !sm.IsDeleted).Sum(sm => (decimal?)sm.Quantity) ?? 0m) <= p.ReorderLevel);
+        }
+        else if (query.OutOfStockOnly)
+        {
+            baseQuery = baseQuery.Where(p =>
+                p.TrackStock &&
+                (p.StockMovements.Where(sm => !sm.IsDeleted).Sum(sm => (decimal?)sm.Quantity) ?? 0m) <= 0m);
+        }
+        else if (query.OutOfStockOnly)
+        {
+            baseQuery = baseQuery.Where(p =>
+                p.TrackStock &&
+                (p.StockMovements.Where(sm => !sm.IsDeleted).Sum(sm => (decimal?)sm.Quantity) ?? 0m) <= 0m);
         }
 
         // 6. Total count
@@ -276,8 +288,45 @@ public class ProductRepository : Repository<Product>, IProductRepository
 
     public async Task<int> GetReferenceCountAsync(int productId, CancellationToken cancellationToken = default)
     {
-        return await Context.StockMovements
-            .CountAsync(sm => sm.ProductId == productId, cancellationToken);
+        int movements = await Context.StockMovements.CountAsync(sm => sm.ProductId == productId, cancellationToken);
+        int sales = await Context.SaleItems.CountAsync(si => si.ProductId == productId, cancellationToken);
+        int purchases = await Context.PurchaseItems.CountAsync(pi => pi.ProductId == productId, cancellationToken);
+        return movements + sales + purchases;
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredIdsAsync(ProductSearchQuery query, CancellationToken cancellationToken = default)
+    {
+        var baseQuery = Context.Products
+            .AsNoTracking()
+            .AsQueryable();
+
+        if (query.IsActive.HasValue)
+        {
+            baseQuery = baseQuery.Where(p => p.IsActive == query.IsActive.Value);
+        }
+
+        if (query.CategoryId.HasValue && query.CategoryId.Value > 0)
+        {
+            baseQuery = baseQuery.Where(p => p.CategoryId == query.CategoryId.Value);
+        }
+
+        if (query.BrandId.HasValue && query.BrandId.Value > 0)
+        {
+            baseQuery = baseQuery.Where(p => p.BrandId == query.BrandId.Value);
+        }
+
+
+        if (!string.IsNullOrWhiteSpace(query.SearchTerm))
+        {
+            var term = query.SearchTerm.Trim().ToLowerInvariant();
+            baseQuery = baseQuery.Where(p =>
+                p.Name.ToLower().Contains(term) ||
+                p.Sku.ToLower().Contains(term) ||
+                (p.Barcode != null && p.Barcode.ToLower().Contains(term)) ||
+                p.AdditionalBarcodes.Any(b => b.Barcode.ToLower().Contains(term)));
+        }
+
+        return await baseQuery.Select(p => p.Id).ToListAsync(cancellationToken);
     }
 
     public async Task<Product> CreateWithOpeningStockAsync(Product product, decimal openingQuantity, decimal unitCost, int? userId, CancellationToken cancellationToken = default)
@@ -504,6 +553,12 @@ public class ProductRepository : Repository<Product>, IProductRepository
                 p.TrackStock &&
                 (p.StockMovements.Where(sm => !sm.IsDeleted).Sum(sm => (decimal?)sm.Quantity) ?? 0m) > 0m &&
                 (p.StockMovements.Where(sm => !sm.IsDeleted).Sum(sm => (decimal?)sm.Quantity) ?? 0m) <= p.ReorderLevel);
+        }
+        else if (query.OutOfStockOnly)
+        {
+            baseQuery = baseQuery.Where(p =>
+                p.TrackStock &&
+                (p.StockMovements.Where(sm => !sm.IsDeleted).Sum(sm => (decimal?)sm.Quantity) ?? 0m) <= 0m);
         }
 
         return await baseQuery.OrderBy(p => p.Name).ToListAsync(cancellationToken);

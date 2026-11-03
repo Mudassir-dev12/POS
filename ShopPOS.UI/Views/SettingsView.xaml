@@ -6,8 +6,8 @@
              xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Settings"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:SettingsViewModel}"
-             Background="#F1F5F9"
-             FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+             Background="{DynamicResource PageBackgroundBrush}"
+             FontFamily="{StaticResource AppFontFamily}"
              Loaded="UserControl_Loaded">
 
     <UserControl.InputBindings>
@@ -30,19 +30,14 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="Store, POS &amp; Inventory Settings" FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Configure store profile, POS cashier rules, shift enforcement, thermal receipt formatting, and valuation." FontSize="13" Foreground="#64748B" Margin="0,2,0,0" />
+                <TextBlock Text="Store, POS &amp; Inventory Settings" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Configure store profile, POS cashier rules, thermal receipt formatting, and valuation." Style="{StaticResource SubTitleStyle}" />
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="💾 Save Settings (Ctrl+S)"
+                <Button Content="Save Settings (Ctrl+S)"
                         Command="{Binding SaveCommand}"
-                        Background="#2563EB"
-                        Foreground="White"
-                        FontWeight="Bold"
-                        Padding="16,8"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource PrimaryButtonStyle}" />
             </StackPanel>
         </Grid>
 
@@ -50,44 +45,70 @@
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel MaxWidth="820" HorizontalAlignment="Left">
                 <!-- Notifications -->
-                <Border Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,12"
+                <Border Background="{DynamicResource DangerBackgroundBrush}"
+                        BorderBrush="{DynamicResource DangerBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="12,8"
+                        Margin="0,0,0,12"
                         Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
-                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#B91C1C" FontWeight="Bold" />
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerBrush}" FontWeight="Bold" />
                 </Border>
 
-                <Border Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,12"
+                <Border Background="{DynamicResource SuccessBackgroundBrush}"
+                        BorderBrush="{DynamicResource SuccessBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="12,8"
+                        Margin="0,0,0,12"
                         Visibility="{Binding SuccessMessage, Converter={StaticResource StringToVisibilityConverter}}">
-                    <TextBlock Text="{Binding SuccessMessage}" Foreground="#15803D" FontWeight="Bold" />
+                    <TextBlock Text="{Binding SuccessMessage}" Foreground="{DynamicResource SuccessTextBrush}" FontWeight="Bold" />
                 </Border>
 
-                <!-- SECTION 1: Store Profile -->
-                <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,16">
+                <!-- SECTION 1: Store Profile & Currency -->
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="Store Profile" FontSize="16" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,14" />
+                        <TextBlock Text="Store Profile &amp; Currency" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14" />
 
                         <!-- Store Name & Currency -->
                         <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2.5*" />
+                                <ColumnDefinition Width="2*" />
                                 <ColumnDefinition Width="14" />
                                 <ColumnDefinition Width="1*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="1*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="1.5*" />
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="STORE NAME *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding ShopName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                                <TextBlock Text="STORE NAME *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding ShopName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="CURRENCY SYMBOL *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding CurrencySymbol, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                                <TextBlock Text="CURRENCY SYMBOL *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding CurrencySymbol, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="4">
+                                <TextBlock Text="DECIMALS" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding AllowedDecimals}" SelectedItem="{Binding CurrencyDecimals, Mode=TwoWay}" Style="{StaticResource InputComboBoxStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="6">
+                                <TextBlock Text="LIVE PREVIEW" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,6">
+                                    <TextBlock Text="{Binding CurrencyPreview}" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" FontSize="13" VerticalAlignment="Center" />
+                                </Border>
                             </StackPanel>
                         </Grid>
 
                         <!-- Address -->
                         <StackPanel Margin="0,0,0,12">
-                            <TextBlock Text="PHYSICAL STORE ADDRESS" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
-                            <TextBox Text="{Binding Address, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                            <TextBlock Text="PHYSICAL STORE ADDRESS" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                            <TextBox Text="{Binding Address, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
                         </StackPanel>
 
                         <!-- Phone & Tax Number -->
@@ -99,27 +120,53 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="CONTACT PHONE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding Phone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                                <TextBlock Text="CONTACT PHONE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding Phone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="TAX / VAT REGISTRATION #" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding TaxNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                                <TextBlock Text="TAX / VAT REGISTRATION #" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding TaxNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
                             </StackPanel>
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <!-- SECTION 2: POS & Sales Policy -->
-                <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,16">
+                <!-- SECTION 2: Appearance & Theme -->
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="POS Checkout &amp; Sales Policies" FontSize="16" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,4,4" />
-                        <TextBlock Text="Controls cash register constraints, shift rules, discounts, and customer credit." FontSize="12" Foreground="#64748B" Margin="0,0,0,14" />
+                        <TextBlock Text="Appearance &amp; Theme" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="220" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="COLOR THEME" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding AvailableThemes}"
+                                          SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
+                                          Style="{StaticResource InputComboBoxStyle}" />
+                            </StackPanel>
+
+                            <Button Grid.Column="2"
+                                    Content="Toggle Theme"
+                                    Command="{Binding ToggleThemeCommand}"
+                                    Style="{StaticResource SecondaryButtonStyle}"
+                                    VerticalAlignment="Bottom" />
+                        </Grid>
+                    </StackPanel>
+                </Border>
+
+                <!-- SECTION 3: POS & Sales Policy -->
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,16">
+                    <StackPanel>
+                        <TextBlock Text="POS Checkout &amp; Sales Policies" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,4,4" />
+                        <TextBlock Text="Controls cash register constraints, discounts, and pricing." Style="{StaticResource SubTitleStyle}" Margin="0,0,0,14" />
 
                         <!-- Toggles -->
-                        <CheckBox Content="Require an active open shift before allowing sales" IsChecked="{Binding RequireOpenShiftForSales, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
-                        <CheckBox Content="Allow sales on credit (unpaid or partial balance)" IsChecked="{Binding AllowCreditSales, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
                         <CheckBox Content="Allow selling below product minimum sale price" IsChecked="{Binding AllowSellingBelowMinPrice, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
                         <CheckBox Content="Selling prices in product catalog already include tax / VAT" IsChecked="{Binding PricesIncludeTax, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
                         <CheckBox Content="Allow customer returns without original invoice receipt" IsChecked="{Binding AllowReturnWithoutReceipt, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,14" />
@@ -133,33 +180,32 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="CASH ROUNDING STEP (0 = DISABLED)" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding CashRoundingStep, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                                <TextBlock Text="CASH ROUNDING STEP (0 = DISABLED)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding CashRoundingStep, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
                             </StackPanel>
 
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="RETURN WINDOW (DAYS, EMPTY = UNLIMITED)" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding SaleReturnWindowDays, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                                <TextBlock Text="RETURN WINDOW (DAYS, EMPTY = UNLIMITED)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding SaleReturnWindowDays, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
                             </StackPanel>
                         </Grid>
                     </StackPanel>
                 </Border>
 
-                <!-- SECTION 3: Inventory & Costing -->
-                <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,16">
+                <!-- SECTION 4: Inventory & Costing -->
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="Inventory Costing &amp; Control" FontSize="16" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,4" />
+                        <TextBlock Text="Inventory Costing &amp; Control" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,4" />
                         <TextBlock Text="These critical parameters dictate accounting valuation and stock validation across purchases and POS checkout."
-                                   FontSize="12" Foreground="#64748B" Margin="0,0,0,16" />
+                                   Style="{StaticResource SubTitleStyle}" Margin="0,0,0,16" />
 
                         <!-- Costing Method -->
                         <StackPanel Margin="0,0,0,16">
-                            <TextBlock Text="INVENTORY COSTING METHOD" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                            <TextBlock Text="INVENTORY COSTING METHOD" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                             <ComboBox ItemsSource="{Binding AvailableCostingMethods}"
                                       SelectedItem="{Binding CostingMethod, Mode=TwoWay}"
                                       IsEnabled="{Binding IsAdmin}"
-                                      Padding="8,6"
-                                      FontSize="13"
+                                      Style="{StaticResource InputComboBoxStyle}"
                                       Width="280"
                                       HorizontalAlignment="Left" />
                         </StackPanel>
@@ -170,23 +216,23 @@
                                       IsChecked="{Binding AllowNegativeStock, Mode=TwoWay}"
                                       IsEnabled="{Binding IsAdmin}"
                                       FontWeight="Bold"
-                                      FontSize="13"
-                                      Foreground="#0F172A" />
+                                      FontSize="13" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
 
-                <!-- SECTION 4: Receipt Printing & Hardware -->
-                <Border Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="20" Margin="0,0,0,24">
+                <!-- SECTION 5: Receipt Printing & Hardware -->
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,24">
                     <StackPanel>
-                        <TextBlock Text="Receipt Printing &amp; Cash Drawer" FontSize="16" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,14" />
+                        <TextBlock Text="Receipt Printing &amp; Cash Drawer" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14" />
 
                         <!-- Printing Mode -->
                         <StackPanel Margin="0,0,0,14">
-                            <TextBlock Text="PRINTING MODE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                            <TextBlock Text="PRINTING MODE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                             <ComboBox ItemsSource="{Binding AvailablePrinterModes}"
                                       SelectedItem="{Binding PrinterMode, Mode=TwoWay}"
-                                      Padding="8,6" FontSize="13" Width="320" HorizontalAlignment="Left" />
+                                      Style="{StaticResource InputComboBoxStyle}"
+                                      Width="320" HorizontalAlignment="Left" />
                         </StackPanel>
 
                         <!-- Printer Queue Selection -->
@@ -200,29 +246,31 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="RECEIPT PRINTER QUEUE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                                <TextBlock Text="RECEIPT PRINTER QUEUE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                                 <ComboBox ItemsSource="{Binding InstalledPrinters}"
                                           SelectedItem="{Binding ReceiptPrinterName, Mode=TwoWay}"
                                           IsEditable="True"
-                                          Padding="8,6" FontSize="13" />
+                                          Style="{StaticResource InputComboBoxStyle}" />
                             </StackPanel>
 
                             <Button Grid.Column="2" Content="Refresh"
                                     Command="{Binding RefreshPrintersCommand}"
-                                    Padding="12,6" FontSize="12" VerticalAlignment="Bottom" Height="34" Background="#F1F5F9" />
+                                    Style="{StaticResource ToolbarButtonStyle}"
+                                    VerticalAlignment="Bottom" Height="34" />
 
                             <StackPanel Grid.Column="4">
-                                <TextBlock Text="RECEIPT COPIES" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding ReceiptCopies, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                                <TextBlock Text="RECEIPT COPIES" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding ReceiptCopies, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
                             </StackPanel>
                         </Grid>
 
                         <!-- Paper Width -->
                         <StackPanel Margin="0,0,0,14">
-                            <TextBlock Text="PAPER ROLL WIDTH" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                            <TextBlock Text="PAPER ROLL WIDTH" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                             <ComboBox SelectedValuePath="Tag"
                                       SelectedValue="{Binding ReceiptWidthMm, Mode=TwoWay}"
-                                      Padding="8,6" FontSize="13" Width="240" HorizontalAlignment="Left">
+                                      Style="{StaticResource InputComboBoxStyle}"
+                                      Width="240" HorizontalAlignment="Left">
                                 <ComboBoxItem Content="80 mm (Standard Thermal)" Tag="80" />
                                 <ComboBoxItem Content="58 mm (Compact Thermal)" Tag="58" />
                             </ComboBox>
@@ -232,19 +280,19 @@
                         <CheckBox Content="Trigger cash drawer kick pulse on cash sales" IsChecked="{Binding OpenCashDrawerOnCashSale, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,14" />
 
                         <StackPanel Margin="0,0,0,16">
-                            <TextBlock Text="RECEIPT FOOTER MESSAGE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
-                            <TextBox Text="{Binding ReceiptFooter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
+                            <TextBlock Text="RECEIPT FOOTER MESSAGE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                            <TextBox Text="{Binding ReceiptFooter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
                         </StackPanel>
 
                         <!-- Hardware Diagnostics -->
-                        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="12">
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
                             <StackPanel>
-                                <TextBlock Text="HARDWARE DIAGNOSTICS" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,8" />
+                                <TextBlock Text="HARDWARE DIAGNOSTICS" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,8" />
                                 <StackPanel Orientation="Horizontal">
                                     <Button Content="Test Print Receipt" Command="{Binding TestPrintCommand}"
-                                            Padding="14,8" FontWeight="SemiBold" Background="#E2E8F0" Margin="0,0,10,0" />
+                                            Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0" />
                                     <Button Content="Open Cash Drawer" Command="{Binding OpenCashDrawerCommand}"
-                                            Padding="14,8" FontWeight="SemiBold" Background="#E2E8F0" />
+                                            Style="{StaticResource SecondaryButtonStyle}" />
                                 </StackPanel>
                             </StackPanel>
                         </Border>

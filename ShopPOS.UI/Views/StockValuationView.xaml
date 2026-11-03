@@ -6,8 +6,8 @@
              xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Inventory"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:StockValuationViewModel}"
-             Background="#F1F5F9"
-             FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+             Background="{DynamicResource PageBackgroundBrush}"
+             FontFamily="{StaticResource AppFontFamily}"
              Loaded="UserControl_Loaded">
 
     <UserControl.InputBindings>
@@ -34,17 +34,17 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="Inventory Stock Valuation by Category" FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Financial analysis of cost, retail value, and projected gross profit margins across inventory categories." FontSize="13" Foreground="#64748B" Margin="0,2,0,0" />
+                <TextBlock Text="Inventory Stock Valuation by Category" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Financial analysis of cost, retail value, and projected gross profit margins across inventory categories." Style="{StaticResource SubTitleStyle}" />
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <Button Content="Export CSV" Command="{Binding ExportCsvCommand}"
-                        Background="#0F172A" Foreground="White" FontWeight="SemiBold" Padding="14,8" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}" Margin="0,0,8,0" />
                 <Button Content="Export PDF" Command="{Binding ExportPdfCommand}"
-                        Background="#0F172A" Foreground="White" FontWeight="SemiBold" Padding="14,8" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}" Margin="0,0,8,0" />
                 <Button Content="Refresh (F5)" Command="{Binding LoadDataCommand}"
-                        Background="#E2E8F0" Foreground="#0F172A" FontWeight="SemiBold" Padding="12,8" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}" />
             </StackPanel>
         </Grid>
 
@@ -59,133 +59,77 @@
             </Grid.ColumnDefinitions>
 
             <!-- Products -->
-            <Border Grid.Column="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+            <Border Grid.Column="0" Style="{StaticResource SurfaceCardStyle}" Margin="0,0,8,0">
                 <StackPanel>
-                    <TextBlock Text="Total Tracked Products" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" />
-                    <TextBlock Text="{Binding TotalProducts}" FontSize="18" FontWeight="Bold" Foreground="#0F172A" Margin="0,4,0,0" />
+                    <TextBlock Text="Total Tracked Products" Style="{StaticResource KpiLabelStyle}" />
+                    <TextBlock Text="{Binding TotalProducts}" Style="{StaticResource KpiValueStyle}" />
                 </StackPanel>
             </Border>
 
             <!-- Units -->
-            <Border Grid.Column="1" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+            <Border Grid.Column="1" Style="{StaticResource SurfaceCardStyle}" Margin="0,0,8,0">
                 <StackPanel>
-                    <TextBlock Text="Total Units in Stock" FontSize="11" FontWeight="SemiBold" Foreground="#64748B" />
-                    <TextBlock Text="{Binding TotalUnits, StringFormat='{}{0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#0F172A" Margin="0,4,0,0" />
+                    <TextBlock Text="Total Units in Stock" Style="{StaticResource KpiLabelStyle}" />
+                    <TextBlock Text="{Binding TotalUnits, StringFormat='{}{0:N2}'}" Style="{StaticResource KpiValueStyle}" />
                 </StackPanel>
             </Border>
 
             <!-- Cost Value -->
-            <Border Grid.Column="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+            <Border Grid.Column="2" Style="{StaticResource SurfaceCardStyle}" Margin="0,0,8,0">
                 <StackPanel>
-                    <TextBlock Text="Total Cost Value" FontSize="11" FontWeight="SemiBold" Foreground="#2563EB" />
-                    <TextBlock Text="{Binding TotalCostValue, StringFormat='${0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#2563EB" Margin="0,4,0,0" />
+                    <TextBlock Text="Total Cost Value" Style="{StaticResource KpiLabelStyle}" />
+                    <TextBlock Text="{Binding TotalCostValue, Converter={StaticResource MoneyConverter}}" Style="{StaticResource KpiValueStyle}" />
                 </StackPanel>
             </Border>
 
             <!-- Retail Value -->
-            <Border Grid.Column="3" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+            <Border Grid.Column="3" Style="{StaticResource SurfaceCardStyle}" Margin="0,0,8,0">
                 <StackPanel>
-                    <TextBlock Text="Total Retail Value" FontSize="11" FontWeight="SemiBold" Foreground="#16A34A" />
-                    <TextBlock Text="{Binding TotalRetailValue, StringFormat='${0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#16A34A" Margin="0,4,0,0" />
+                    <TextBlock Text="Total Retail Value" Style="{StaticResource KpiLabelStyle}" Foreground="{DynamicResource SuccessTextBrush}" />
+                    <TextBlock Text="{Binding TotalRetailValue, Converter={StaticResource MoneyConverter}}" Style="{StaticResource KpiValueStyle}" Foreground="{DynamicResource SuccessTextBrush}" />
                 </StackPanel>
             </Border>
 
             <!-- Potential Profit -->
-            <Border Grid.Column="4" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12">
+            <Border Grid.Column="4" Style="{StaticResource SurfaceCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="Potential Gross Profit" FontSize="11" FontWeight="SemiBold" Foreground="#0F172A" />
+                    <TextBlock Text="Potential Gross Profit" Style="{StaticResource KpiLabelStyle}" />
                     <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                        <TextBlock Text="{Binding TotalPotentialProfit, StringFormat='${0:N2}'}" FontSize="18" FontWeight="Bold" Foreground="#0F172A" />
-                        <TextBlock Text="{Binding OverallProfitMarginPercent, StringFormat='{} ({0:N1}%)'}" FontSize="12" FontWeight="SemiBold" Foreground="#16A34A" VerticalAlignment="Center" Margin="4,0,0,0" />
+                        <TextBlock Text="{Binding TotalPotentialProfit, Converter={StaticResource MoneyConverter}}" Style="{StaticResource KpiValueStyle}" />
+                        <TextBlock Text="{Binding OverallProfitMarginPercent, StringFormat='{} ({0:N1}%)'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SuccessTextBrush}" VerticalAlignment="Center" Margin="6,0,0,0" />
                     </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>
 
         <!-- DataGrid -->
-        <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="1">
+        <Border Grid.Row="2" Style="{StaticResource TableContainerBorderStyle}">
             <DataGrid ItemsSource="{Binding Valuations}"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#F1F5F9"
-                      RowHeight="38"
-                      BorderThickness="0"
-                      Background="White">
+                      Style="{StaticResource AppDataGridStyle}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Category Name" Binding="{Binding CategoryName}" Width="*" FontWeight="Bold" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Products" Binding="{Binding ProductCount}" Width="100" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Category Name" Binding="{Binding CategoryName}" Width="*" FontWeight="SemiBold" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Products" Binding="{Binding ProductCount}" Width="100"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
 
-                    <DataGridTextColumn Header="Total Units" Binding="{Binding TotalUnits, StringFormat='{}{0:N2}'}" Width="120" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Total Units" Binding="{Binding TotalUnits, StringFormat='{}{0:N2}'}" Width="120"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
 
-                    <DataGridTextColumn Header="Value at Cost" Binding="{Binding TotalCostValue, StringFormat='${0:N2}'}" Width="130" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="FontWeight" Value="SemiBold" />
-                                <Setter Property="Foreground" Value="#2563EB" />
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Value at Cost" Binding="{Binding TotalCostValue, Converter={StaticResource MoneyConverter}}" Width="140"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
 
-                    <DataGridTextColumn Header="Value at Retail" Binding="{Binding TotalRetailValue, StringFormat='${0:N2}'}" Width="130" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="FontWeight" Value="SemiBold" />
-                                <Setter Property="Foreground" Value="#16A34A" />
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Value at Retail" Binding="{Binding TotalRetailValue, Converter={StaticResource MoneyConverter}}" Width="140"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
 
-                    <DataGridTextColumn Header="Potential Profit" Binding="{Binding PotentialProfit, StringFormat='${0:N2}'}" Width="130" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="FontWeight" Value="Bold" />
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Potential Profit" Binding="{Binding PotentialProfit, Converter={StaticResource MoneyConverter}}" Width="140"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
 
-                    <DataGridTextColumn Header="Margin %" Binding="{Binding ProfitMarginPercent, StringFormat='{}{0:N1}%'}" Width="100" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="FontWeight" Value="SemiBold" />
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Margin %" Binding="{Binding ProfitMarginPercent, StringFormat='{}{0:N1}%'}" Width="110"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
 
         <!-- Footer -->
-        <TextBlock Grid.Row="3" Text="{Binding Valuations.Count, StringFormat='{}Categories: {0}'}" Foreground="#64748B" FontWeight="SemiBold" Margin="4,10,0,0" />
+        <TextBlock Grid.Row="3" Text="{Binding Valuations.Count, StringFormat='{}Categories: {0}'}" Style="{StaticResource MutedLabelStyle}" Margin="4,10,0,0" />
     </Grid>
 </UserControl>
-

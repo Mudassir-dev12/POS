@@ -96,51 +96,10 @@ namespace ShopPOS.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("IsDeleted = 0");
 
                     b.ToTable("Brands");
-                });
-
-            modelBuilder.Entity("ShopPOS.Core.Entities.CashMovement", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("Amount")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("CreatedByUserId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("MovedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("ShiftId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ShiftId");
-
-                    b.ToTable("CashMovements", (string)null);
                 });
 
             modelBuilder.Entity("ShopPOS.Core.Entities.Category", b =>
@@ -177,77 +136,10 @@ namespace ShopPOS.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ParentCategoryId", "Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("IsDeleted = 0");
 
                     b.ToTable("Categories");
-                });
-
-            modelBuilder.Entity("ShopPOS.Core.Entities.Customer", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Address")
-                        .HasMaxLength(300)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("CreatedByUserId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("CreditLimit")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("DefaultPriceLevelId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(150)
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasDefaultValue(true);
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<long>("OpeningBalance")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("TaxNumber")
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DefaultPriceLevelId");
-
-                    b.HasIndex("Phone")
-                        .IsUnique()
-                        .HasFilter("[Phone] IS NOT NULL AND [Phone] != ''");
-
-                    b.ToTable("Customers");
                 });
 
             modelBuilder.Entity("ShopPOS.Core.Entities.NumberSequence", b =>
@@ -360,6 +252,13 @@ namespace ShopPOS.Data.Migrations
                     b.Property<long>("SalePrice")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("SearchText")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("");
+
                     b.Property<string>("Sku")
                         .IsRequired()
                         .HasMaxLength(60)
@@ -382,7 +281,7 @@ namespace ShopPOS.Data.Migrations
 
                     b.HasIndex("Barcode")
                         .IsUnique()
-                        .HasFilter("[Barcode] IS NOT NULL");
+                        .HasFilter("Barcode IS NOT NULL AND IsDeleted = 0");
 
                     b.HasIndex("BrandId");
 
@@ -390,8 +289,11 @@ namespace ShopPOS.Data.Migrations
 
                     b.HasIndex("Name");
 
+                    b.HasIndex("SearchText");
+
                     b.HasIndex("Sku")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("IsDeleted = 0");
 
                     b.HasIndex("UnitId");
 
@@ -430,7 +332,8 @@ namespace ShopPOS.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Barcode")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("IsDeleted = 0");
 
                     b.HasIndex("ProductId");
 
@@ -870,9 +773,6 @@ namespace ShopPOS.Data.Migrations
                     b.Property<int?>("CreatedByUserId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("CustomerId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<long>("DueAmount")
                         .HasColumnType("INTEGER");
 
@@ -909,9 +809,6 @@ namespace ShopPOS.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("ShiftId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
@@ -929,8 +826,6 @@ namespace ShopPOS.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomerId");
-
                     b.HasIndex("HoldNumber");
 
                     b.HasIndex("PriceLevelId");
@@ -938,8 +833,6 @@ namespace ShopPOS.Data.Migrations
                     b.HasIndex("SaleNumber")
                         .IsUnique()
                         .HasFilter("[SaleNumber] IS NOT NULL");
-
-                    b.HasIndex("ShiftId");
 
                     b.HasIndex("Status", "SaleDate");
 
@@ -1083,9 +976,6 @@ namespace ShopPOS.Data.Migrations
                     b.Property<int?>("CreatedByUserId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("CustomerId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
 
@@ -1110,9 +1000,6 @@ namespace ShopPOS.Data.Migrations
                     b.Property<int?>("SaleId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("ShiftId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("Status")
                         .HasColumnType("INTEGER");
 
@@ -1130,14 +1017,10 @@ namespace ShopPOS.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CustomerId");
-
                     b.HasIndex("ReturnNumber")
                         .IsUnique();
 
                     b.HasIndex("SaleId");
-
-                    b.HasIndex("ShiftId");
 
                     b.ToTable("SaleReturns", (string)null);
                 });
@@ -1217,66 +1100,6 @@ namespace ShopPOS.Data.Migrations
                     b.ToTable("SaleReturnItems", (string)null);
                 });
 
-            modelBuilder.Entity("ShopPOS.Core.Entities.Shift", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("ClosedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<long?>("CountedCash")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int?>("CreatedByUserId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long?>("Difference")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long?>("ExpectedCash")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("OpenedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<long>("OpeningCash")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("ShiftNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ShiftNumber")
-                        .IsUnique();
-
-                    b.HasIndex("Status")
-                        .IsUnique()
-                        .HasFilter("[Status] = 1 AND [IsDeleted] = 0");
-
-                    b.ToTable("Shifts", (string)null);
-                });
-
             modelBuilder.Entity("ShopPOS.Core.Entities.ShopSetting", b =>
                 {
                     b.Property<int>("Id")
@@ -1285,11 +1108,6 @@ namespace ShopPOS.Data.Migrations
 
                     b.Property<string>("Address")
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("AllowCreditSales")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasDefaultValue(true);
 
                     b.Property<bool>("AllowNegativeStock")
                         .HasColumnType("INTEGER");
@@ -1324,10 +1142,17 @@ namespace ShopPOS.Data.Migrations
                     b.Property<int?>("CreatedByUserId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("CurrencyDecimals")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(2);
+
                     b.Property<string>("CurrencySymbol")
                         .IsRequired()
+                        .ValueGeneratedOnAdd()
                         .HasMaxLength(10)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("Rs");
 
                     b.Property<decimal>("DefaultReorderMultiplier")
                         .ValueGeneratedOnAdd()
@@ -1375,11 +1200,6 @@ namespace ShopPOS.Data.Migrations
 
                     b.Property<int>("ReceiptWidthMm")
                         .HasColumnType("INTEGER");
-
-                    b.Property<bool>("RequireOpenShiftForSales")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER")
-                        .HasDefaultValue(true);
 
                     b.Property<int?>("SaleReturnWindowDays")
                         .HasColumnType("INTEGER");
@@ -1642,7 +1462,8 @@ namespace ShopPOS.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Name", "Phone")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("IsDeleted = 0");
 
                     b.ToTable("Suppliers");
                 });
@@ -1761,7 +1582,8 @@ namespace ShopPOS.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Name")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("IsDeleted = 0");
 
                     b.ToTable("Units");
                 });
@@ -1830,17 +1652,6 @@ namespace ShopPOS.Data.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ShopPOS.Core.Entities.CashMovement", b =>
-                {
-                    b.HasOne("ShopPOS.Core.Entities.Shift", "Shift")
-                        .WithMany("CashMovements")
-                        .HasForeignKey("ShiftId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Shift");
-                });
-
             modelBuilder.Entity("ShopPOS.Core.Entities.Category", b =>
                 {
                     b.HasOne("ShopPOS.Core.Entities.Category", "ParentCategory")
@@ -1849,16 +1660,6 @@ namespace ShopPOS.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("ParentCategory");
-                });
-
-            modelBuilder.Entity("ShopPOS.Core.Entities.Customer", b =>
-                {
-                    b.HasOne("ShopPOS.Core.Entities.PriceLevel", "DefaultPriceLevel")
-                        .WithMany("Customers")
-                        .HasForeignKey("DefaultPriceLevelId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("DefaultPriceLevel");
                 });
 
             modelBuilder.Entity("ShopPOS.Core.Entities.Product", b =>
@@ -2032,26 +1833,12 @@ namespace ShopPOS.Data.Migrations
 
             modelBuilder.Entity("ShopPOS.Core.Entities.Sale", b =>
                 {
-                    b.HasOne("ShopPOS.Core.Entities.Customer", "Customer")
-                        .WithMany("Sales")
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("ShopPOS.Core.Entities.PriceLevel", "PriceLevel")
                         .WithMany()
                         .HasForeignKey("PriceLevelId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("ShopPOS.Core.Entities.Shift", "Shift")
-                        .WithMany("Sales")
-                        .HasForeignKey("ShiftId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Customer");
-
                     b.Navigation("PriceLevel");
-
-                    b.Navigation("Shift");
                 });
 
             modelBuilder.Entity("ShopPOS.Core.Entities.SaleItem", b =>
@@ -2086,26 +1873,12 @@ namespace ShopPOS.Data.Migrations
 
             modelBuilder.Entity("ShopPOS.Core.Entities.SaleReturn", b =>
                 {
-                    b.HasOne("ShopPOS.Core.Entities.Customer", "Customer")
-                        .WithMany("SaleReturns")
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("ShopPOS.Core.Entities.Sale", "Sale")
                         .WithMany("Returns")
                         .HasForeignKey("SaleId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("ShopPOS.Core.Entities.Shift", "Shift")
-                        .WithMany()
-                        .HasForeignKey("ShiftId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("Customer");
-
                     b.Navigation("Sale");
-
-                    b.Navigation("Shift");
                 });
 
             modelBuilder.Entity("ShopPOS.Core.Entities.SaleReturnItem", b =>
@@ -2229,17 +2002,8 @@ namespace ShopPOS.Data.Migrations
                     b.Navigation("SubCategories");
                 });
 
-            modelBuilder.Entity("ShopPOS.Core.Entities.Customer", b =>
-                {
-                    b.Navigation("SaleReturns");
-
-                    b.Navigation("Sales");
-                });
-
             modelBuilder.Entity("ShopPOS.Core.Entities.PriceLevel", b =>
                 {
-                    b.Navigation("Customers");
-
                     b.Navigation("ProductPrices");
                 });
 
@@ -2285,13 +2049,6 @@ namespace ShopPOS.Data.Migrations
             modelBuilder.Entity("ShopPOS.Core.Entities.SaleReturn", b =>
                 {
                     b.Navigation("Items");
-                });
-
-            modelBuilder.Entity("ShopPOS.Core.Entities.Shift", b =>
-                {
-                    b.Navigation("CashMovements");
-
-                    b.Navigation("Sales");
                 });
 
             modelBuilder.Entity("ShopPOS.Core.Entities.StockAdjustment", b =>

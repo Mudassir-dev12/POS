@@ -52,15 +52,21 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
         builder.Property(p => p.IsActive)
             .HasDefaultValue(true);
 
+        builder.Property(p => p.SearchText)
+            .HasMaxLength(1000)
+            .HasDefaultValue(string.Empty);
+
         // Required indexes
         builder.HasIndex(p => p.Sku)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("IsDeleted = 0");
 
         builder.HasIndex(p => p.Barcode)
             .IsUnique()
-            .HasFilter("[Barcode] IS NOT NULL");
+            .HasFilter("Barcode IS NOT NULL AND IsDeleted = 0");
 
         builder.HasIndex(p => p.Name);
+        builder.HasIndex(p => p.SearchText);
 
         // Foreign relationships
         builder.HasOne(p => p.Category)

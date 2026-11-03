@@ -12,28 +12,22 @@ public class SupplierLedgerService : ISupplierLedgerService
     private readonly ISupplierRepository _supplierRepo;
     private readonly IShopSettingRepository _shopSettingRepo;
     private readonly IPdfReportService _pdfReportService;
-    private readonly IPermissionService _permissionService;
 
     public SupplierLedgerService(
         ISupplierLedgerRepository ledgerRepo,
         ISupplierRepository supplierRepo,
         IShopSettingRepository shopSettingRepo,
-        IPdfReportService pdfReportService,
-        IPermissionService permissionService)
+                IPdfReportService pdfReportService)
     {
         _ledgerRepo = ledgerRepo;
         _supplierRepo = supplierRepo;
         _shopSettingRepo = shopSettingRepo;
         _pdfReportService = pdfReportService;
-        _permissionService = permissionService;
     }
 
     public async Task<Result<decimal>> GetSupplierBalanceAsync(int supplierId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessSuppliers(userRole))
-        {
-            return Result.Failure<decimal>("Permission denied. You do not have access to Suppliers.");
-        }
+        // single-user: no permission check needed
 
         var balance = await _ledgerRepo.GetSupplierBalanceAsync(supplierId, cancellationToken);
         return Result.Ok(balance);
@@ -41,10 +35,7 @@ public class SupplierLedgerService : ISupplierLedgerService
 
     public async Task<Result<Dictionary<int, decimal>>> GetSupplierBalancesAsync(IEnumerable<int> supplierIds, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessSuppliers(userRole))
-        {
-            return Result.Failure<Dictionary<int, decimal>>("Permission denied. You do not have access to Suppliers.");
-        }
+        // single-user: no permission check needed
 
         var map = await _ledgerRepo.GetSupplierBalancesAsync(supplierIds, cancellationToken);
         return Result.Ok(map);
@@ -52,10 +43,7 @@ public class SupplierLedgerService : ISupplierLedgerService
 
     public async Task<Result<SupplierLedgerReportDto>> GetSupplierLedgerReportAsync(int supplierId, DateTime fromDate, DateTime toDate, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessSuppliers(userRole))
-        {
-            return Result.Failure<SupplierLedgerReportDto>("Permission denied. You do not have access to Suppliers.");
-        }
+        // single-user: no permission check needed
 
         var supplier = await _supplierRepo.GetByIdAsync(supplierId, cancellationToken);
         if (supplier == null)
@@ -114,7 +102,7 @@ public class SupplierLedgerService : ISupplierLedgerService
             Address = settings?.Address,
             Phone = settings?.Phone,
             TaxNumber = settings?.TaxNumber,
-            CurrencySymbol = settings?.CurrencySymbol ?? "$"
+            CurrencySymbol = settings?.CurrencySymbol ?? "Rs"
         };
 
         var bytes = await _pdfReportService.GenerateSupplierLedgerPdfAsync(reportRes.Data, settingsDto, cancellationToken);

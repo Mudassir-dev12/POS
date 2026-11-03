@@ -10,6 +10,10 @@
             <ResourceDictionary.MergedDictionaries>
                 <ui:ThemesDictionary Theme="Light" />
                 <ui:ControlsDictionary />
+                <ResourceDictionary Source="/ShopPOS.UI;component/Styles/ThemeLight.xaml" />
+                <ResourceDictionary Source="/ShopPOS.UI;component/Styles/Typography.xaml" />
+                <ResourceDictionary Source="/ShopPOS.UI;component/Styles/Controls.xaml" />
+                <ResourceDictionary Source="/ShopPOS.UI;component/Styles/Layout.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <ObjectDataProvider x:Key="PaymentMethods" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">
@@ -40,6 +44,12 @@
             <helpers:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
             <helpers:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
             <helpers:DecimalGreaterThanZeroToVisibilityConverter x:Key="DecimalGreaterThanZeroToVisibilityConverter" />
+            <helpers:DecimalNonZeroToVisibilityConverter x:Key="DecimalNonZeroToVisibilityConverter" />
+            <helpers:MoneyConverter x:Key="MoneyConverter" />
+            <helpers:MoneyNoSymbolConverter x:Key="MoneyNoSymbolConverter" />
+            <helpers:DateDisplayConverter x:Key="DateDisplayConverter" />
+            <helpers:TimeDisplayConverter x:Key="TimeDisplayConverter" />
+            <helpers:DateTimeDisplayConverter x:Key="DateTimeDisplayConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -14,5 +14,8 @@ public interface IStockAdjustmentService
     Task<Result<StockAdjustmentDetailDto>> PostAdjustmentAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default);
     Task<Result<bool>> CancelAdjustmentAsync(int id, string reason, int? userId, string? userRole, CancellationToken cancellationToken = default);
     Task<Result<bool>> CreateAndPostSingleAdjustmentAsync(int productId, decimal targetQuantity, string reasonText, StockAdjustmentReason reasonType, int? userId, string? userRole, CancellationToken cancellationToken = default);
+    Task<BulkOperationResult> BulkDeleteDraftsAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default);
+    Task<BulkOperationResult> BulkCancelAdjustmentsAsync(IEnumerable<int> ids, string reason, int? userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredAdjustmentIdsAsync(DateTime? fromDate, DateTime? toDate, StockAdjustmentStatus? status, CancellationToken cancellationToken = default);
 }
 

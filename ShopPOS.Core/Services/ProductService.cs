@@ -12,7 +12,6 @@ public class ProductService : IProductService
     private readonly IProductRepository _productRepository;
     private readonly IShopSettingRepository _shopSettingRepository;
     private readonly IAuditLogService _auditLogService;
-    private readonly IPermissionService _permissionService;
     private readonly ITransactionRunner? _transactionRunner;
     private readonly IStockAdjustmentService? _stockAdjustmentService;
     private readonly CreateProductValidator _createValidator = new();
@@ -22,14 +21,12 @@ public class ProductService : IProductService
         IProductRepository productRepository,
         IShopSettingRepository shopSettingRepository,
         IAuditLogService auditLogService,
-        IPermissionService permissionService,
         ITransactionRunner? transactionRunner = null,
         IStockAdjustmentService? stockAdjustmentService = null)
     {
         _productRepository = productRepository;
         _shopSettingRepository = shopSettingRepository;
         _auditLogService = auditLogService;
-        _permissionService = permissionService;
         _transactionRunner = transactionRunner;
         _stockAdjustmentService = stockAdjustmentService;
     }
@@ -115,10 +112,7 @@ public class ProductService : IProductService
 
     public async Task<Result<ProductDto>> CreateProductAsync(CreateProductDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure<ProductDto>("Permission denied. Only Admins and Managers can add products.");
-        }
+        // single-user: no permission check needed
 
         var val = await _createValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -247,10 +241,7 @@ public class ProductService : IProductService
 
     public async Task<Result<ProductDto>> UpdateProductAsync(UpdateProductDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure<ProductDto>("Permission denied. Only Admins and Managers can edit products.");
-        }
+        // single-user: no permission check needed
 
         var val = await _updateValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -325,10 +316,7 @@ public class ProductService : IProductService
 
                 if (delta != 0)
                 {
-                    if (!_permissionService.CanAdjustStock(userRole))
-                    {
-                        return Result.Failure<ProductDto>("Permission denied. Only Admins and Managers can adjust product stock.");
-                    }
+                    // single-user: no permission check needed
 
                     if (string.IsNullOrWhiteSpace(dto.StockAdjustmentNote))
                     {
@@ -423,10 +411,7 @@ public class ProductService : IProductService
 
     public async Task<Result> DeactivateProductAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure("Permission denied. Only Admins and Managers can deactivate products.");
-        }
+        // single-user: no permission check needed
 
         var product = await _productRepository.GetByIdAsync(id, cancellationToken);
         if (product == null)
@@ -449,10 +434,7 @@ public class ProductService : IProductService
 
     public async Task<Result> DeleteProductAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure("Permission denied. Only Admins and Managers can delete products.");
-        }
+        // single-user: no permission check needed
 
         var product = await _productRepository.GetByIdAsync(id, cancellationToken);
         if (product == null)
@@ -481,10 +463,7 @@ public class ProductService : IProductService
 
     public async Task<Result<ProductDto>> DuplicateProductAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure<ProductDto>("Permission denied. Only Admins and Managers can duplicate products.");
-        }
+        // single-user: no permission check needed
 
         var source = await _productRepository.GetWithDetailsAsync(id, cancellationToken);
         if (source == null)
@@ -552,4 +531,63 @@ public class ProductService : IProductService
 
         return Result.Ok<string?>(null);
     }
+
+    public async Task<BulkOperationResult> BulkDeleteAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var product = await _productRepository.GetByIdAsync(id, cancellationToken);
+            if (product == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Product not found." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            int refCount = await _productRepository.GetReferenceCountAsync(id, cancellationToken);
+            if (refCount > 0)
+            {
+                result.Items.Add(new BulkItemResult
+                {
+                    Id = id,
+                    Identifier = product.Name,
+                    Success = false,
+                    Message = $"Skipped: in use (referenced by {refCount} movements/transactions). Deactivate instead?",
+                    CanDeactivateInstead = true
+                });
+                result.SkippedCount++;
+                continue;
+            }
+
+            await _productRepository.SoftDeleteAsync(id, cancellationToken);
+            await _auditLogService.LogAsync(userId, "DeleteProduct", "Product", product.Id, $"Soft-deleted product '{product.Name}' (SKU: {product.Sku})");
+            result.Items.Add(new BulkItemResult { Id = id, Identifier = product.Name, Success = true });
+            result.SuccessCount++;
+        }
+        return result;
+    }
+
+    public async Task<BulkOperationResult> BulkDeactivateAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var product = await _productRepository.GetByIdAsync(id, cancellationToken);
+            if (product == null) continue;
+
+            product.IsActive = false;
+            await _productRepository.UpdateAsync(product, cancellationToken);
+            await _auditLogService.LogAsync(userId, "DeactivateProduct", "Product", product.Id, $"Deactivated product '{product.Name}' (SKU: {product.Sku})");
+            result.Items.Add(new BulkItemResult { Id = id, Identifier = product.Name, Success = true });
+            result.SuccessCount++;
+        }
+        return result;
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredProductIdsAsync(ProductSearchQuery query, CancellationToken cancellationToken = default)
+    {
+        return await _productRepository.GetFilteredIdsAsync(query, cancellationToken);
+    }
+
 }

@@ -4,10 +4,8 @@
         Title="{Binding DialogTitle}"
         Height="360"
         Width="480"
-        WindowStartupLocation="CenterOwner"
+        Style="{StaticResource DialogWindowStyle}"
         ResizeMode="NoResize"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
         Loaded="Window_Loaded">
 
     <Window.InputBindings>
@@ -23,66 +21,43 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Margin="0,0,0,16" Padding="0,0,0,10" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
-            <TextBlock Text="{Binding DialogTitle}" FontSize="16" FontWeight="Bold" Foreground="#0F172A" />
+        <Border Grid.Row="0" Margin="0,0,0,16" Padding="0,0,0,10" BorderBrush="{DynamicResource SeparatorBorderBrush}" BorderThickness="0,0,0,1">
+            <TextBlock Text="{Binding DialogTitle}" Style="{StaticResource SectionHeaderStyle}" />
         </Border>
 
         <!-- Form Body -->
         <StackPanel Grid.Row="1">
             <!-- Name -->
-            <StackPanel>
-                <TextBlock Text="Category Name *" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
-                <TextBox x:Name="FirstField" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
-                <TextBlock Text="{Binding NameError}" Foreground="#DC2626" FontSize="11" Margin="0,2,0,0" Visibility="{Binding NameError, Converter={StaticResource StringToVisibilityConverter}}" />
+            <StackPanel Margin="0,0,0,12">
+                <TextBlock Text="Category Name *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                <TextBox x:Name="FirstField" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+                <TextBlock Text="{Binding NameError}" Foreground="{DynamicResource DangerBrush}" FontSize="11" Margin="0,2,0,0" Visibility="{Binding NameError, Converter={StaticResource StringToVisibilityConverter}}" />
             </StackPanel>
 
             <!-- Parent Category -->
-            <StackPanel>
-                <TextBlock Text="Parent Category" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
+            <StackPanel Margin="0,0,0,12">
+                <TextBlock Text="Parent Category" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                 <ComboBox ItemsSource="{Binding AvailableParents}"
                           SelectedValuePath="Id"
                           DisplayMemberPath="Name"
                           SelectedValue="{Binding SelectedParentId}"
-                          Padding="8,6"
-                          FontSize="13" />
+                          Style="{StaticResource InputComboBoxStyle}" />
             </StackPanel>
 
             <!-- IsActive -->
             <CheckBox Content="Category is active" IsChecked="{Binding IsActive}" Margin="0,4,0,0" />
-            <TextBlock Text="{Binding GeneralError}" Foreground="#DC2626" FontSize="12" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding GeneralError}" Foreground="{DynamicResource DangerBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,4,0,0" />
         </StackPanel>
 
         <!-- Footer -->
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
             <Button Content="Save (Ctrl+S)"
                     Command="{Binding SaveCommand}"
-                    Background="#2563EB"
-                    Foreground="White"
-                    FontWeight="Bold"
-                    Padding="18,8"
-                    BorderThickness="0"
-                    Cursor="Hand"
-                    Margin="0,0,8,0">
-                <Button.Resources>
-                    <Style TargetType="Border">
-                        <Setter Property="CornerRadius" Value="6" />
-                    </Style>
-                </Button.Resources>
-            </Button>
+                    Style="{StaticResource PrimaryButtonStyle}"
+                    Margin="0,0,8,0" />
             <Button Content="Cancel (Esc)"
                     Command="{Binding CancelCommand}"
-                    Background="#E2E8F0"
-                    Foreground="#334155"
-                    FontWeight="SemiBold"
-                    Padding="16,8"
-                    BorderThickness="0"
-                    Cursor="Hand">
-                <Button.Resources>
-                    <Style TargetType="Border">
-                        <Setter Property="CornerRadius" Value="6" />
-                    </Style>
-                </Button.Resources>
-            </Button>
+                    Style="{StaticResource SecondaryButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>

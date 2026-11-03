@@ -105,7 +105,6 @@ public class InventoryPerformanceTests
                 var settingRepo = new ShopSettingRepository(testCtx);
                 var supplierLedgerRepo = new SupplierLedgerRepository(testCtx);
                 var invRepo = new InventoryRepository(testCtx);
-                var permService = new PermissionService();
 
                 var invService = new InventoryService(
                     ledgerQuery,
@@ -116,7 +115,6 @@ public class InventoryPerformanceTests
                     supplierLedgerRepo,
                     invRepo,
                     new Mock<IPurchaseService>().Object,
-                    permService,
                     new Mock<IPdfReportService>().Object);
 
                 // Measure query execution time
@@ -238,7 +236,6 @@ public class InventoryPerformanceTests
                 var settingRepo = new ShopSettingRepository(testCtx);
                 var supplierLedgerRepo = new SupplierLedgerRepository(testCtx);
                 var invRepo = new InventoryRepository(testCtx);
-                var permService = new PermissionService();
 
                 var invService = new InventoryService(
                     ledgerQuery,
@@ -249,7 +246,6 @@ public class InventoryPerformanceTests
                     supplierLedgerRepo,
                     invRepo,
                     new Mock<IPurchaseService>().Object,
-                    permService,
                     new Mock<IPdfReportService>().Object);
 
                 // 1. Measure paged overall movement history

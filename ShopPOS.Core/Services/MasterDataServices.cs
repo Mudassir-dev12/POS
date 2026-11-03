@@ -10,18 +10,15 @@ public class CategoryService : ICategoryService
 {
     private readonly ICategoryRepository _categoryRepository;
     private readonly IAuditLogService _auditLogService;
-    private readonly IPermissionService _permissionService;
     private readonly CreateCategoryValidator _createValidator = new();
     private readonly UpdateCategoryValidator _updateValidator = new();
 
     public CategoryService(
         ICategoryRepository categoryRepository,
-        IAuditLogService auditLogService,
-        IPermissionService permissionService)
+        IAuditLogService auditLogService)
     {
         _categoryRepository = categoryRepository;
         _auditLogService = auditLogService;
-        _permissionService = permissionService;
     }
 
     public async Task<Result<IReadOnlyList<CategoryDto>>> GetCategoryTreeAsync(bool includeInactive = false, CancellationToken cancellationToken = default)
@@ -51,13 +48,8 @@ public class CategoryService : ICategoryService
         return Result.Ok<IReadOnlyList<CategoryDto>>(dtos);
     }
 
-    public async Task<Result<CategoryDto>> CreateCategoryAsync(CreateCategoryDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<CategoryDto>> CreateCategoryAsync(CreateCategoryDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure<CategoryDto>("Permission denied. Only Admins and Managers can add categories.");
-        }
-
         var val = await _createValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
         {
@@ -91,13 +83,8 @@ public class CategoryService : ICategoryService
         });
     }
 
-    public async Task<Result<CategoryDto>> UpdateCategoryAsync(UpdateCategoryDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<CategoryDto>> UpdateCategoryAsync(UpdateCategoryDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure<CategoryDto>("Permission denied. Only Admins and Managers can edit categories.");
-        }
-
         var val = await _updateValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
         {
@@ -141,13 +128,8 @@ public class CategoryService : ICategoryService
         });
     }
 
-    public async Task<Result> DeactivateCategoryAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result> DeactivateCategoryAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure("Permission denied. Only Admins and Managers can deactivate categories.");
-        }
-
         var category = await _categoryRepository.GetByIdAsync(id, cancellationToken);
         if (category == null)
         {
@@ -162,13 +144,8 @@ public class CategoryService : ICategoryService
         return Result.Ok();
     }
 
-    public async Task<Result> DeleteCategoryAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteCategoryAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure("Permission denied. Only Admins and Managers can delete categories.");
-        }
-
         var category = await _categoryRepository.GetByIdAsync(id, cancellationToken);
         if (category == null)
         {
@@ -186,24 +163,77 @@ public class CategoryService : ICategoryService
 
         return Result.Ok();
     }
+
+    public async Task<BulkOperationResult> BulkDeleteAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var cat = await _categoryRepository.GetByIdAsync(id, cancellationToken);
+            if (cat == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Category not found." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            if (await _categoryRepository.HasProductsOrChildrenAsync(id, cancellationToken))
+            {
+                result.Items.Add(new BulkItemResult
+                {
+                    Id = id,
+                    Identifier = cat.Name,
+                    Success = false,
+                    Message = "Skipped: in use (referenced by products or subcategories). Deactivate instead?",
+                    CanDeactivateInstead = true
+                });
+                result.SkippedCount++;
+                continue;
+            }
+
+            await _categoryRepository.SoftDeleteAsync(id, cancellationToken);
+            await _auditLogService.LogAsync(userId, "DeleteCategory", "Category", cat.Id, $"Soft-deleted category '{cat.Name}'");
+            result.Items.Add(new BulkItemResult { Id = id, Identifier = cat.Name, Success = true });
+            result.SuccessCount++;
+        }
+        return result;
+    }
+
+    public async Task<BulkOperationResult> BulkDeactivateAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var cat = await _categoryRepository.GetByIdAsync(id, cancellationToken);
+            if (cat == null) continue;
+            cat.IsActive = false;
+            await _categoryRepository.UpdateAsync(cat, cancellationToken);
+            await _auditLogService.LogAsync(userId, "DeactivateCategory", "Category", cat.Id, $"Deactivated category '{cat.Name}'");
+            result.Items.Add(new BulkItemResult { Id = id, Identifier = cat.Name, Success = true });
+            result.SuccessCount++;
+        }
+        return result;
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredCategoryIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default)
+    {
+        return await _categoryRepository.GetFilteredIdsAsync(searchTerm, includeInactive, cancellationToken);
+    }
 }
 
 public class BrandService : IBrandService
 {
     private readonly IBrandRepository _brandRepository;
     private readonly IAuditLogService _auditLogService;
-    private readonly IPermissionService _permissionService;
     private readonly CreateBrandValidator _createValidator = new();
     private readonly UpdateBrandValidator _updateValidator = new();
 
     public BrandService(
         IBrandRepository brandRepository,
-        IAuditLogService auditLogService,
-        IPermissionService permissionService)
+        IAuditLogService auditLogService)
     {
         _brandRepository = brandRepository;
         _auditLogService = auditLogService;
-        _permissionService = permissionService;
     }
 
     public async Task<Result<PagedResult<BrandDto>>> GetPagedBrandsAsync(MasterDataSearchQuery query, CancellationToken cancellationToken = default)
@@ -225,13 +255,8 @@ public class BrandService : IBrandService
         return Result.Ok<IReadOnlyList<BrandDto>>(dtos);
     }
 
-    public async Task<Result<BrandDto>> CreateBrandAsync(CreateBrandDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<BrandDto>> CreateBrandAsync(CreateBrandDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure<BrandDto>("Permission denied. Only Admins and Managers can create brands.");
-        }
-
         var val = await _createValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
         {
@@ -257,13 +282,8 @@ public class BrandService : IBrandService
         return Result.Ok(new BrandDto { Id = brand.Id, Name = brand.Name, Description = brand.Description, IsActive = brand.IsActive });
     }
 
-    public async Task<Result<BrandDto>> UpdateBrandAsync(UpdateBrandDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<BrandDto>> UpdateBrandAsync(UpdateBrandDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure<BrandDto>("Permission denied. Only Admins and Managers can edit brands.");
-        }
-
         var val = await _updateValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
         {
@@ -291,13 +311,8 @@ public class BrandService : IBrandService
         return Result.Ok(new BrandDto { Id = existing.Id, Name = existing.Name, Description = existing.Description, IsActive = existing.IsActive });
     }
 
-    public async Task<Result> DeactivateBrandAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result> DeactivateBrandAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure("Permission denied. Only Admins and Managers can deactivate brands.");
-        }
-
         var brand = await _brandRepository.GetByIdAsync(id, cancellationToken);
         if (brand == null)
         {
@@ -311,13 +326,8 @@ public class BrandService : IBrandService
         return Result.Ok();
     }
 
-    public async Task<Result> DeleteBrandAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteBrandAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure("Permission denied. Only Admins and Managers can delete brands.");
-        }
-
         var brand = await _brandRepository.GetByIdAsync(id, cancellationToken);
         if (brand == null)
         {
@@ -334,24 +344,77 @@ public class BrandService : IBrandService
 
         return Result.Ok();
     }
+
+    public async Task<BulkOperationResult> BulkDeleteAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var brand = await _brandRepository.GetByIdAsync(id, cancellationToken);
+            if (brand == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Brand not found." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            if (await _brandRepository.HasProductsAsync(id, cancellationToken))
+            {
+                result.Items.Add(new BulkItemResult
+                {
+                    Id = id,
+                    Identifier = brand.Name,
+                    Success = false,
+                    Message = "Skipped: in use (referenced by products). Deactivate instead?",
+                    CanDeactivateInstead = true
+                });
+                result.SkippedCount++;
+                continue;
+            }
+
+            await _brandRepository.SoftDeleteAsync(id, cancellationToken);
+            await _auditLogService.LogAsync(userId, "DeleteBrand", "Brand", brand.Id, $"Soft-deleted brand '{brand.Name}'");
+            result.Items.Add(new BulkItemResult { Id = id, Identifier = brand.Name, Success = true });
+            result.SuccessCount++;
+        }
+        return result;
+    }
+
+    public async Task<BulkOperationResult> BulkDeactivateAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var brand = await _brandRepository.GetByIdAsync(id, cancellationToken);
+            if (brand == null) continue;
+            brand.IsActive = false;
+            await _brandRepository.UpdateAsync(brand, cancellationToken);
+            await _auditLogService.LogAsync(userId, "DeactivateBrand", "Brand", brand.Id, $"Deactivated brand '{brand.Name}'");
+            result.Items.Add(new BulkItemResult { Id = id, Identifier = brand.Name, Success = true });
+            result.SuccessCount++;
+        }
+        return result;
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredBrandIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default)
+    {
+        return await _brandRepository.GetFilteredIdsAsync(searchTerm, includeInactive, cancellationToken);
+    }
 }
 
 public class UnitService : IUnitService
 {
     private readonly IUnitRepository _unitRepository;
     private readonly IAuditLogService _auditLogService;
-    private readonly IPermissionService _permissionService;
     private readonly CreateUnitValidator _createValidator = new();
     private readonly UpdateUnitValidator _updateValidator = new();
 
     public UnitService(
         IUnitRepository unitRepository,
-        IAuditLogService auditLogService,
-        IPermissionService permissionService)
+        IAuditLogService auditLogService)
     {
         _unitRepository = unitRepository;
         _auditLogService = auditLogService;
-        _permissionService = permissionService;
     }
 
     public async Task<Result<PagedResult<UnitDto>>> GetPagedUnitsAsync(MasterDataSearchQuery query, CancellationToken cancellationToken = default)
@@ -374,13 +437,8 @@ public class UnitService : IUnitService
         return Result.Ok<IReadOnlyList<UnitDto>>(dtos);
     }
 
-    public async Task<Result<UnitDto>> CreateUnitAsync(CreateUnitDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<UnitDto>> CreateUnitAsync(CreateUnitDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure<UnitDto>("Permission denied. Only Admins and Managers can add units.");
-        }
-
         var val = await _createValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
         {
@@ -407,13 +465,8 @@ public class UnitService : IUnitService
         return Result.Ok(new UnitDto { Id = unit.Id, Name = unit.Name, ShortName = unit.ShortName, AllowDecimal = unit.AllowDecimal, IsActive = unit.IsActive });
     }
 
-    public async Task<Result<UnitDto>> UpdateUnitAsync(UpdateUnitDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<UnitDto>> UpdateUnitAsync(UpdateUnitDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure<UnitDto>("Permission denied. Only Admins and Managers can edit units.");
-        }
-
         var val = await _updateValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
         {
@@ -442,13 +495,8 @@ public class UnitService : IUnitService
         return Result.Ok(new UnitDto { Id = existing.Id, Name = existing.Name, ShortName = existing.ShortName, AllowDecimal = existing.AllowDecimal, IsActive = existing.IsActive });
     }
 
-    public async Task<Result> DeactivateUnitAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result> DeactivateUnitAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure("Permission denied. Only Admins and Managers can deactivate units.");
-        }
-
         var unit = await _unitRepository.GetByIdAsync(id, cancellationToken);
         if (unit == null)
         {
@@ -462,13 +510,8 @@ public class UnitService : IUnitService
         return Result.Ok();
     }
 
-    public async Task<Result> DeleteUnitAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteUnitAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(userRole))
-        {
-            return Result.Failure("Permission denied. Only Admins and Managers can delete units.");
-        }
-
         var unit = await _unitRepository.GetByIdAsync(id, cancellationToken);
         if (unit == null)
         {
@@ -486,44 +529,87 @@ public class UnitService : IUnitService
 
         return Result.Ok();
     }
+
+    public async Task<BulkOperationResult> BulkDeleteAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var unit = await _unitRepository.GetByIdAsync(id, cancellationToken);
+            if (unit == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Unit not found." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            if (await _unitRepository.HasProductsAsync(id, cancellationToken))
+            {
+                result.Items.Add(new BulkItemResult
+                {
+                    Id = id,
+                    Identifier = unit.Name,
+                    Success = false,
+                    Message = "Skipped: in use (referenced by products). Deactivate instead?",
+                    CanDeactivateInstead = true
+                });
+                result.SkippedCount++;
+                continue;
+            }
+
+            await _unitRepository.SoftDeleteAsync(id, cancellationToken);
+            await _auditLogService.LogAsync(userId, "DeleteUnit", "Unit", unit.Id, $"Soft-deleted unit '{unit.Name}'");
+            result.Items.Add(new BulkItemResult { Id = id, Identifier = unit.Name, Success = true });
+            result.SuccessCount++;
+        }
+        return result;
+    }
+
+    public async Task<BulkOperationResult> BulkDeactivateAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var unit = await _unitRepository.GetByIdAsync(id, cancellationToken);
+            if (unit == null) continue;
+            unit.IsActive = false;
+            await _unitRepository.UpdateAsync(unit, cancellationToken);
+            await _auditLogService.LogAsync(userId, "DeactivateUnit", "Unit", unit.Id, $"Deactivated unit '{unit.Name}'");
+            result.Items.Add(new BulkItemResult { Id = id, Identifier = unit.Name, Success = true });
+            result.SuccessCount++;
+        }
+        return result;
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredUnitIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default)
+    {
+        return await _unitRepository.GetFilteredIdsAsync(searchTerm, includeInactive, cancellationToken);
+    }
 }
 
 public class SupplierService : ISupplierService
 {
     private readonly ISupplierRepository _supplierRepository;
     private readonly IAuditLogService _auditLogService;
-    private readonly IPermissionService _permissionService;
     private readonly CreateSupplierValidator _createValidator = new();
     private readonly UpdateSupplierValidator _updateValidator = new();
 
     public SupplierService(
         ISupplierRepository supplierRepository,
-        IAuditLogService auditLogService,
-        IPermissionService permissionService)
+        IAuditLogService auditLogService)
     {
         _supplierRepository = supplierRepository;
         _auditLogService = auditLogService;
-        _permissionService = permissionService;
     }
 
-    public async Task<Result<PagedResult<SupplierDto>>> GetPagedSuppliersAsync(MasterDataSearchQuery query, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PagedResult<SupplierDto>>> GetPagedSuppliersAsync(MasterDataSearchQuery query, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessSuppliers(userRole))
-        {
-            return Result.Failure<PagedResult<SupplierDto>>("Access denied. Cashiers cannot access suppliers.");
-        }
-
         var paged = await _supplierRepository.GetPagedAsync(query, cancellationToken);
         return Result.Ok(paged);
     }
 
     public async Task<Result<IReadOnlyList<SupplierDto>>> GetFlatListAsync(bool includeInactive = false, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessSuppliers(userRole))
-        {
-            return Result.Failure<IReadOnlyList<SupplierDto>>("Access denied. Cashiers cannot access suppliers.");
-        }
-
         var list = await _supplierRepository.GetAllFlatAsync(includeInactive, cancellationToken);
         var dtos = list.Select(s => new SupplierDto
         {
@@ -541,13 +627,8 @@ public class SupplierService : ISupplierService
         return Result.Ok<IReadOnlyList<SupplierDto>>(dtos);
     }
 
-    public async Task<Result<SupplierDto>> CreateSupplierAsync(CreateSupplierDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<SupplierDto>> CreateSupplierAsync(CreateSupplierDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessSuppliers(userRole))
-        {
-            return Result.Failure<SupplierDto>("Access denied. Cashiers cannot access suppliers.");
-        }
-
         var val = await _createValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
         {
@@ -591,13 +672,8 @@ public class SupplierService : ISupplierService
         });
     }
 
-    public async Task<Result<SupplierDto>> UpdateSupplierAsync(UpdateSupplierDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<SupplierDto>> UpdateSupplierAsync(UpdateSupplierDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessSuppliers(userRole))
-        {
-            return Result.Failure<SupplierDto>("Access denied. Cashiers cannot access suppliers.");
-        }
-
         var val = await _updateValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
         {
@@ -649,13 +725,8 @@ public class SupplierService : ISupplierService
         });
     }
 
-    public async Task<Result> DeactivateSupplierAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result> DeactivateSupplierAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessSuppliers(userRole))
-        {
-            return Result.Failure("Access denied. Cashiers cannot access suppliers.");
-        }
-
         var supplier = await _supplierRepository.GetByIdAsync(id, cancellationToken);
         if (supplier == null)
         {
@@ -669,13 +740,8 @@ public class SupplierService : ISupplierService
         return Result.Ok();
     }
 
-    public async Task<Result> DeleteSupplierAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteSupplierAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessSuppliers(userRole))
-        {
-            return Result.Failure("Access denied. Cashiers cannot access suppliers.");
-        }
-
         var supplier = await _supplierRepository.GetByIdAsync(id, cancellationToken);
         if (supplier == null)
         {
@@ -692,211 +758,61 @@ public class SupplierService : ISupplierService
 
         return Result.Ok();
     }
-}
 
-public class CustomerService : ICustomerService
-{
-    private readonly ICustomerRepository _customerRepository;
-    private readonly IAuditLogService _auditLogService;
-    private readonly IPermissionService _permissionService;
-    private readonly CreateCustomerValidator _createValidator = new();
-    private readonly UpdateCustomerValidator _updateValidator = new();
-
-    public CustomerService(
-        ICustomerRepository customerRepository,
-        IAuditLogService auditLogService,
-        IPermissionService permissionService)
+    public async Task<BulkOperationResult> BulkDeleteAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
     {
-        _customerRepository = customerRepository;
-        _auditLogService = auditLogService;
-        _permissionService = permissionService;
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var supplier = await _supplierRepository.GetByIdAsync(id, cancellationToken);
+            if (supplier == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Supplier not found." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            if (await _supplierRepository.HasTransactionsAsync(id, cancellationToken))
+            {
+                result.Items.Add(new BulkItemResult
+                {
+                    Id = id,
+                    Identifier = supplier.Name,
+                    Success = false,
+                    Message = "Skipped: in use (referenced by transactions). Deactivate instead?",
+                    CanDeactivateInstead = true
+                });
+                result.SkippedCount++;
+                continue;
+            }
+
+            await _supplierRepository.SoftDeleteAsync(id, cancellationToken);
+            await _auditLogService.LogAsync(userId, "DeleteSupplier", "Supplier", supplier.Id, $"Soft-deleted supplier '{supplier.Name}'");
+            result.Items.Add(new BulkItemResult { Id = id, Identifier = supplier.Name, Success = true });
+            result.SuccessCount++;
+        }
+        return result;
     }
 
-    public async Task<Result<PagedResult<CustomerDto>>> GetPagedCustomersAsync(MasterDataSearchQuery query, CancellationToken cancellationToken = default)
+    public async Task<BulkOperationResult> BulkDeactivateAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
     {
-        var paged = await _customerRepository.GetPagedAsync(query, cancellationToken);
-        return Result.Ok(paged);
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var supplier = await _supplierRepository.GetByIdAsync(id, cancellationToken);
+            if (supplier == null) continue;
+            supplier.IsActive = false;
+            await _supplierRepository.UpdateAsync(supplier, cancellationToken);
+            await _auditLogService.LogAsync(userId, "DeactivateSupplier", "Supplier", supplier.Id, $"Deactivated supplier '{supplier.Name}'");
+            result.Items.Add(new BulkItemResult { Id = id, Identifier = supplier.Name, Success = true });
+            result.SuccessCount++;
+        }
+        return result;
     }
 
-    public async Task<Result<IReadOnlyList<CustomerDto>>> GetFlatListAsync(bool includeInactive = false, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<int>> GetFilteredSupplierIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default)
     {
-        var list = await _customerRepository.GetAllFlatAsync(includeInactive, cancellationToken);
-        var dtos = list.Select(c => new CustomerDto
-        {
-            Id = c.Id,
-            Name = c.Name,
-            Phone = c.Phone,
-            Email = c.Email,
-            TaxNumber = c.TaxNumber,
-            Address = c.Address,
-            Notes = c.Notes,
-            CreditLimit = c.CreditLimit,
-            OpeningBalance = c.OpeningBalance,
-            DefaultPriceLevelId = c.DefaultPriceLevelId,
-            IsActive = c.IsActive
-        }).ToList();
-        return Result.Ok<IReadOnlyList<CustomerDto>>(dtos);
-    }
-
-    public async Task<Result<CustomerDto>> CreateCustomerAsync(CreateCustomerDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
-    {
-        if (!_permissionService.CanCreateEditCustomers(userRole))
-        {
-            return Result.Failure<CustomerDto>("Permission denied. Cannot create customer.");
-        }
-
-        var val = await _createValidator.ValidateAsync(dto, cancellationToken);
-        if (!val.IsValid)
-        {
-            return Result.Invalid<CustomerDto>(val.ToDictionary());
-        }
-
-        if (!string.IsNullOrWhiteSpace(dto.Phone) && await _customerRepository.IsPhoneTakenAsync(dto.Phone, null, cancellationToken))
-        {
-            return Result.Failure<CustomerDto>($"Customer phone '{dto.Phone}' is already in use by another customer.");
-        }
-
-        var customer = new Customer
-        {
-            Name = dto.Name.Trim(),
-            Phone = string.IsNullOrWhiteSpace(dto.Phone) ? null : dto.Phone.Trim(),
-            Email = dto.Email?.Trim(),
-            TaxNumber = dto.TaxNumber?.Trim(),
-            Address = dto.Address?.Trim(),
-            Notes = dto.Notes?.Trim(),
-            CreditLimit = dto.CreditLimit,
-            OpeningBalance = dto.OpeningBalance,
-            DefaultPriceLevelId = dto.DefaultPriceLevelId > 0 ? dto.DefaultPriceLevelId : null,
-            IsActive = true,
-            CreatedByUserId = userId
-        };
-
-        await _customerRepository.AddAsync(customer, cancellationToken);
-        await _auditLogService.LogAsync(userId, "CreateCustomer", "Customer", customer.Id, $"Created customer '{customer.Name}', Opening balance: {customer.OpeningBalance}");
-
-        return Result.Ok(new CustomerDto
-        {
-            Id = customer.Id,
-            Name = customer.Name,
-            Phone = customer.Phone,
-            Email = customer.Email,
-            TaxNumber = customer.TaxNumber,
-            Address = customer.Address,
-            Notes = customer.Notes,
-            CreditLimit = customer.CreditLimit,
-            OpeningBalance = customer.OpeningBalance,
-            DefaultPriceLevelId = customer.DefaultPriceLevelId,
-            IsActive = customer.IsActive
-        });
-    }
-
-    public async Task<Result<CustomerDto>> UpdateCustomerAsync(UpdateCustomerDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
-    {
-        if (!_permissionService.CanCreateEditCustomers(userRole))
-        {
-            return Result.Failure<CustomerDto>("Permission denied. Cannot edit customer.");
-        }
-
-        var val = await _updateValidator.ValidateAsync(dto, cancellationToken);
-        if (!val.IsValid)
-        {
-            return Result.Invalid<CustomerDto>(val.ToDictionary());
-        }
-
-        var existing = await _customerRepository.GetByIdAsync(dto.Id, cancellationToken);
-        if (existing == null)
-        {
-            return Result.Failure<CustomerDto>($"Customer with ID {dto.Id} was not found.");
-        }
-
-        if (!string.IsNullOrWhiteSpace(dto.Phone) && await _customerRepository.IsPhoneTakenAsync(dto.Phone, dto.Id, cancellationToken))
-        {
-            return Result.Failure<CustomerDto>($"Customer phone '{dto.Phone}' is already in use by another customer.");
-        }
-
-        existing.Name = dto.Name.Trim();
-        existing.Phone = string.IsNullOrWhiteSpace(dto.Phone) ? null : dto.Phone.Trim();
-        existing.Email = dto.Email?.Trim();
-        existing.TaxNumber = dto.TaxNumber?.Trim();
-        existing.Address = dto.Address?.Trim();
-        existing.Notes = dto.Notes?.Trim();
-        existing.CreditLimit = dto.CreditLimit;
-        existing.DefaultPriceLevelId = dto.DefaultPriceLevelId > 0 ? dto.DefaultPriceLevelId : null;
-
-        // If Cashier, cannot change IsActive (deactivate)
-        if (_permissionService.CanDeleteCustomers(userRole))
-        {
-            existing.IsActive = dto.IsActive;
-        }
-
-        // Opening balance is editable until transactions exist
-        bool hasTx = await _customerRepository.HasTransactionsAsync(existing.Id, cancellationToken);
-        if (!hasTx)
-        {
-            existing.OpeningBalance = dto.OpeningBalance;
-        }
-
-        await _customerRepository.UpdateAsync(existing, cancellationToken);
-        await _auditLogService.LogAsync(userId, "UpdateCustomer", "Customer", existing.Id, $"Updated customer '{existing.Name}'");
-
-        return Result.Ok(new CustomerDto
-        {
-            Id = existing.Id,
-            Name = existing.Name,
-            Phone = existing.Phone,
-            Email = existing.Email,
-            TaxNumber = existing.TaxNumber,
-            Address = existing.Address,
-            Notes = existing.Notes,
-            CreditLimit = existing.CreditLimit,
-            OpeningBalance = existing.OpeningBalance,
-            DefaultPriceLevelId = existing.DefaultPriceLevelId,
-            IsActive = existing.IsActive
-        });
-    }
-
-    public async Task<Result> DeactivateCustomerAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
-    {
-        if (!_permissionService.CanDeleteCustomers(userRole))
-        {
-            return Result.Failure("Permission denied. Cashiers cannot deactivate customers.");
-        }
-
-        var customer = await _customerRepository.GetByIdAsync(id, cancellationToken);
-        if (customer == null)
-        {
-            return Result.Failure($"Customer with ID {id} was not found.");
-        }
-
-        customer.IsActive = false;
-        await _customerRepository.UpdateAsync(customer, cancellationToken);
-        await _auditLogService.LogAsync(userId, "DeactivateCustomer", "Customer", customer.Id, $"Deactivated customer '{customer.Name}'");
-
-        return Result.Ok();
-    }
-
-    public async Task<Result> DeleteCustomerAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
-    {
-        if (!_permissionService.CanDeleteCustomers(userRole))
-        {
-            return Result.Failure("Permission denied. Cashiers cannot delete customers.");
-        }
-
-        var customer = await _customerRepository.GetByIdAsync(id, cancellationToken);
-        if (customer == null)
-        {
-            return Result.Failure($"Customer with ID {id} was not found.");
-        }
-
-        if (await _customerRepository.HasTransactionsAsync(id, cancellationToken))
-        {
-            return Result.Failure("REFERENCED_CANNOT_DELETE");
-        }
-
-        await _customerRepository.SoftDeleteAsync(id, cancellationToken);
-        await _auditLogService.LogAsync(userId, "DeleteCustomer", "Customer", customer.Id, $"Deleted customer '{customer.Name}'");
-
-        return Result.Ok();
+        return await _supplierRepository.GetFilteredIdsAsync(searchTerm, includeInactive, cancellationToken);
     }
 }
 

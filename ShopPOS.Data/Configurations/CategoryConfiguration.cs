@@ -18,7 +18,8 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
             .HasDefaultValue(true);
 
         builder.HasIndex(c => new { c.ParentCategoryId, c.Name })
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("IsDeleted = 0");
 
         builder.HasOne(c => c.ParentCategory)
             .WithMany(p => p.SubCategories)

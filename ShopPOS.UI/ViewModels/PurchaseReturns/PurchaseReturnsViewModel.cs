@@ -27,11 +27,11 @@ public partial class PurchaseReturnsViewModel : BaseCrudViewModel<PurchaseReturn
         ISupplierService supplierService,
         IDialogService dialogService,
         IServiceProvider serviceProvider,
-        IAuthService authService,
-        IPermissionService permissionService,
         IShopSettingService shopSettingService)
-        : base(authService, permissionService, shopSettingService)
+        : base(shopSettingService, dialogService)
     {
+        CanShowDeleteSelected = false;
+        CanShowCancelSelected = true;
         _returnService = returnService;
         _supplierService = supplierService;
         _dialogService = dialogService;
@@ -40,18 +40,10 @@ public partial class PurchaseReturnsViewModel : BaseCrudViewModel<PurchaseReturn
 
     protected override void ApplyPermissions()
     {
-        string? role = GetCurrentRole();
-        bool canManage = PermissionService.CanManagePurchases(role);
-
-        CanAdd = canManage;
-        CanEdit = canManage;
-        CanDelete = canManage;
-        CanDeactivate = canManage;
-
-        if (!canManage)
-        {
-            ErrorMessage = "Access Denied: Cashiers do not have permission to access Purchase Returns.";
-        }
+        CanAdd = true;
+        CanEdit = true;
+        CanDelete = true;
+        CanDeactivate = true;
     }
 
     public override async Task InitializeAsync()
@@ -78,12 +70,6 @@ public partial class PurchaseReturnsViewModel : BaseCrudViewModel<PurchaseReturn
 
     public override async Task LoadDataAsync(CancellationToken cancellationToken = default)
     {
-        if (!PermissionService.CanManagePurchases(GetCurrentRole()))
-        {
-            ErrorMessage = "Access Denied: Cashiers do not have permission to access Purchase Returns.";
-            return;
-        }
-
         IsLoading = true;
         ErrorMessage = null;
 
@@ -142,7 +128,7 @@ public partial class PurchaseReturnsViewModel : BaseCrudViewModel<PurchaseReturn
         if (SelectedItem == null || SelectedItem.Status == PurchaseReturnStatus.Cancelled) return;
 
         var selected = SelectedItem;
-        string prompt = $"Cancel purchase return '{selected.ReturnNumber}' for total {selected.TotalAmount:C}?\n\nThis will reverse the inventory restoration and restore the payable balance to the vendor.";
+        string prompt = $"Cancel purchase return '{selected.ReturnNumber}' for total {ShopPOS.Core.Services.MoneyFormatter.Instance.Format(selected.TotalAmount)}?\n\nThis will reverse the inventory restoration and restore the payable balance to the vendor.";
         string? reason = _dialogService.ShowReasonPromptDialog("Cancel Purchase Return", prompt);
         if (string.IsNullOrWhiteSpace(reason))
         {
@@ -167,4 +153,15 @@ public partial class PurchaseReturnsViewModel : BaseCrudViewModel<PurchaseReturn
             IsLoading = false;
         }
     }
+
+    protected override async Task<IReadOnlyList<int>> FetchAllFilteredIdsAsync()
+    {
+        return await _returnService.GetFilteredReturnIdsAsync(SelectedSupplierId);
+    }
+
+    protected override async Task<BulkOperationResult> ExecuteBulkCancelAsync(IReadOnlyList<int> ids, string reason)
+    {
+        return await _returnService.BulkCancelReturnsAsync(ids, reason, GetCurrentUserId());
+    }
+
 }

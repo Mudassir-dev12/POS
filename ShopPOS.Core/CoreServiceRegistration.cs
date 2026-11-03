@@ -12,10 +12,9 @@ public static class CoreServiceRegistration
     public static IServiceCollection AddCoreServices(this IServiceCollection services)
     {
         services.AddSingleton<ICurrentUserProvider, CurrentUserProvider>();
-        services.AddSingleton<IPermissionService, PermissionService>();
+        services.AddSingleton<IMoneyFormatter>(MoneyFormatter.Instance);
         services.AddScoped<IAuditLogService, AuditLogService>();
         services.AddScoped<IShopSettingService, ShopSettingService>();
-        services.AddScoped<IAuthService, AuthService>();
 
         // Phase 2 Master Data Services
         services.AddScoped<IProductService, ProductService>();
@@ -23,7 +22,6 @@ public static class CoreServiceRegistration
         services.AddScoped<IBrandService, BrandService>();
         services.AddScoped<IUnitService, UnitService>();
         services.AddScoped<ISupplierService, SupplierService>();
-        services.AddScoped<ICustomerService, CustomerService>();
         services.AddScoped<IPriceLevelService, PriceLevelService>();
 
         // Phase 3 Purchase Services
@@ -40,7 +38,6 @@ public static class CoreServiceRegistration
         // Phase 5 Sales Services
         services.AddSingleton<ISaleCalculator, SaleCalculator>();
         services.AddScoped<IProductLookupService, ProductLookupService>();
-        services.AddScoped<IShiftService, ShiftService>();
         services.AddScoped<ISaleReturnService, SaleReturnService>();
         services.AddScoped<ISaleService, SaleService>();
         services.AddSingleton<IReceiptBuilder, ReceiptBuilder>();
@@ -59,9 +56,6 @@ public static class CoreServiceRegistration
         services.AddScoped<FluentValidation.IValidator<DTOs.SaveSaleDto>, Validators.SaveSaleValidator>();
         services.AddScoped<FluentValidation.IValidator<DTOs.CompleteSaleDto>, Validators.CompleteSaleValidator>();
         services.AddScoped<FluentValidation.IValidator<DTOs.CreateSaleReturnDto>, Validators.CreateSaleReturnValidator>();
-        services.AddScoped<FluentValidation.IValidator<DTOs.OpenShiftDto>, Validators.OpenShiftValidator>();
-        services.AddScoped<FluentValidation.IValidator<DTOs.CloseShiftDto>, Validators.CloseShiftValidator>();
-        services.AddScoped<FluentValidation.IValidator<DTOs.CashMovementDto>, Validators.CashMovementValidator>();
 
         return services;
     }

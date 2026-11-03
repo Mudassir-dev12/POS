@@ -14,7 +14,6 @@ public partial class StockOverviewViewModel : ObservableObject
     private readonly IInventoryService _inventoryService;
     private readonly ICategoryService _categoryService;
     private readonly IBrandService _brandService;
-    private readonly IAuthService _authService;
     private readonly IDialogService _dialogService;
 
     [ObservableProperty]
@@ -63,7 +62,7 @@ public partial class StockOverviewViewModel : ObservableObject
     private string _rowCountText = "Showing 0 products";
 
     [ObservableProperty]
-    private bool _isCashier;
+    private bool _isCashier = false;
 
     [ObservableProperty]
     private StockOverviewSummaryDto? _summary;
@@ -76,16 +75,13 @@ public partial class StockOverviewViewModel : ObservableObject
         IInventoryService inventoryService,
         ICategoryService categoryService,
         IBrandService brandService,
-        IAuthService authService,
         IDialogService dialogService)
     {
         _inventoryService = inventoryService;
         _categoryService = categoryService;
         _brandService = brandService;
-        _authService = authService;
         _dialogService = dialogService;
-
-        IsCashier = string.Equals(_authService.CurrentUser?.Role?.Name, RoleDefaults.Cashier, StringComparison.OrdinalIgnoreCase);
+        _isCashier = false;
     }
 
     [RelayCommand]
@@ -127,7 +123,6 @@ public partial class StockOverviewViewModel : ObservableObject
         ErrorMessage = null;
         try
         {
-            var userRole = _authService.CurrentUser?.Role?.Name;
             var query = new StockOverviewFilterQuery
             {
                 SearchTerm = SearchTerm,
@@ -140,7 +135,7 @@ public partial class StockOverviewViewModel : ObservableObject
                 PageSize = PageSize
             };
 
-            var pagedResult = await _inventoryService.GetStockOverviewAsync(query, userRole);
+            var pagedResult = await _inventoryService.GetStockOverviewAsync(query, "Owner");
             if (pagedResult.Success && pagedResult.Data != null)
             {
                 Items.Clear();
@@ -160,7 +155,7 @@ public partial class StockOverviewViewModel : ObservableObject
                 ErrorMessage = pagedResult.ErrorMessage ?? "Failed to load stock overview.";
             }
 
-            var sumResult = await _inventoryService.GetStockOverviewSummaryAsync(userRole);
+            var sumResult = await _inventoryService.GetStockOverviewSummaryAsync("Owner");
             if (sumResult.Success)
             {
                 Summary = sumResult.Data;
@@ -184,7 +179,7 @@ public partial class StockOverviewViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public async Task ClearFilterAsync()
+    public async Task ResetFiltersAsync()
     {
         SearchTerm = string.Empty;
         SelectedCategoryId = null;
@@ -217,14 +212,19 @@ public partial class StockOverviewViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public void AdjustStock(StockOverviewItemDto? item)
+    {
+        if (item == null) return;
+    }
+
+    [RelayCommand]
     public async Task ExportCsvAsync()
     {
         try
         {
-            var filePath = _dialogService.ShowSaveFileDialog("CSV Files (*.csv)|*.csv", $"StockOverview_{DateTime.Now:yyyyMMdd_HHmm}.csv");
+            string? filePath = _dialogService.ShowSaveFileDialog("CSV Files (*.csv)|*.csv", $"StockOverview_{DateTime.Now:yyyyMMdd_HHmm}.csv");
             if (string.IsNullOrWhiteSpace(filePath)) return;
 
-            var userRole = _authService.CurrentUser?.Role?.Name;
             var query = new StockOverviewFilterQuery
             {
                 SearchTerm = SearchTerm,
@@ -232,25 +232,23 @@ public partial class StockOverviewViewModel : ObservableObject
                 BrandId = SelectedBrandId,
                 Status = SelectedStatus,
                 LowOrOutOnly = LowOrOutOnly,
-                IncludeNonTracked = IncludeNonTracked,
-                PageNumber = 1,
-                PageSize = 10000
+                IncludeNonTracked = IncludeNonTracked
             };
 
-            var exportResult = await _inventoryService.ExportStockOverviewCsvAsync(query, userRole);
-            if (exportResult.Success && exportResult.Data != null)
+            var csvRes = await _inventoryService.ExportStockOverviewCsvAsync(query, "Owner");
+            if (csvRes.Success && csvRes.Data != null)
             {
-                await File.WriteAllBytesAsync(filePath, exportResult.Data);
-                _dialogService.ShowMessage("Stock overview exported successfully.", "Export Complete");
+                await File.WriteAllBytesAsync(filePath, csvRes.Data);
+                _dialogService.ShowMessage("Stock Overview CSV successfully exported.", "Export Complete");
             }
             else
             {
-                _dialogService.ShowMessage(exportResult.ErrorMessage ?? "Failed to export CSV.", "Export Failed");
+                _dialogService.ShowMessage($"Export failed: {csvRes.ErrorMessage}", "Export Error");
             }
         }
         catch (Exception ex)
         {
-            _dialogService.ShowMessage($"Export error: {ex.Message}", "Error");
+            _dialogService.ShowMessage($"Export failed: {ex.Message}", "Export Error");
         }
     }
 
@@ -259,10 +257,9 @@ public partial class StockOverviewViewModel : ObservableObject
     {
         try
         {
-            var filePath = _dialogService.ShowSaveFileDialog("PDF Files (*.pdf)|*.pdf", $"StockOverview_{DateTime.Now:yyyyMMdd_HHmm}.pdf");
+            string? filePath = _dialogService.ShowSaveFileDialog("PDF Files (*.pdf)|*.pdf", $"StockOverview_{DateTime.Now:yyyyMMdd_HHmm}.pdf");
             if (string.IsNullOrWhiteSpace(filePath)) return;
 
-            var userRole = _authService.CurrentUser?.Role?.Name;
             var query = new StockOverviewFilterQuery
             {
                 SearchTerm = SearchTerm,
@@ -270,25 +267,23 @@ public partial class StockOverviewViewModel : ObservableObject
                 BrandId = SelectedBrandId,
                 Status = SelectedStatus,
                 LowOrOutOnly = LowOrOutOnly,
-                IncludeNonTracked = IncludeNonTracked,
-                PageNumber = 1,
-                PageSize = 10000
+                IncludeNonTracked = IncludeNonTracked
             };
 
-            var exportResult = await _inventoryService.ExportStockOverviewPdfAsync(query, userRole);
-            if (exportResult.Success && exportResult.Data != null)
+            var pdfRes = await _inventoryService.ExportStockOverviewPdfAsync(query, "Owner");
+            if (pdfRes.Success && pdfRes.Data != null)
             {
-                await File.WriteAllBytesAsync(filePath, exportResult.Data);
-                _dialogService.ShowMessage("Stock overview PDF generated successfully.", "Export Complete");
+                await File.WriteAllBytesAsync(filePath, pdfRes.Data);
+                _dialogService.ShowMessage("Stock Overview PDF successfully exported.", "Export Complete");
             }
             else
             {
-                _dialogService.ShowMessage(exportResult.ErrorMessage ?? "Failed to generate PDF.", "Export Failed");
+                _dialogService.ShowMessage($"Export failed: {pdfRes.ErrorMessage}", "Export Error");
             }
         }
         catch (Exception ex)
         {
-            _dialogService.ShowMessage($"Export error: {ex.Message}", "Error");
+            _dialogService.ShowMessage($"Export failed: {ex.Message}", "Export Error");
         }
     }
 }

@@ -7,18 +7,17 @@
              xmlns:dto="clr-namespace:ShopPOS.Core.DTOs;assembly=ShopPOS.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:CategoriesViewModel}"
-             Background="#F1F5F9"
-             FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
              Loaded="UserControl_Loaded">
 
     <UserControl.InputBindings>
         <KeyBinding Key="N" Modifiers="Ctrl" Command="{Binding AddCommand}" />
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
-        <KeyBinding Key="Delete" Command="{Binding DeleteOrDeactivateCommand}" />
+        <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllOnPageCommand}" />
+        <KeyBinding Key="Delete" Command="{Binding DeleteSelectedCommand}" />
         <KeyBinding Key="Enter" Command="{Binding EditCommand}" />
     </UserControl.InputBindings>
 
-    <Grid Margin="24">
+    <Grid>
         <Grid.RowDefinitions>
             <!-- Header bar -->
             <RowDefinition Height="Auto" />
@@ -30,7 +29,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
+        <!-- 1. Header Bar -->
         <Grid Grid.Row="0" Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -38,100 +37,172 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="Categories Hierarchy" FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Organize catalog taxonomy into multi-level parent and subcategories." FontSize="13" Foreground="#64748B" Margin="0,2,0,0" />
+                <TextBlock Text="Categories hierarchy" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Organize catalog taxonomy into multi-level parent and subcategories."
+                           Style="{StaticResource SubTitleStyle}"
+                           Margin="0,4,0,0" />
             </StackPanel>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="+ Add Root Category (Ctrl+N)"
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="Add root category Ctrl N"
                         Command="{Binding AddCommand}"
-                        IsEnabled="{Binding CanAdd}"
-                        Background="#2563EB"
-                        Foreground="White"
-                        FontWeight="Bold"
-                        Padding="14,8"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Margin="0,0,8,0" />
 
-                <Button Content="+ Add Subcategory"
+                <Button Content="Add subcategory"
                         Command="{Binding AddChildCategoryCommand}"
-                        IsEnabled="{Binding CanAdd}"
-                        Background="#0284C7"
-                        Foreground="White"
-                        FontWeight="SemiBold"
-                        Padding="12,8"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Margin="0,0,8,0" />
 
-                <Button Content="✏️ Edit / Rename"
+                <Button Content="Edit"
                         Command="{Binding EditCommand}"
-                        IsEnabled="{Binding CanEdit}"
-                        Background="#475569"
-                        Foreground="White"
-                        FontWeight="SemiBold"
-                        Padding="12,8"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Margin="0,0,8,0" />
 
-                <Button Content="🗑️ Deactivate / Delete (Del)"
-                        Command="{Binding DeleteOrDeactivateCommand}"
-                        IsEnabled="{Binding CanDelete}"
-                        Background="#DC2626"
-                        Foreground="White"
-                        FontWeight="SemiBold"
-                        Padding="12,8"
-                        BorderThickness="0"
-                        Cursor="Hand" />
-
-                <Button Content="🔄 Refresh (F5)"
+                <Button Content="Refresh F5"
                         Command="{Binding RefreshCommand}"
-                        Background="#E2E8F0"
-                        Foreground="#334155"
-                        FontWeight="SemiBold"
-                        Padding="12,8"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}" />
             </StackPanel>
         </Grid>
 
-        <!-- Filter bar -->
-        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="16,10" Margin="0,0,0,14" BorderBrush="#E2E8F0" BorderThickness="1">
+        <!-- 2. Filter Bar -->
+        <Border Grid.Row="1" Style="{StaticResource FilterBarStyle}">
             <Grid>
                 <CheckBox Content="Show Inactive Categories"
                           IsChecked="{Binding ShowInactive}"
-                          FontWeight="Medium"
-                          Foreground="#64748B"
                           VerticalAlignment="Center" />
-                <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding ErrorMessage}"
+                           Foreground="{DynamicResource DangerBrush}"
+                           FontWeight="SemiBold"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center" />
             </Grid>
         </Border>
 
-        <!-- Main TreeView -->
-        <Border Grid.Row="2" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="14">
-            <TreeView ItemsSource="{Binding CategoryTree}"
-                      SelectedItemChanged="TreeView_SelectedItemChanged"
-                      BorderThickness="0">
-                <TreeView.ItemTemplate>
-                    <HierarchicalDataTemplate DataType="{x:Type dto:CategoryDto}" ItemsSource="{Binding SubCategories}">
-                        <StackPanel Orientation="Horizontal" Margin="4,4" Opacity="{Binding IsActive, Converter={StaticResource InactiveOpacityConverter}}">
-                            <TextBlock Text="📁 " FontSize="14" VerticalAlignment="Center" />
-                            <TextBlock Text="{Binding Name}" FontWeight="Bold" FontSize="13" Foreground="#0F172A" VerticalAlignment="Center" />
-                            <Border Background="#F1F5F9" CornerRadius="4" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
-                                <TextBlock Text="{Binding ProductCount, StringFormat='{}{0} products'}" FontSize="11" Foreground="#64748B" />
-                            </Border>
-                            <Border Background="#FEE2E2" CornerRadius="4" Padding="4,1" Margin="6,0,0,0" VerticalAlignment="Center"
-                                    Visibility="{Binding IsActive, Converter={StaticResource InverseBooleanConverter}}">
-                                <TextBlock Text="Inactive" FontSize="10" Foreground="#DC2626" FontWeight="Bold" />
-                            </Border>
-                        </StackPanel>
-                    </HierarchicalDataTemplate>
-                </TreeView.ItemTemplate>
-            </TreeView>
-        </Border>
+        <!-- 3. Main TreeView -->
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <!-- Footer -->
-        <Border Grid.Row="3" Margin="0,12,0,0">
-            <TextBlock Text="Select a category and press Enter or double-click to edit, Del to deactivate or delete." FontSize="12" Foreground="#94A3B8" />
+            <!-- Bulk Selection Status Banner -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SecondaryBackgroundBrush}"
+                    BorderBrush="{DynamicResource SecondaryBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SelectionStatusText}"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <Button Content="Clear selection"
+                                Command="{Binding ClearSelectionCommand}"
+                                Style="{StaticResource GhostButtonStyle}"
+                                Padding="8,2"
+                                Margin="8,0,0,0" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Delete selected"
+                                Command="{Binding DeleteSelectedCommand}"
+                                Style="{StaticResource DangerButtonStyle}"
+                                Visibility="{Binding CanShowDeleteSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Margin="0,0,8,0" />
+                        <Button Content="Cancel selected"
+                                Command="{Binding CancelSelectedCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Visibility="{Binding CanShowCancelSelected, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Select All Filtered Results Cross-Page Banner -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource WarningBackgroundBrush}"
+                    BorderBrush="{DynamicResource WarningBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding ShowSelectAllResultsBanner, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding SelectAllResultsBannerText}"
+                               Foreground="{DynamicResource WarningTextBrush}"
+                               FontWeight="Medium"
+                               VerticalAlignment="Center" />
+                    <Button Content="Select all matching results across all pages"
+                            Command="{Binding SelectAllFilteredResultsCommand}"
+                            Style="{StaticResource GhostButtonStyle}"
+                            FontWeight="Bold"
+                            Foreground="{DynamicResource WarningTextBrush}"
+                            Margin="8,0,0,0" />
+                </StackPanel>
+            </Border>
+
+            <!-- TreeView Container -->
+            <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Padding="16">
+                <TreeView ItemsSource="{Binding CategoryTree}"
+                          SelectedItemChanged="TreeView_SelectedItemChanged"
+                          Background="Transparent"
+                          BorderThickness="0">
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate DataType="{x:Type dto:CategoryDto}" ItemsSource="{Binding SubCategories}">
+                            <StackPanel Orientation="Horizontal" Margin="4,4" Opacity="{Binding IsActive, Converter={StaticResource InactiveOpacityConverter}}">
+                                <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                          Command="{Binding DataContext.ItemSelectionChangedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          CommandParameter="{Binding}"
+                                          Margin="0,0,8,0"
+                                          VerticalAlignment="Center" />
+
+                                <TextBlock Text="{Binding Name}"
+                                           FontWeight="SemiBold"
+                                           FontSize="13"
+                                           Foreground="{DynamicResource TextPrimaryBrush}"
+                                           VerticalAlignment="Center" />
+
+                                <Border Background="{DynamicResource TableHeaderBackgroundBrush}"
+                                        BorderBrush="{DynamicResource ThinRuleBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="3"
+                                        Padding="6,1"
+                                        Margin="8,0,0,0"
+                                        VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding ProductCount, StringFormat='{}{0} products'}"
+                                               FontFamily="{StaticResource AppMonospaceFontFamily}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                </Border>
+
+                                <Border Style="{StaticResource StockTagOut}"
+                                        Margin="6,0,0,0"
+                                        Visibility="{Binding IsActive, Converter={StaticResource InverseBooleanConverter}}">
+                                    <TextBlock Text="Inactive"
+                                               FontFamily="{StaticResource AppMonospaceFontFamily}"
+                                               FontSize="9"
+                                               FontWeight="Bold"
+                                               Foreground="{DynamicResource DangerOutlineTextBrush}" />
+                                </Border>
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+            </Border>
+        </Grid>
+
+        <!-- 4. Footer -->
+        <Border Grid.Row="3" Style="{StaticResource PaginationBarStyle}">
+            <TextBlock Text="Select a category and press Enter or double-click to edit, Del to deactivate or delete."
+                       FontFamily="{StaticResource AppMonospaceFontFamily}"
+                       FontSize="11"
+                       Foreground="{DynamicResource TextMutedBrush}"
+                       VerticalAlignment="Center" />
         </Border>
     </Grid>
 </UserControl>

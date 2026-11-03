@@ -33,7 +33,7 @@ public partial class SaleReturnsViewModel : ObservableObject
     private string? _errorMessage;
 
     [ObservableProperty]
-    private string _currencySymbol = "$";
+    private string _currencySymbol = "Rs";
 
     public ObservableCollection<SaleReturnDetailDto> Items { get; } = new();
 
@@ -145,5 +145,129 @@ public partial class SaleReturnsViewModel : ObservableObject
             _dialogService.ShowMessage(result.Error ?? "Could not cancel return.", "Error");
         }
     }
-}
 
+    // Bulk selection
+    [ObservableProperty]
+    private int _selectedCount = 0;
+
+    [ObservableProperty]
+    private bool? _isAllOnPageSelected = false;
+
+    [ObservableProperty]
+    private bool _isAllResultsSelected = false;
+
+    [ObservableProperty]
+    private bool _canShowDeleteSelected = false;
+
+    [ObservableProperty]
+    private bool _canShowCancelSelected = true;
+
+    [ObservableProperty]
+    private int _totalCount = 0;
+
+    public HashSet<int> SelectedIds { get; } = new();
+
+    public bool HasSelection => SelectedCount > 0;
+
+    public bool ShowSelectAllResultsBanner => TotalCount > Items.Count && IsAllOnPageSelected == true && !IsAllResultsSelected;
+
+    public string SelectAllResultsBannerText => $"All {Items.Count} returns on this page are selected. Select all {TotalCount:N0} returns matching this filter?";
+
+    public string SelectionStatusText => IsAllResultsSelected ? $"All {TotalCount:N0} returns selected across all pages" : $"{SelectedCount:N0} selected";
+
+    [RelayCommand]
+    public void ToggleSelectAllOnPage(bool? isChecked)
+    {
+        bool select = isChecked == true;
+        foreach (var item in Items)
+        {
+            item.IsSelected = select;
+            if (select) SelectedIds.Add(item.Id);
+            else SelectedIds.Remove(item.Id);
+        }
+        if (!select) IsAllResultsSelected = false;
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    public void SelectAllOnPage()
+    {
+        ToggleSelectAllOnPage(IsAllOnPageSelected != true);
+    }
+
+    [RelayCommand]
+    public void ItemSelectionChanged(SaleReturnDetailDto item)
+    {
+        if (item.IsSelected) SelectedIds.Add(item.Id);
+        else { SelectedIds.Remove(item.Id); IsAllResultsSelected = false; }
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    public async Task SelectAllFilteredResultsAsync()
+    {
+        var criteria = new SaleReturnSearchDto
+        {
+            SearchTerm = SearchTerm,
+            DateFrom = DateFrom,
+            DateTo = DateTo
+        };
+        var allIds = await _saleReturnService.GetFilteredSaleReturnIdsAsync(criteria);
+        foreach (var id in allIds) SelectedIds.Add(id);
+        IsAllResultsSelected = true;
+        foreach (var item in Items) item.IsSelected = true;
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    public void ClearSelection()
+    {
+        SelectedIds.Clear();
+        IsAllResultsSelected = false;
+        IsAllOnPageSelected = false;
+        foreach (var item in Items) item.IsSelected = false;
+        UpdateSelectionState();
+    }
+
+    public void UpdateSelectionState()
+    {
+        SelectedCount = SelectedIds.Count;
+        int onPage = Items.Count;
+        int selected = Items.Count(i => i.IsSelected);
+        if (onPage == 0 || selected == 0) IsAllOnPageSelected = false;
+        else if (selected == onPage) IsAllOnPageSelected = true;
+        else IsAllOnPageSelected = null;
+
+        OnPropertyChanged(nameof(HasSelection));
+        OnPropertyChanged(nameof(ShowSelectAllResultsBanner));
+        OnPropertyChanged(nameof(SelectAllResultsBannerText));
+        OnPropertyChanged(nameof(SelectionStatusText));
+    }
+
+    private void SyncSelectionState()
+    {
+        foreach (var item in Items)
+        {
+            item.IsSelected = SelectedIds.Contains(item.Id);
+        }
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    public async Task CancelSelectedAsync()
+    {
+        if (SelectedCount == 0) return;
+        string? reason = _dialogService.ShowReasonPromptDialog("Cancel Selected", "Enter a shared cancellation reason for all selected sale returns:");
+        if (string.IsNullOrWhiteSpace(reason)) return;
+
+        bool requireTyped = SelectedCount > 50 || IsAllResultsSelected;
+        if (!_dialogService.ShowBulkConfirmDialog("Cancel", SelectedCount, requireTyped, $"Are you sure you want to cancel {SelectedCount:N0} returns with reason: '{reason.Trim()}'?")) return;
+
+        var ids = SelectedIds.ToList();
+        var result = await _saleReturnService.BulkCancelSaleReturnsAsync(ids, reason.Trim(), 1);
+        _dialogService.ShowBulkSummaryDialog("Bulk Cancel Summary", result);
+        ClearSelection();
+        await LoadReturnsAsync();
+    }
+
+}

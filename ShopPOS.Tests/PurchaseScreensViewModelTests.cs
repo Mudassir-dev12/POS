@@ -23,8 +23,6 @@ public class PurchaseScreensViewModelTests
     private readonly Mock<IProductService> _productService = new();
     private readonly Mock<IPurchaseCalculator> _calculator = new();
     private readonly Mock<IDialogService> _dialogService = new();
-    private readonly Mock<IAuthService> _authService = new();
-    private readonly Mock<IPermissionService> _permissionService = new();
     private readonly Mock<IShopSettingService> _shopSettingService = new();
     private readonly Mock<ISupplierPaymentService> _paymentService = new();
     private readonly Mock<IPurchaseReturnService> _returnService = new();
@@ -32,11 +30,6 @@ public class PurchaseScreensViewModelTests
 
     public PurchaseScreensViewModelTests()
     {
-        var admin = new User { Id = 1, Username = "admin", Role = new Role { Name = RoleDefaults.Admin } };
-        _authService.Setup(a => a.CurrentUser).Returns(admin);
-        _permissionService.Setup(p => p.CanManagePurchases(RoleDefaults.Admin)).Returns(true);
-        _permissionService.Setup(p => p.CanManageUsers(RoleDefaults.Admin)).Returns(true);
-        _permissionService.Setup(p => p.CanAccessMenuItem(RoleDefaults.Admin, "Settings")).Returns(true);
 
         _supplierService.Setup(s => s.GetFlatListAsync(false, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<IReadOnlyList<SupplierDto>>.Ok(new List<SupplierDto>
@@ -77,9 +70,7 @@ public class PurchaseScreensViewModelTests
             _supplierService.Object,
             _productService.Object,
             _calculator.Object,
-            _dialogService.Object,
-            _authService.Object,
-            _permissionService.Object);
+            _dialogService.Object);
 
         await vm.InitializeAsync();
 
@@ -114,9 +105,7 @@ public class PurchaseScreensViewModelTests
             _supplierService.Object,
             _productService.Object,
             _calculator.Object,
-            _dialogService.Object,
-            _authService.Object,
-            _permissionService.Object);
+            _dialogService.Object);
 
         await vm.InitializeAsync();
 
@@ -159,9 +148,7 @@ public class PurchaseScreensViewModelTests
             _supplierService.Object,
             _productService.Object,
             _calculator.Object,
-            _dialogService.Object,
-            _authService.Object,
-            _permissionService.Object);
+            _dialogService.Object);
 
         await vm.InitializeAsync();
 
@@ -222,9 +209,7 @@ public class PurchaseScreensViewModelTests
             _supplierService.Object,
             _productService.Object,
             _calculator.Object,
-            _dialogService.Object,
-            _authService.Object,
-            _permissionService.Object);
+            _dialogService.Object);
 
         // Act
         await vm.InitializeAsync(42);
@@ -236,38 +221,7 @@ public class PurchaseScreensViewModelTests
         vm.GrandTotal.Should().Be(500m);
     }
 
-    [Fact]
-    public async Task PurchasesViewModel_Cashier_DeniesAccess()
-    {
-        // Arrange
-        var cashier = new User { Id = 2, Username = "cashier1", Role = new Role { Name = RoleDefaults.Cashier } };
-        var cashierAuthService = new Mock<IAuthService>();
-        cashierAuthService.Setup(a => a.CurrentUser).Returns(cashier);
-
-        _permissionService.Setup(p => p.CanManagePurchases(RoleDefaults.Cashier)).Returns(false);
-
-        var vm = new PurchasesViewModel(
-            _purchaseService.Object,
-            _supplierService.Object,
-            _dialogService.Object,
-            _serviceProvider.Object,
-            cashierAuthService.Object,
-            _permissionService.Object,
-            _shopSettingService.Object);
-
-        // Act
-        await vm.InitializeAsync();
-
-        // Assert
-        vm.CanAdd.Should().BeFalse();
-        vm.CanEdit.Should().BeFalse();
-        vm.CanDelete.Should().BeFalse();
-        vm.ErrorMessage.Should().Contain("Access Denied");
-
-        // Service should never have been queried for purchases
-        _purchaseService.Verify(p => p.GetPurchasesAsync(It.IsAny<PurchaseSearchQuery>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
-    }
-
+    
     [Fact]
     public async Task SupplierPaymentDialogViewModel_InvoiceSelection_DefaultsAmountToBalance()
     {
@@ -283,8 +237,7 @@ public class PurchaseScreensViewModelTests
         var vm = new SupplierPaymentDialogViewModel(
             _paymentService.Object,
             _supplierService.Object,
-            _purchaseService.Object,
-            _authService.Object);
+            _purchaseService.Object);
 
         await vm.InitializeAsync(preselectedSupplierId: 7, preselectedPurchaseId: null);
 
@@ -331,8 +284,7 @@ public class PurchaseScreensViewModelTests
         var vm = new PurchaseReturnDialogViewModel(
             _returnService.Object,
             _supplierService.Object,
-            _purchaseService.Object,
-            _authService.Object);
+            _purchaseService.Object);
 
         await vm.InitializeAsync(preselectedSupplierId: 3, preselectedPurchaseId: 20);
 
@@ -351,9 +303,6 @@ public class PurchaseScreensViewModelTests
     public async Task SettingsViewModel_Owner_CanEditCostingMethodAndAllowNegativeWithoutRoleRestriction()
     {
         // Arrange
-        var owner = new User { Id = 1, Username = "owner", FullName = "Owner", Role = new Role { Name = "Owner" } };
-        var ownerAuth = new Mock<IAuthService>();
-        ownerAuth.Setup(a => a.CurrentUser).Returns(owner);
 
         var existingSettings = new ShopSetting
         {
@@ -366,9 +315,7 @@ public class PurchaseScreensViewModelTests
             .ReturnsAsync(existingSettings);
 
         var vm = new SettingsViewModel(
-            _shopSettingService.Object,
-            ownerAuth.Object,
-            _permissionService.Object);
+            _shopSettingService.Object);
 
         // Act
         await vm.InitializeAsync();

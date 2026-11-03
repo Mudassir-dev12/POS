@@ -23,13 +23,11 @@ public class SalesModuleTests : IDisposable
 
     private readonly SaleCalculator _calculator;
     private readonly ProductRepository _productRepo;
-    private readonly CustomerRepository _customerRepo;
     private readonly Repository<StockMovement> _movementRepo;
     private readonly Repository<ProductBarcode> _barcodeRepo;
     private readonly ShopSettingRepository _settingRepo;
     private readonly ShopSettingService _settingService;
     private readonly StockLedgerQuery _stockLedgerQuery;
-    private readonly CustomerBalanceQuery _customerBalanceQuery;
     private readonly NumberSequenceService _sequenceService;
     private readonly TransactionRunner _transactionRunner;
     private readonly Mock<IAuditLogService> _auditMock;
@@ -37,17 +35,14 @@ public class SalesModuleTests : IDisposable
 
     private readonly SaleRepository _saleRepo;
     private readonly SaleReturnRepository _returnRepo;
-    private readonly ShiftRepository _shiftRepo;
 
     private readonly ProductLookupService _lookupService;
-    private readonly ShiftService _shiftService;
     private readonly SaleReturnService _returnService;
     private readonly SaleService _saleService;
 
     private Category _category = null!;
     private Unit _pcsUnit = null!;
     private Unit _kgUnit = null!;
-    private Customer _customer = null!;
     private PriceLevel _wholesaleLevel = null!;
     private Product _trackProd = null!;
     private Product _nonTrackProd = null!;
@@ -67,13 +62,11 @@ public class SalesModuleTests : IDisposable
 
         _calculator = new SaleCalculator();
         _productRepo = new ProductRepository(_context);
-        _customerRepo = new CustomerRepository(_context);
         _movementRepo = new Repository<StockMovement>(_context);
         _barcodeRepo = new Repository<ProductBarcode>(_context);
         _settingRepo = new ShopSettingRepository(_context);
         _settingService = new ShopSettingService(_settingRepo);
         _stockLedgerQuery = new StockLedgerQuery(_context);
-        _customerBalanceQuery = new CustomerBalanceQuery(_context);
         _sequenceService = new NumberSequenceService(_context);
         _transactionRunner = new TransactionRunner(_context);
         _auditMock = new Mock<IAuditLogService>();
@@ -81,51 +74,33 @@ public class SalesModuleTests : IDisposable
 
         _saleRepo = new SaleRepository(_context);
         _returnRepo = new SaleReturnRepository(_context);
-        _shiftRepo = new ShiftRepository(_context);
 
         _lookupService = new ProductLookupService(_productRepo);
-        _shiftService = new ShiftService(
-            _shiftRepo,
-            _sequenceService,
-            _auditMock.Object,
-            _currentUserProvider,
-            new OpenShiftValidator(),
-            new CloseShiftValidator(),
-            new CashMovementValidator());
+
 
         _returnService = new SaleReturnService(
             _returnRepo,
             _saleRepo,
             _productRepo,
-            _customerRepo,
             _movementRepo,
             _stockLedgerQuery,
-            _customerBalanceQuery,
             _settingService,
-            _shiftRepo,
             _sequenceService,
             _transactionRunner,
             _auditMock.Object,
-            _currentUserProvider,
-            _calculator,
-            new CreateSaleReturnValidator());
+            _currentUserProvider);
 
         _saleService = new SaleService(
             _saleRepo,
             _productRepo,
-            _customerRepo,
             _movementRepo,
             _stockLedgerQuery,
-            _customerBalanceQuery,
             _settingService,
-            _shiftRepo,
             _sequenceService,
             _transactionRunner,
             _auditMock.Object,
             _currentUserProvider,
-            _calculator,
-            new SaveSaleValidator(),
-            new CompleteSaleValidator());
+            _calculator);
 
         SeedBaseData();
     }
@@ -144,7 +119,6 @@ public class SalesModuleTests : IDisposable
         _category = _context.Categories.First();
         _pcsUnit = _context.Units.First(u => u.ShortName == "pcs");
         _kgUnit = _context.Units.First(u => u.ShortName == "kg");
-        _customer = _context.Customers.First();
         _wholesaleLevel = _context.PriceLevels.First(p => p.Name == "Wholesale");
 
         _trackProd = new Product
@@ -321,7 +295,6 @@ public class SalesModuleTests : IDisposable
     [Fact]
     public async Task CompleteSale_MinPriceRule_BlocksWhenDisallowed_AllowsWhenAllowed()
     {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
 
         // MinSalePrice on _trackProd is 2.00. Attempt selling at 1.50
         var dto = new CompleteSaleDto
@@ -356,7 +329,6 @@ public class SalesModuleTests : IDisposable
     [Fact]
     public async Task CompleteSale_DecimalQuantityRule_RejectsFractionalForNonDecimals()
     {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
 
         // _trackProd has AllowDecimalQuantity = false
         var dto = new CompleteSaleDto
@@ -379,8 +351,6 @@ public class SalesModuleTests : IDisposable
     [Fact]
     public async Task CompleteSale_CreatesSnapshots_Movements_Number_Shift_AndAuditLog()
     {
-        var shiftRes = await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
-        int shiftId = shiftRes.Data!.Id;
 
         decimal initialStock = await _stockLedgerQuery.GetCurrentStockAsync(_trackProd.Id);
 
@@ -402,7 +372,6 @@ public class SalesModuleTests : IDisposable
 
         sale.SaleNumber.Should().StartWith("INV-");
         sale.Status.Should().Be(SaleStatus.Completed);
-        sale.ShiftId.Should().Be(shiftId);
         sale.GrandTotal.Should().Be(5.50m);
         sale.Items.Should().HaveCount(1);
         sale.Items[0].CostPriceSnapshot.Should().Be(_trackProd.CostPrice);
@@ -430,7 +399,6 @@ public class SalesModuleTests : IDisposable
     [Fact]
     public async Task CompleteSale_Atomicity_OnFailure_RollsBackEverything()
     {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
         decimal initialStock = await _stockLedgerQuery.GetCurrentStockAsync(_trackProd.Id);
 
         // Intentionally invalid: Overpayment on Card (which is disallowed)
@@ -461,7 +429,6 @@ public class SalesModuleTests : IDisposable
     [Fact]
     public async Task CompleteSale_NegativeStock_BlockedWhenSettingFalse_AllowedWhenSettingTrue()
     {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
         decimal currentStock = await _stockLedgerQuery.GetCurrentStockAsync(_trackProd.Id); // 20 units
 
         // Try to sell 25 units (exceeds 20)
@@ -500,7 +467,6 @@ public class SalesModuleTests : IDisposable
     [Fact]
     public async Task CompleteSale_NonTrackedProducts_SkipCheckAndCreateNoStockMovement()
     {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
 
         var dto = new CompleteSaleDto
         {
@@ -523,73 +489,29 @@ public class SalesModuleTests : IDisposable
     }
 
     [Fact]
-    public async Task CompleteSale_CreditSale_ValidatesCustomer_AllowCreditSetting_AndCreditLimit()
+    public async Task CompleteSale_FullPaymentRule_RejectsUnderpayment()
     {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
-
-        // Customer opening balance is 45, credit limit is 500
-        _customer.CreditLimit = 100m;
-        _customer.OpeningBalance = 40m;
-        await _customerRepo.UpdateAsync(_customer);
-
-        // 1. Attempt credit sale without selecting customer -> fails
-        var walkInCredit = new CompleteSaleDto
+        // Attempt underpayment on counter sale (grand total 2.50, paid 1.50)
+        var underpaid = new CompleteSaleDto
         {
-            CustomerId = null, // walk-in
             Items = new List<SaleLineItemDto>
             {
-                new() { ProductId = _trackProd.Id, Quantity = 1m, UnitPrice = 2.50m }
+                new() { ProductId = _trackProd.Id, Quantity = 1m, UnitPrice = 2.50m, TaxPercent = 0m }
             },
-            Payments = new List<SalePaymentDto>() // 0 paid -> full due
-        };
-        var res1 = await _saleService.CompleteSaleAsync(walkInCredit);
-        res1.Success.Should().BeFalse();
-        res1.ErrorMessage.Should().Contain("customer must be selected");
-
-        // 2. Setting: AllowCreditSales = false -> fails
-        var setting = await _settingService.GetSettingsAsync();
-        setting.AllowCreditSales = false;
-        await _settingService.UpdateSettingsAsync(setting);
-
-        var customerCredit = new CompleteSaleDto
-        {
-            CustomerId = _customer.Id,
-            Items = new List<SaleLineItemDto>
+            Payments = new List<SalePaymentDto>
             {
-                new() { ProductId = _trackProd.Id, Quantity = 1m, UnitPrice = 2.50m }
-            },
-            Payments = new List<SalePaymentDto>()
+                new() { Method = PaymentMethod.Cash, Amount = 1.50m }
+            }
         };
-        var res2 = await _saleService.CompleteSaleAsync(customerCredit);
-        res2.Success.Should().BeFalse();
-        res2.ErrorMessage.Should().Contain("not permitted by store settings");
 
-        // 3. Exceeding credit limit (Limit = 100, current = 40, attempting new due = 70 -> total 110 > 100) -> fails
-        setting.AllowCreditSales = true;
-        await _settingService.UpdateSettingsAsync(setting);
-
-        var overLimitCredit = new CompleteSaleDto
-        {
-            CustomerId = _customer.Id,
-            Items = new List<SaleLineItemDto>
-            {
-                new() { ProductId = _trackProd.Id, Quantity = 28m, UnitPrice = 2.50m } // 28 * 2.50 = 70
-            },
-            Payments = new List<SalePaymentDto>()
-        };
-        // Allow negative stock temporarily for this test
-        setting.AllowNegativeStock = true;
-        await _settingService.UpdateSettingsAsync(setting);
-
-        var res3 = await _saleService.CompleteSaleAsync(overLimitCredit);
-        res3.Success.Should().BeFalse();
-        res3.ErrorMessage.Should().Contain("Credit limit of 100.00 exceeded");
+        var res = await _saleService.CompleteSaleAsync(underpaid);
+        res.Success.Should().BeFalse();
+        res.ErrorMessage.Should().Contain("All sales must be paid in full at completion");
     }
 
     [Fact]
     public async Task CompleteSale_ChangeAndOverpayment_CashAllowsChange_CardOverpaymentRejected()
     {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
 
         // Total bill = 10.00 (tax = 0)
         var dto = new CompleteSaleDto
@@ -625,7 +547,6 @@ public class SalesModuleTests : IDisposable
         // 1. Save held bill
         var saveDto = new SaveSaleDto
         {
-            CustomerId = _customer.Id,
             Notes = "Hold for Alice",
             Items = new List<SaleLineItemDto>
             {
@@ -644,11 +565,9 @@ public class SalesModuleTests : IDisposable
         stockAfterHold.Should().Be(initialStock);
 
         // 2. Complete sale referencing the held bill
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
         var completeDto = new CompleteSaleDto
         {
             HeldBillId = held.Id,
-            CustomerId = _customer.Id,
             Items = new List<SaleLineItemDto>
             {
                 new() { ProductId = _trackProd.Id, Quantity = 3m, UnitPrice = 2.50m, TaxPercent = 0m }
@@ -674,8 +593,6 @@ public class SalesModuleTests : IDisposable
     [Fact]
     public async Task CancelSale_CreatesReversingMovements_BlockedIfHasReturnsOrClosedShift()
     {
-        var shiftRes = await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
-        int shiftId = shiftRes.Data!.Id;
         decimal stockBefore = await _stockLedgerQuery.GetCurrentStockAsync(_trackProd.Id);
 
         var compRes = await _saleService.CompleteSaleAsync(new CompleteSaleDto
@@ -708,7 +625,6 @@ public class SalesModuleTests : IDisposable
     [Fact]
     public async Task SaleReturn_RestrictsQuantityToSoldMinusReturned_RefundsAtOriginalPrice()
     {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
         var compRes = await _saleService.CompleteSaleAsync(new CompleteSaleDto
         {
             Items = new List<SaleLineItemDto>
@@ -748,7 +664,6 @@ public class SalesModuleTests : IDisposable
     [Fact]
     public async Task SaleReturn_WithoutReceipt_RespectsSettingAndUsesCurrentPrice()
     {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
 
         var returnDto = new CreateSaleReturnDto
         {
@@ -779,94 +694,8 @@ public class SalesModuleTests : IDisposable
         ok.Data!.TotalAmount.Should().Be(_trackProd.SalePrice + (_trackProd.SalePrice * (_trackProd.TaxPercent / 100m)));
     }
 
-    [Fact]
-    public async Task Shift_OnlyOneOpenAtATime_AndExpectedCashFormula()
-    {
-        // 1. Open shift 1
-        var shift1 = await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
-        shift1.Success.Should().BeTrue();
-        int shiftId = shift1.Data!.Id;
-
-        // 2. Attempt to open second shift while shift 1 is open -> fails
-        var shift2 = await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 50m });
-        shift2.Success.Should().BeFalse();
-        shift2.ErrorMessage.Should().Contain("is currently open");
-
-        // 3. Make cash sale of $25
-        await _saleService.CompleteSaleAsync(new CompleteSaleDto
-        {
-            Items = new List<SaleLineItemDto>
-            {
-                new() { ProductId = _trackProd.Id, Quantity = 10m, UnitPrice = 2.50m, TaxPercent = 0m }
-            },
-            Payments = new List<SalePaymentDto>
-            {
-                new() { Method = PaymentMethod.Cash, Amount = 25m }
-            }
-        });
-
-        // 4. Add CashIn $50 (e.g. change money) and CashOut $15 (expenses)
-        await _shiftService.AddCashMovementAsync(new CashMovementDto { ShiftId = shiftId, Type = CashMovementType.CashIn, Amount = 50m, Reason = "Float" });
-        await _shiftService.AddCashMovementAsync(new CashMovementDto { ShiftId = shiftId, Type = CashMovementType.CashOut, Amount = 15m, Reason = "Tea" });
-
-        // Expected Cash = 100 (open) + 25 (sale) + 50 (in) - 15 (out) = 160
-        var summary = await _shiftService.GetShiftSummaryAsync(shiftId);
-        summary.Data!.ExpectedCash.Should().Be(160m);
-
-        // 5. Close shift with counted cash = 165 -> difference = +5
-        var closeRes = await _shiftService.CloseShiftAsync(new CloseShiftDto { ShiftId = shiftId, CountedCash = 165m });
-        closeRes.Success.Should().BeTrue();
-        closeRes.Data!.Difference.Should().Be(5.00m);
-        closeRes.Data!.Status.Should().Be(ShiftStatus.Closed);
-
-        // 6. Proving closed shift is immutable
-        var failCloseAgain = await _shiftService.CloseShiftAsync(new CloseShiftDto { ShiftId = shiftId, CountedCash = 165m });
-        failCloseAgain.Success.Should().BeFalse();
-        failCloseAgain.ErrorMessage.Should().Contain("already closed and immutable");
-    }
-
-    [Fact]
-    public async Task CustomerBalanceQuery_CalculatesOpeningPlusDueMinusStoreCredit()
-    {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
-
-        // Customer opening balance = 45
-        decimal initialBal = await _customerBalanceQuery.GetCustomerBalanceAsync(_customer.Id);
-        initialBal.Should().Be(_customer.OpeningBalance);
-
-        // Complete a credit sale with due amount of $20
-        var saleRes = await _saleService.CompleteSaleAsync(new CompleteSaleDto
-        {
-            CustomerId = _customer.Id,
-            Items = new List<SaleLineItemDto>
-            {
-                new() { ProductId = _trackProd.Id, Quantity = 8m, UnitPrice = 2.50m, TaxPercent = 0m } // 20.00
-            },
-            Payments = new List<SalePaymentDto>() // 0 paid -> 20 due
-        });
-        saleRes.Success.Should().BeTrue();
-
-        decimal balAfterSale = await _customerBalanceQuery.GetCustomerBalanceAsync(_customer.Id);
-        balAfterSale.Should().Be(initialBal + 20m);
-
-        // Post a StoreCredit return of $5
-        var retRes = await _returnService.CreateSaleReturnAsync(new CreateSaleReturnDto
-        {
-            SaleId = saleRes.Data!.Id,
-            CustomerId = _customer.Id,
-            RefundMethod = PaymentMethod.StoreCredit,
-            Reason = "Return against account",
-            Items = new List<CreateSaleReturnItemDto>
-            {
-                new() { SaleItemId = saleRes.Data!.Items[0].Id, ProductId = _trackProd.Id, Quantity = 2m, ReturnToStock = true } // 2 * 2.50 = 5.00
-            }
-        });
-        retRes.Success.Should().BeTrue();
-
-        decimal balAfterReturn = await _customerBalanceQuery.GetCustomerBalanceAsync(_customer.Id);
-        balAfterReturn.Should().Be(initialBal + 20m - 5m);
-    }
-
+    
+    
     [Fact]
     public void ProductLookup_ParsesQuickQuantitySyntax()
     {
@@ -925,38 +754,7 @@ public class SalesModuleTests : IDisposable
         }
     }
 
-    [Fact]
-    public async Task Shift_RequireOpenShiftSetting_BlocksSaleIfNoOpenShift()
-    {
-        var setting = await _settingService.GetSettingsAsync();
-        setting.RequireOpenShiftForSales = true;
-        await _settingService.UpdateSettingsAsync(setting);
-
-        // No shift is open
-        var dto = new CompleteSaleDto
-        {
-            Items = new List<SaleLineItemDto>
-            {
-                new() { ProductId = _trackProd.Id, Quantity = 1m, UnitPrice = 2.50m }
-            },
-            Payments = new List<SalePaymentDto>
-            {
-                new() { Method = PaymentMethod.Cash, Amount = 2.75m }
-            }
-        };
-
-        var failResult = await _saleService.CompleteSaleAsync(dto);
-        failResult.Success.Should().BeFalse();
-        failResult.ErrorMessage.Should().Contain("open shift is required");
-
-        // Allow without shift
-        setting.RequireOpenShiftForSales = false;
-        await _settingService.UpdateSettingsAsync(setting);
-
-        var okResult = await _saleService.CompleteSaleAsync(dto);
-        okResult.Success.Should().BeTrue();
-    }
-
+    
     [Fact]
     public async Task CompleteSale_ParallelSalesForLastUnit_ExactlyOneSucceeds()
     {
@@ -1003,16 +801,6 @@ public class SalesModuleTests : IDisposable
                     UnitCost = 5m,
                     MovementDate = DateTime.Now
                 });
-
-                // Open shift
-                var shift = new Shift
-                {
-                    ShiftNumber = "SHF-000001",
-                    OpenedAt = DateTime.Now,
-                    OpeningCash = 100m,
-                    Status = ShiftStatus.Open
-                };
-                ctx.Shifts.Add(shift);
                 await ctx.SaveChangesAsync();
             }
 
@@ -1023,21 +811,18 @@ public class SalesModuleTests : IDisposable
                 var runner = new TransactionRunner(ctx);
                 var sRepo = new SaleRepository(ctx);
                 var pRepo = new ProductRepository(ctx);
-                var cRepo = new CustomerRepository(ctx);
                 var mRepo = new Repository<StockMovement>(ctx);
                 var slQuery = new StockLedgerQuery(ctx);
-                var cbQuery = new CustomerBalanceQuery(ctx);
                 var setRepo = new ShopSettingRepository(ctx);
                 var setService = new ShopSettingService(setRepo);
-                var shRepo = new ShiftRepository(ctx);
                 var seqService = new NumberSequenceService(ctx);
                 var calc = new SaleCalculator();
 
                 var service = new SaleService(
-                    sRepo, pRepo, cRepo, mRepo, slQuery, cbQuery,
-                    setService, shRepo, seqService, runner,
+                    sRepo, pRepo, mRepo, slQuery,
+                    setService, seqService, runner,
                     new Mock<IAuditLogService>().Object, new CurrentUserProvider(),
-                    calc, new SaveSaleValidator(), new CompleteSaleValidator());
+                    calc);
 
                 var res = await service.CompleteSaleAsync(new CompleteSaleDto
                 {
@@ -1079,8 +864,6 @@ public class SalesModuleTests : IDisposable
     [Fact]
     public async Task CancelSale_BlockedIfHasReturns_OrClosedShift()
     {
-        var shiftRes = await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
-        int shiftId = shiftRes.Data!.Id;
 
         // Complete sale
         var compRes = await _saleService.CompleteSaleAsync(new CompleteSaleDto
@@ -1113,7 +896,7 @@ public class SalesModuleTests : IDisposable
         cancelWithReturn.Success.Should().BeFalse();
         cancelWithReturn.ErrorMessage.Should().Contain("has posted returns");
 
-        // Now test closed shift rule with another sale
+        // Now test past date rule with another sale
         var comp2 = await _saleService.CompleteSaleAsync(new CompleteSaleDto
         {
             Items = new List<SaleLineItemDto>
@@ -1127,20 +910,20 @@ public class SalesModuleTests : IDisposable
         });
         var sale2Id = comp2.Data!.Id;
 
-        // Close shift
-        await _shiftService.CloseShiftAsync(new CloseShiftDto { ShiftId = shiftId, CountedCash = 200m });
+        // Set date to yesterday
+        var s2 = await _context.Sales.FindAsync(sale2Id);
+        s2!.SaleDate = DateTime.Today.AddDays(-1);
+        await _context.SaveChangesAsync();
 
-        // 2. Attempt cancel -> must fail because shift is closed
-        var cancelClosed = await _saleService.CancelSaleAsync(sale2Id, "Void after close");
-        cancelClosed.Success.Should().BeFalse();
-        cancelClosed.ErrorMessage.Should().Contain("shift");
-        cancelClosed.ErrorMessage.Should().Contain("closed");
+        // 2. Attempt cancel -> must fail because sale is from a past date
+        var cancelPast = await _saleService.CancelSaleAsync(sale2Id, "Void yesterday sale");
+        cancelPast.Success.Should().BeFalse();
+        cancelPast.ErrorMessage.Should().Contain("cannot be cancelled");
     }
 
     [Fact]
     public async Task SaleReturn_Cancel_CreatesReversingMovements_BlockedIfStockWouldGoNegative()
     {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
 
         // Sell 5 units (stock goes from 20 to 15)
         var comp = await _saleService.CompleteSaleAsync(new CompleteSaleDto
@@ -1206,7 +989,6 @@ public class SalesModuleTests : IDisposable
     [Fact]
     public async Task SaleReturn_RespectsWindowDays()
     {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
 
         var comp = await _saleService.CompleteSaleAsync(new CompleteSaleDto
         {
@@ -1249,7 +1031,6 @@ public class SalesModuleTests : IDisposable
     [Fact]
     public async Task SaleReturn_RestockVsDamaged_RestockCreatesMovements_DamagedCreatesNone()
     {
-        await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 100m });
         decimal initialStock = await _stockLedgerQuery.GetCurrentStockAsync(_trackProd.Id);
 
         var comp = await _saleService.CompleteSaleAsync(new CompleteSaleDto
@@ -1288,18 +1069,12 @@ public class SalesModuleTests : IDisposable
     }
 
     [Fact]
-    public async Task ConsistencyTest_SequenceOfSalesReturnsCancels_StockAndBalancesMatch()
+    public async Task ConsistencyTest_SequenceOfSalesReturnsCancels_StockAndPaymentsMatch()
     {
-        // Initial state:
-        // TrackProd stock = 20. Customer opening balance = 45.
+        // Initial state: TrackProd stock = 20
         decimal initialStock = await _stockLedgerQuery.GetCurrentStockAsync(_trackProd.Id);
-        decimal initialCustBal = await _customerBalanceQuery.GetCustomerBalanceAsync(_customer.Id);
 
-        // 1. Open shift with $200
-        var shiftRes = await _shiftService.OpenShiftAsync(new OpenShiftDto { OpeningCash = 200m });
-        int shiftId = shiftRes.Data!.Id;
-
-        // 2. Sale 1: 5 units cash @ 2.50 = $12.50
+        // 1. Sale 1: 5 units @ 2.50 = 12.50 (paid 15.00 cash -> 2.50 change, paid amount = 12.50)
         var s1 = await _saleService.CompleteSaleAsync(new CompleteSaleDto
         {
             Items = new List<SaleLineItemDto>
@@ -1308,24 +1083,28 @@ public class SalesModuleTests : IDisposable
             },
             Payments = new List<SalePaymentDto>
             {
-                new() { Method = PaymentMethod.Cash, Amount = 12.50m }
+                new() { Method = PaymentMethod.Cash, Amount = 15.00m, TenderedAmount = 15.00m }
             }
         });
         s1.Success.Should().BeTrue();
+        s1.Data!.PaidAmount.Should().Be(12.50m);
+        s1.Data!.ChangeAmount.Should().Be(2.50m);
 
-        // 3. Sale 2: 3 units credit to customer @ 2.50 = $7.50 (0 paid -> 7.50 due)
+        // 2. Sale 2: 3 units @ 2.50 = 7.50 card
         var s2 = await _saleService.CompleteSaleAsync(new CompleteSaleDto
         {
-            CustomerId = _customer.Id,
             Items = new List<SaleLineItemDto>
             {
                 new() { ProductId = _trackProd.Id, Quantity = 3m, UnitPrice = 2.50m, TaxPercent = 0m }
             },
-            Payments = new List<SalePaymentDto>()
+            Payments = new List<SalePaymentDto>
+            {
+                new() { Method = PaymentMethod.Card, Amount = 7.50m }
+            }
         });
         s2.Success.Should().BeTrue();
 
-        // 4. Sale 3: 2 units cash @ 2.50 = $5.00
+        // 3. Sale 3: 2 units @ 2.50 = 5.00 cash
         var s3 = await _saleService.CompleteSaleAsync(new CompleteSaleDto
         {
             Items = new List<SaleLineItemDto>
@@ -1339,7 +1118,7 @@ public class SalesModuleTests : IDisposable
         });
         s3.Success.Should().BeTrue();
 
-        // 5. Return 1 unit from Sale 1 cash @ 2.50 = $2.50 (restock)
+        // 4. Return 1 unit from Sale 1 cash @ 2.50 = 2.50 (restock)
         var r1 = await _returnService.CreateSaleReturnAsync(new CreateSaleReturnDto
         {
             SaleId = s1.Data!.Id,
@@ -1352,13 +1131,12 @@ public class SalesModuleTests : IDisposable
         });
         r1.Success.Should().BeTrue();
 
-        // 6. Return 1 unit from Sale 2 StoreCredit @ 2.50 = $2.50 (restock)
+        // 5. Return 1 unit from Sale 2 card @ 2.50 = 2.50 (restock)
         var r2 = await _returnService.CreateSaleReturnAsync(new CreateSaleReturnDto
         {
             SaleId = s2.Data!.Id,
-            CustomerId = _customer.Id,
-            RefundMethod = PaymentMethod.StoreCredit,
-            Reason = "Store credit return",
+            RefundMethod = PaymentMethod.Card,
+            Reason = "Return 2",
             Items = new List<CreateSaleReturnItemDto>
             {
                 new() { SaleItemId = s2.Data!.Items[0].Id, ProductId = _trackProd.Id, Quantity = 1m, ReturnToStock = true }
@@ -1366,35 +1144,20 @@ public class SalesModuleTests : IDisposable
         });
         r2.Success.Should().BeTrue();
 
-        // 7. Cancel Sale 3 (reverses 2 units)
+        // 6. Cancel Sale 3 today (reverses 2 units)
         var c3 = await _saleService.CancelSaleAsync(s3.Data!.Id, "Voided Sale 3");
         c3.Success.Should().BeTrue();
-
-        // 8. Shift Cash Movements: CashIn $50, CashOut $20
-        await _shiftService.AddCashMovementAsync(new CashMovementDto { ShiftId = shiftId, Type = CashMovementType.CashIn, Amount = 50m, Reason = "Float" });
-        await _shiftService.AddCashMovementAsync(new CashMovementDto { ShiftId = shiftId, Type = CashMovementType.CashOut, Amount = 20m, Reason = "Supplies" });
 
         // Assert 1: Stock calculation matches
         // Initial = 20. S1: -5, S2: -3, S3: -2, R1: +1, R2: +1, CancelS3: +2 -> Expected: 20 - 5 - 3 - 2 + 1 + 1 + 2 = 14
         decimal actualStock = await _stockLedgerQuery.GetCurrentStockAsync(_trackProd.Id);
         actualStock.Should().Be(14m);
 
-        // Assert 2: Customer Balance matches
-        // Initial = 45. Due from S2: +7.50. StoreCredit R2: -2.50 -> Expected: 45 + 7.50 - 2.50 = 50.00
-        decimal actualCustBal = await _customerBalanceQuery.GetCustomerBalanceAsync(_customer.Id);
-        actualCustBal.Should().Be(initialCustBal + 7.50m - 2.50m);
-
-        // Assert 3: Shift Expected Cash matches
-        // Open: 200 + NetCashSales (S1: 12.50) - CashRefunds (R1: 2.50) + CashIn (50) - CashOut (20) = 240.00
-        // (Note: S3 was cancelled, so excluded from completed sales!)
-        var shiftSummary = await _shiftService.GetShiftSummaryAsync(shiftId);
-        shiftSummary.Data!.ExpectedCash.Should().Be(240.00m);
-
-        // Assert 4: Payments minus change on every completed sale equals PaidAmount
+        // Assert 2: Payments minus change on every completed sale equals PaidAmount
         var allSales = await _context.Sales.Include(s => s.Payments).Where(s => s.Status == SaleStatus.Completed).ToListAsync();
         foreach (var sale in allSales)
         {
             sale.PaidAmount.Should().Be(sale.Payments.Sum(p => p.Amount));
         }
-    }
 }
+    }

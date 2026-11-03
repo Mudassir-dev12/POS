@@ -7,18 +7,29 @@ using ShopPOS.Core.Enums;
 using ShopPOS.Core.Interfaces;
 using ShopPOS.UI.Services;
 using ShopPOS.UI.ViewModels.HeldBills;
-using ShopPOS.UI.ViewModels.Shifts;
 
 namespace ShopPOS.UI.ViewModels.Sales;
 
 public partial class PosProductSuggestion : ObservableObject
 {
-    public ProductListItemDto Product { get; }
-    public string Name => Product.Name;
-    public string Sku => Product.Sku;
-    public string? Barcode => Product.Barcode;
-    public decimal SalePrice => Product.SalePrice;
-    public decimal CurrentStock => Product.CurrentStock;
+    public PosProductSearchResult? SearchResult { get; }
+    public ProductListItemDto? Product { get; }
+
+    public int ProductId => SearchResult?.ProductId ?? Product?.Id ?? 0;
+    public string Name => SearchResult?.Name ?? Product?.Name ?? string.Empty;
+    public string Sku => SearchResult?.Sku ?? Product?.Sku ?? string.Empty;
+    public string? Barcode => SearchResult?.Barcode ?? Product?.Barcode;
+    public decimal SalePrice => SearchResult?.SalePrice ?? Product?.SalePrice ?? 0m;
+    public decimal CurrentStock => SearchResult?.CurrentStock ?? Product?.CurrentStock ?? 0m;
+    public StockStatus StockStatus => SearchResult?.StockStatus ?? (Product != null && !Product.TrackStock ? StockStatus.NotTracked : (Product != null && Product.CurrentStock <= 0 ? StockStatus.OutOfStock : (Product != null && Product.CurrentStock <= Product.ReorderLevel ? StockStatus.Low : StockStatus.OK)));
+    public string StockStatusDisplay => SearchResult?.StockStatusDisplay ?? StockStatus.ToString();
+    public string UnitShortName => SearchResult?.UnitShortName ?? Product?.UnitShortName ?? string.Empty;
+    public decimal ParsedQuantity => SearchResult?.ParsedQuantity ?? 1m;
+
+    public PosProductSuggestion(PosProductSearchResult result)
+    {
+        SearchResult = result;
+    }
 
     public PosProductSuggestion(ProductListItemDto product)
     {
@@ -31,18 +42,21 @@ public partial class PosSaleViewModel : ObservableObject
     private readonly ISaleService _saleService;
     private readonly ISaleCalculator _saleCalculator;
     private readonly IProductLookupService _productLookupService;
-    private readonly IShiftService _shiftService;
-    private readonly ICustomerService _customerService;
     private readonly IProductService _productService;
+    private readonly IPriceLevelService _priceLevelService;
     private readonly IStockLedgerQuery _stockLedgerQuery;
     private readonly IShopSettingService _shopSettingService;
-    private readonly ICustomerBalanceQuery _customerBalanceQuery;
     private readonly IDialogService _dialogService;
     private readonly INavigationService _navigationService;
     private readonly IReceiptPrinterService _receiptPrinterService;
     private readonly IReceiptBuilder? _receiptBuilder;
     private readonly IAuditLogService? _auditLogService;
     private readonly ICurrentUserProvider? _currentUserProvider;
+    private readonly IProductSearchService? _productSearchService;
+    private CancellationTokenSource? _scanDebounceCts;
+
+    [ObservableProperty]
+    private bool _hasSuggestions;
 
     // Scan box & suggestions
     [ObservableProperty]
@@ -65,18 +79,31 @@ public partial class PosSaleViewModel : ObservableObject
     [ObservableProperty]
     private PosCartLineItemViewModel? _selectedCartItem;
 
-    // Customer
-    [ObservableProperty]
-    private int? _selectedCustomerId;
+    // Price Levels
+    public ObservableCollection<PriceLevelDto> PriceLevels { get; } = new();
 
     [ObservableProperty]
-    private string _customerDisplayName = "Walk-in Customer";
+    private PriceLevelDto? _selectedPriceLevel;
 
-    [ObservableProperty]
-    private decimal _customerCurrentBalance;
+    partial void OnSelectedPriceLevelChanged(PriceLevelDto? value)
+    {
+        if (value == null || CartItems.Count == 0) return;
+        _ = UpdateCartPricesForSelectedPriceLevelAsync(value.Id);
+    }
 
-    [ObservableProperty]
-    private decimal _customerCreditLimit;
+    public async Task UpdateCartPricesForSelectedPriceLevelAsync(int priceLevelId)
+    {
+        foreach (var item in CartItems)
+        {
+            var pRes = await _productService.GetProductByIdAsync(item.ProductId);
+            if (pRes.Success && pRes.Data != null)
+            {
+                var tier = pRes.Data.Prices.FirstOrDefault(pr => pr.PriceLevelId == priceLevelId);
+                item.UnitPrice = tier != null && tier.Price > 0 ? tier.Price : pRes.Data.SalePrice;
+            }
+        }
+        RecalculateTotals();
+    }
 
     // Notes & Discounts
     [ObservableProperty]
@@ -112,7 +139,7 @@ public partial class PosSaleViewModel : ObservableObject
 
     // System Settings & State
     [ObservableProperty]
-    private string _currencySymbol = "$";
+    private string _currencySymbol = "Rs";
 
     [ObservableProperty]
     private bool _pricesIncludeTax = true;
@@ -124,22 +151,10 @@ public partial class PosSaleViewModel : ObservableObject
     private bool _allowNegativeStock = true;
 
     [ObservableProperty]
-    private bool _allowCreditSales = true;
-
-    [ObservableProperty]
     private bool _allowSellingBelowMinPrice = false;
 
     [ObservableProperty]
-    private bool _requireOpenShiftForSales = false;
-
-    [ObservableProperty]
     private bool _autoPrintReceipt = false;
-
-    [ObservableProperty]
-    private string _shiftStatusText = "Checking shift status...";
-
-    [ObservableProperty]
-    private Shift? _currentOpenShift;
 
     [ObservableProperty]
     private int _heldBillsCount;
@@ -164,45 +179,43 @@ public partial class PosSaleViewModel : ObservableObject
         ISaleService saleService,
         ISaleCalculator saleCalculator,
         IProductLookupService productLookupService,
-        IShiftService shiftService,
-        ICustomerService customerService,
         IProductService productService,
+        IPriceLevelService priceLevelService,
         IStockLedgerQuery stockLedgerQuery,
         IShopSettingService shopSettingService,
-        ICustomerBalanceQuery customerBalanceQuery,
         IDialogService dialogService,
         INavigationService navigationService,
         IReceiptPrinterService receiptPrinterService,
         IReceiptBuilder? receiptBuilder = null,
         IAuditLogService? auditLogService = null,
-        ICurrentUserProvider? currentUserProvider = null)
+        ICurrentUserProvider? currentUserProvider = null,
+        IProductSearchService? productSearchService = null)
     {
         _saleService = saleService;
         _saleCalculator = saleCalculator;
         _productLookupService = productLookupService;
-        _shiftService = shiftService;
-        _customerService = customerService;
         _productService = productService;
+        _priceLevelService = priceLevelService;
         _stockLedgerQuery = stockLedgerQuery;
         _shopSettingService = shopSettingService;
-        _customerBalanceQuery = customerBalanceQuery;
         _dialogService = dialogService;
         _navigationService = navigationService;
         _receiptPrinterService = receiptPrinterService;
         _receiptBuilder = receiptBuilder;
         _auditLogService = auditLogService;
         _currentUserProvider = currentUserProvider;
+        _productSearchService = productSearchService;
 
         _ = InitializeAsync();
     }
 
     public async Task InitializeAsync()
     {
-        await LoadSettingsAndShiftAsync();
+        await LoadSettingsAndPriceLevelsAsync();
         RecalculateTotals();
     }
 
-    public async Task LoadSettingsAndShiftAsync()
+    public async Task LoadSettingsAndPriceLevelsAsync()
     {
         try
         {
@@ -211,25 +224,15 @@ public partial class PosSaleViewModel : ObservableObject
             PricesIncludeTax = settings.PricesIncludeTax;
             CashRoundingStep = settings.CashRoundingStep;
             AllowNegativeStock = settings.AllowNegativeStock;
-            AllowCreditSales = settings.AllowCreditSales;
             AllowSellingBelowMinPrice = settings.AllowSellingBelowMinPrice;
-            RequireOpenShiftForSales = settings.RequireOpenShiftForSales;
             AutoPrintReceipt = settings.AutoPrintReceipt;
 
-            var shiftResult = await _shiftService.GetCurrentOpenShiftAsync();
-            if (shiftResult.Success && shiftResult.Data != null)
+            var plResult = await _priceLevelService.GetAllAsync();
+            if (plResult.Success && plResult.Data != null)
             {
-                CurrentOpenShift = shiftResult.Data;
-                var summaryResult = await _shiftService.GetShiftSummaryAsync(shiftResult.Data.Id);
-                decimal expected = summaryResult.Success && summaryResult.Data != null ? summaryResult.Data.ExpectedCash : shiftResult.Data.OpeningCash;
-                ShiftStatusText = $"Shift #{shiftResult.Data.ShiftNumber} open since {shiftResult.Data.OpenedAt:HH:mm} | Expected Cash: {CurrencySymbol}{expected:F2}";
-            }
-            else
-            {
-                CurrentOpenShift = null;
-                ShiftStatusText = RequireOpenShiftForSales
-                    ? "⚠️ NO OPEN SHIFT (Shift required before completing sales)"
-                    : "No active shift (Shift tracking optional)";
+                PriceLevels.Clear();
+                foreach (var pl in plResult.Data) PriceLevels.Add(pl);
+                SelectedPriceLevel = PriceLevels.FirstOrDefault(p => p.Name.Equals("Retail", StringComparison.OrdinalIgnoreCase)) ?? PriceLevels.FirstOrDefault();
             }
 
             var heldResult = await _saleService.ListHeldBillsAsync();
@@ -243,49 +246,83 @@ public partial class PosSaleViewModel : ObservableObject
     partial void OnScanInputChanged(string value)
     {
         ScanErrorMessage = null;
-        if (string.IsNullOrWhiteSpace(value) || value.Length < 2)
+        _scanDebounceCts?.Cancel();
+
+        if (string.IsNullOrWhiteSpace(value))
         {
             ShowSuggestions = false;
+            HasSuggestions = false;
             Suggestions.Clear();
+            SelectedSuggestion = null;
             return;
         }
 
-        // Check if typing a product name (does not contain asterisk prefix)
-        if (!value.Contains('*') && value.Length >= 2 && !char.IsDigit(value[0]))
+        _scanDebounceCts = new CancellationTokenSource();
+        var token = _scanDebounceCts.Token;
+
+        _ = Task.Run(async () =>
         {
-            _ = UpdateSuggestionsAsync(value);
-        }
-        else
-        {
-            ShowSuggestions = false;
-        }
+            try
+            {
+                await Task.Delay(150, token);
+                if (token.IsCancellationRequested) return;
+
+                if (App.Current?.Dispatcher != null)
+                {
+                    await App.Current.Dispatcher.InvokeAsync(async () =>
+                    {
+                        if (token.IsCancellationRequested) return;
+                        await UpdateSuggestionsAsync(value, token);
+                    });
+                }
+                else
+                {
+                    await UpdateSuggestionsAsync(value, token);
+                }
+            }
+            catch (OperationCanceledException) { }
+        }, token);
     }
 
-    private async Task UpdateSuggestionsAsync(string query)
+    public async Task UpdateSuggestionsAsync(string query, CancellationToken token = default)
     {
         try
         {
-            var searchDto = new ProductSearchQuery
+            int? priceTier = SelectedPriceLevel?.Id;
+            IReadOnlyList<PosProductSearchResult> results;
+
+            if (_productSearchService != null)
             {
-                SearchTerm = query.Trim(),
-                IsActive = true,
-                PageSize = 6
-            };
-            var result = await _productService.GetPagedProductsAsync(searchDto);
-            if (result.Success && result.Data != null && result.Data.Items.Count > 0)
-            {
-                Suggestions.Clear();
-                foreach (var p in result.Data.Items)
-                {
-                    Suggestions.Add(new PosProductSuggestion(p));
-                }
-                ShowSuggestions = Suggestions.Count > 0;
+                results = await _productSearchService.SearchProductsAsync(query, priceTier, 20, token);
             }
             else
             {
-                ShowSuggestions = false;
+                // Fallback using ProductService
+                var res = await _productService.GetPagedProductsAsync(new ProductSearchQuery
+                {
+                    SearchTerm = query.Trim(),
+                    IsActive = true,
+                    PageSize = 20
+                }, token);
+
+                results = (res.Data?.Items ?? new List<ProductListItemDto>())
+                    .Select(p => new PosProductSuggestion(p).SearchResult!)
+                    .ToList();
             }
+
+            if (token.IsCancellationRequested) return;
+
+            Suggestions.Clear();
+            foreach (var r in results)
+            {
+                Suggestions.Add(new PosProductSuggestion(r));
+            }
+
+            HasSuggestions = Suggestions.Count > 0;
+            ShowSuggestions = true;
+            SelectedSuggestion = Suggestions.FirstOrDefault();
         }
+        catch (OperationCanceledException) { }
         catch
         {
             ShowSuggestions = false;
@@ -297,22 +334,25 @@ public partial class PosSaleViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(ScanInput)) return;
 
-        // If suggestion was selected via arrow keys
+        // 1. If suggestions open and an item is selected or exactly 1 suggestion, add that suggestion
         if (ShowSuggestions && SelectedSuggestion != null)
         {
-            await AddProductToCartAsync(SelectedSuggestion.Product.Id, 1m);
+            decimal qty = SelectedSuggestion.ParsedQuantity > 0 ? SelectedSuggestion.ParsedQuantity : 1m;
+            await AddProductToCartAsync(SelectedSuggestion.ProductId, qty);
             ClearScanBox();
             return;
         }
 
-        // Check Shift requirement
-        if (RequireOpenShiftForSales && CurrentOpenShift == null)
+        if (ShowSuggestions && Suggestions.Count == 1)
         {
-            bool shiftOpened = PromptOpenShift();
-            if (!shiftOpened) return;
+            decimal qty = Suggestions[0].ParsedQuantity > 0 ? Suggestions[0].ParsedQuantity : 1m;
+            await AddProductToCartAsync(Suggestions[0].ProductId, qty);
+            ClearScanBox();
+            return;
         }
 
-        var lookupResult = await _productLookupService.LookupProductAsync(ScanInput.Trim());
+        // 2. Barcode or SKU direct lookup
+        var lookupResult = await _productLookupService.LookupProductAsync(ScanInput.Trim(), SelectedPriceLevel?.Id);
         if (lookupResult.Found && lookupResult.Product != null)
         {
             await AddProductToCartAsync(lookupResult.Product.Id, lookupResult.ParsedQuantity);
@@ -331,9 +371,11 @@ public partial class PosSaleViewModel : ObservableObject
 
     private void ClearScanBox()
     {
+        _scanDebounceCts?.Cancel();
         ScanInput = string.Empty;
         ScanErrorMessage = null;
         ShowSuggestions = false;
+        HasSuggestions = false;
         Suggestions.Clear();
         SelectedSuggestion = null;
     }
@@ -342,7 +384,8 @@ public partial class PosSaleViewModel : ObservableObject
     public async Task SelectSuggestionAsync(PosProductSuggestion suggestion)
     {
         if (suggestion == null) return;
-        await AddProductToCartAsync(suggestion.Product.Id, 1m);
+        decimal qty = suggestion.ParsedQuantity > 0 ? suggestion.ParsedQuantity : 1m;
+        await AddProductToCartAsync(suggestion.ProductId, qty);
         ClearScanBox();
     }
 
@@ -368,6 +411,16 @@ public partial class PosSaleViewModel : ObservableObject
         decimal currentStock = p.TrackStock ? await _stockLedgerQuery.GetCurrentStockAsync(p.Id) : 0m;
         var stockStatus = ComputeStockStatus(currentStock, p.ReorderLevel, p.TrackStock);
 
+        decimal unitPrice = p.SalePrice;
+        if (SelectedPriceLevel != null)
+        {
+            var tier = p.Prices?.FirstOrDefault(pr => pr.PriceLevelId == SelectedPriceLevel.Id);
+            if (tier != null && tier.Price > 0)
+            {
+                unitPrice = tier.Price;
+            }
+        }
+
         var newLine = new PosCartLineItemViewModel
         {
             LineNo = CartItems.Count + 1,
@@ -376,7 +429,7 @@ public partial class PosSaleViewModel : ObservableObject
             Sku = p.Sku,
             Barcode = p.Barcode,
             Quantity = quantity,
-            UnitPrice = p.SalePrice,
+            UnitPrice = unitPrice,
             MinSalePrice = p.MinSalePrice,
             CostPriceSnapshot = p.CostPrice,
             AllowDecimalQuantity = p.AllowDecimalQuantity,
@@ -457,10 +510,6 @@ public partial class PosSaleViewModel : ObservableObject
         CartItems.Clear();
         SelectedCartItem = null;
         OriginatingHeldBillId = null;
-        SelectedCustomerId = null;
-        CustomerDisplayName = "Walk-in Customer";
-        CustomerCurrentBalance = 0m;
-        CustomerCreditLimit = 0m;
         BillDiscountPercent = 0m;
         BillDiscountAmount = 0m;
         Notes = null;
@@ -468,6 +517,10 @@ public partial class PosSaleViewModel : ObservableObject
         LastCompletedSale = null;
         LastChangeAmount = 0m;
         ClearScanBox();
+
+        // Reset to Retail price level
+        SelectedPriceLevel = PriceLevels.FirstOrDefault(p => p.Name.Equals("Retail", StringComparison.OrdinalIgnoreCase)) ?? PriceLevels.FirstOrDefault();
+
         RecalculateTotals();
         OnPropertyChanged(nameof(HasCartItems));
     }
@@ -501,7 +554,6 @@ public partial class PosSaleViewModel : ObservableObject
         ItemsCount = CartItems.Count;
         TotalUnits = CartItems.Sum(c => c.Quantity);
 
-        // Update allocated lines
         for (int i = 0; i < CartItems.Count && i < totals.Lines.Count; i++)
         {
             CartItems[i].LineTotal = totals.Lines[i].LineTotal;
@@ -528,31 +580,6 @@ public partial class PosSaleViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public async Task SelectCustomerAsync()
-    {
-        var custVm = new ViewModels.Customers.CustomerDialogViewModel(
-            _customerService,
-            null!,
-            null!,
-            1,
-            "Owner");
-
-        var result = _dialogService.ShowCustomerDialog(custVm);
-        if (result == true && custVm.CreatedCustomerId.HasValue)
-        {
-            SelectedCustomerId = custVm.CreatedCustomerId.Value;
-            var listRes = await _customerService.GetFlatListAsync(true);
-            var cust = listRes.Data?.FirstOrDefault(c => c.Id == SelectedCustomerId.Value);
-            if (cust != null)
-            {
-                CustomerDisplayName = cust.Name;
-                CustomerCreditLimit = cust.CreditLimit;
-                CustomerCurrentBalance = await _customerBalanceQuery.GetCustomerBalanceAsync(cust.Id);
-            }
-        }
-    }
-
-    [RelayCommand]
     public async Task HoldBillAsync()
     {
         if (CartItems.Count == 0)
@@ -563,7 +590,7 @@ public partial class PosSaleViewModel : ObservableObject
 
         var dto = new SaveSaleDto
         {
-            CustomerId = SelectedCustomerId,
+            PriceLevelId = SelectedPriceLevel?.Id,
             Notes = Notes?.Trim(),
             BillDiscountPercent = BillDiscountPercent,
             BillDiscountAmount = BillDiscountAmount,
@@ -587,7 +614,7 @@ public partial class PosSaleViewModel : ObservableObject
         {
             _dialogService.ShowMessage($"Cart saved to held bills as '{result.Data.HoldNumber}'.", "Bill Held");
             ResetCartState();
-            await LoadSettingsAndShiftAsync();
+            await LoadSettingsAndPriceLevelsAsync();
         }
         else
         {
@@ -612,14 +639,12 @@ public partial class PosSaleViewModel : ObservableObject
     {
         ResetCartState();
         OriginatingHeldBillId = heldSale.Id;
-        SelectedCustomerId = heldSale.CustomerId;
-        CustomerDisplayName = heldSale.CustomerName ?? "Walk-in Customer";
         Notes = heldSale.Notes;
         BillDiscountAmount = heldSale.BillDiscountAmount;
 
-        if (SelectedCustomerId.HasValue)
+        if (heldSale.PriceLevelId.HasValue)
         {
-            CustomerCurrentBalance = await _customerBalanceQuery.GetCustomerBalanceAsync(SelectedCustomerId.Value);
+            SelectedPriceLevel = PriceLevels.FirstOrDefault(pl => pl.Id == heldSale.PriceLevelId.Value) ?? SelectedPriceLevel;
         }
 
         foreach (var item in heldSale.Items)
@@ -627,7 +652,7 @@ public partial class PosSaleViewModel : ObservableObject
             await AddProductToCartAsync(item.ProductId, item.Quantity);
         }
 
-        await LoadSettingsAndShiftAsync();
+        await LoadSettingsAndPriceLevelsAsync();
     }
 
     [RelayCommand]
@@ -677,13 +702,6 @@ public partial class PosSaleViewModel : ObservableObject
             return;
         }
 
-        // Shift requirement check
-        if (RequireOpenShiftForSales && CurrentOpenShift == null)
-        {
-            bool shiftOpened = PromptOpenShift();
-            if (!shiftOpened) return;
-        }
-
         // Check for minimum selling price violations
         if (!AllowSellingBelowMinPrice)
         {
@@ -718,11 +736,6 @@ public partial class PosSaleViewModel : ObservableObject
 
         var paymentVm = new SalePaymentDialogViewModel(
             GrandTotal,
-            SelectedCustomerId,
-            CustomerDisplayName,
-            CustomerCurrentBalance,
-            CustomerCreditLimit,
-            AllowCreditSales,
             CurrencySymbol,
             _saleCalculator);
 
@@ -738,7 +751,7 @@ public partial class PosSaleViewModel : ObservableObject
         var dto = new CompleteSaleDto
         {
             HeldBillId = OriginatingHeldBillId,
-            CustomerId = SelectedCustomerId,
+            PriceLevelId = SelectedPriceLevel?.Id,
             Notes = Notes?.Trim(),
             BillDiscountPercent = BillDiscountPercent,
             BillDiscountAmount = BillDiscountAmount,
@@ -765,14 +778,12 @@ public partial class PosSaleViewModel : ObservableObject
             LastChangeAmount = paymentVm.ChangeAmount;
             IsSaleSuccess = true;
 
-            // Auto-print receipt if setting is active
             if (AutoPrintReceipt)
             {
                 _ = PrintLastReceiptAsync();
             }
 
-            // Update shift status
-            await LoadSettingsAndShiftAsync();
+            await LoadSettingsAndPriceLevelsAsync();
         }
         else
         {
@@ -871,47 +882,10 @@ public partial class PosSaleViewModel : ObservableObject
         ResetCartState();
     }
 
-    private bool PromptOpenShift()
-    {
-        bool confirm = _dialogService.ShowConfirmation(
-            "An open shift is required to perform sales transactions. Would you like to open a shift now?",
-            "Open Shift Required");
-
-        if (!confirm) return false;
-
-        var shiftVm = new OpenShiftDialogViewModel(_shiftService);
-        bool? opened = _dialogService.ShowOpenShiftDialog(shiftVm);
-        if (opened == true && shiftVm.Confirmed && shiftVm.OpenedShift != null)
-        {
-            CurrentOpenShift = shiftVm.OpenedShift;
-            _ = LoadSettingsAndShiftAsync();
-            return true;
-        }
-
-        return false;
-    }
-
     [RelayCommand]
     public void OpenReturnsShortcut()
     {
         _navigationService.NavigateTo("SaleReturns");
-    }
-
-    [RelayCommand]
-    public void OpenCashMovement()
-    {
-        if (CurrentOpenShift == null)
-        {
-            _dialogService.ShowMessage("No shift is currently open. Please open a shift first.", "Cash In / Out");
-            return;
-        }
-
-        var vm = new CashMovementDialogViewModel(CurrentOpenShift.Id, CurrencySymbol, _shiftService);
-        bool? saved = _dialogService.ShowCashMovementDialog(vm);
-        if (saved == true && vm.Confirmed)
-        {
-            _ = LoadSettingsAndShiftAsync();
-        }
     }
 
     [RelayCommand]

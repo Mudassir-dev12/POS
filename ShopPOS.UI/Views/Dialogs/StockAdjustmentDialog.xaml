@@ -7,9 +7,7 @@
         Width="920"
         MinHeight="500"
         MinWidth="750"
-        WindowStartupLocation="CenterOwner"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+        Style="{StaticResource DialogWindowStyle}">
 
     <Window.InputBindings>
         <KeyBinding Key="Escape" Command="{Binding CancelCommand}" />
@@ -28,7 +26,7 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+        <Border Grid.Row="0" Style="{StaticResource SurfaceCardStyle}" Padding="16" Margin="0,0,0,12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -49,20 +47,20 @@
 
                     <!-- Number -->
                     <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,12,8">
-                        <TextBlock Text="Adjustment #" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4" />
-                        <TextBox Text="{Binding AdjustmentNumber}" IsReadOnly="True" Background="#F1F5F9" Padding="6,4" />
+                        <TextBlock Text="Adjustment #" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding AdjustmentNumber}" IsReadOnly="True" Style="{StaticResource InputTextBoxStyle}" />
                     </StackPanel>
 
                     <!-- Date -->
                     <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,12,8">
-                        <TextBlock Text="Adjustment Date" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4" />
+                        <TextBlock Text="Adjustment Date" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                         <DatePicker SelectedDate="{Binding AdjustmentDate}" IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}" Padding="6,4" />
                     </StackPanel>
 
                     <!-- Reason -->
                     <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,12,8">
-                        <TextBlock Text="Reason Category *" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4" />
-                        <ComboBox SelectedItem="{Binding SelectedReason}" IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}" Padding="6,4">
+                        <TextBlock Text="Reason Category *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                        <ComboBox SelectedItem="{Binding SelectedReason}" IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}" Style="{StaticResource InputComboBoxStyle}">
                             <enums:StockAdjustmentReason>CountCorrection</enums:StockAdjustmentReason>
                             <enums:StockAdjustmentReason>Damaged</enums:StockAdjustmentReason>
                             <enums:StockAdjustmentReason>Expired</enums:StockAdjustmentReason>
@@ -74,49 +72,70 @@
 
                     <!-- Notes -->
                     <StackPanel Grid.Row="0" Grid.Column="3" Margin="0,0,0,8">
-                        <TextBlock Text="Notes / Explanation" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4" />
-                        <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding IsReadOnly}" Padding="6,4" />
+                        <TextBlock Text="Notes / Explanation" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" IsReadOnly="{Binding IsReadOnly}" Style="{StaticResource InputTextBoxStyle}" />
                     </StackPanel>
                 </Grid>
 
                 <!-- Status Badge -->
                 <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="16,0,0,0">
-                    <Border CornerRadius="4" Padding="10,6" Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1">
-                        <TextBlock Text="{Binding Status}" FontWeight="Bold" Foreground="#1E40AF" FontSize="13" HorizontalAlignment="Center" />
+                    <Border CornerRadius="4" Padding="10,6" Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1">
+                        <TextBlock Text="{Binding Status}" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" FontSize="13" HorizontalAlignment="Center" />
                     </Border>
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Toolbar -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,8">
-            <Button Content="+ Add Product(s)..."
-                    Command="{Binding AddProductLineCommand}"
-                    IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
-                    Background="#2563EB" Foreground="White" FontWeight="SemiBold" Padding="12,6" BorderThickness="0" Cursor="Hand" Margin="0,0,8,0" />
-            <Button Content="Remove Selected Lines"
-                    Command="{Binding RemoveSelectedLinesCommand}"
-                    IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
-                    Background="#EF4444" Foreground="White" FontWeight="SemiBold" Padding="12,6" BorderThickness="0" Cursor="Hand" />
-        </StackPanel>
+        <Grid Grid.Row="1" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Barcode Scanner input for quick counting -->
+            <Grid Grid.Column="0" Margin="0,0,16,0">
+                <TextBox x:Name="AdjustmentScanBox"
+                         Text="{Binding ScanInput, UpdateSourceTrigger=PropertyChanged}"
+                         IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
+                         Style="{StaticResource InputTextBoxStyle}">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Enter" Command="{Binding ProcessScanInputCommand}" />
+                    </TextBox.InputBindings>
+                </TextBox>
+                <TextBlock Text=" Scan barcode with USB scanner or type SKU and press Enter to add..."
+                           IsHitTestVisible="False"
+                           VerticalAlignment="Center"
+                           Margin="10,0,0,0"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           Visibility="{Binding ScanInput, Converter={StaticResource StringToVisibilityConverter}, ConverterParameter=Inverse}" />
+            </Grid>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="+ Add Product(s)..."
+                        Command="{Binding AddProductLineCommand}"
+                        IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
+                        Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+                <Button Content="Remove Selected Lines"
+                        Command="{Binding RemoveSelectedLinesCommand}"
+                        IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
+                        Style="{StaticResource DangerButtonStyle}" />
+            </StackPanel>
+        </Grid>
 
         <!-- Items DataGrid -->
-        <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="1">
+        <Border Grid.Row="2" Style="{StaticResource TableContainerBorderStyle}">
             <DataGrid x:Name="ItemsGrid"
                       ItemsSource="{Binding Items}"
                       SelectedItem="{Binding SelectedLine, Mode=TwoWay}"
                       SelectionMode="Extended"
                       SelectionUnit="FullRow"
-                      AutoGenerateColumns="False"
+                      Style="{StaticResource AppDataGridStyle}"
                       CanUserAddRows="False"
                       CanUserDeleteRows="False"
-                      GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#F1F5F9"
-                      RowHeight="36"
-                      BorderThickness="0"
-                      Background="White">
+                      RowHeight="36">
                 <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow">
+                    <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
                         <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                     </Style>
                 </DataGrid.RowStyle>
@@ -124,17 +143,11 @@
                     <!-- Checkbox Column -->
                     <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="40" />
 
-                    <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="100" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" Width="*" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Current Stock" Binding="{Binding SystemQuantity, StringFormat='{}{0:N2}'}" Width="110" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="100"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" Width="*" FontWeight="SemiBold" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Current Stock" Binding="{Binding SystemQuantity, StringFormat='{}{0:N2}'}" Width="110"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
 
                     <DataGridTemplateColumn Header="Adjust To *" Width="120">
                         <DataGridTemplateColumn.CellTemplate>
@@ -145,6 +158,7 @@
                                          Padding="4,2"
                                          HorizontalAlignment="Stretch"
                                          VerticalAlignment="Center"
+                                         Style="{StaticResource InputTextBoxStyle}"
                                          GotFocus="NewQuantityBox_GotFocus"
                                          PreviewKeyDown="NewQuantityBox_PreviewKeyDown"
                                          IsReadOnly="{Binding DataContext.IsReadOnly, RelativeSource={RelativeSource AncestorType=DataGrid}}" />
@@ -152,37 +166,14 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTextColumn Header="Difference" Binding="{Binding Difference, StringFormat='{}{0:+0.###;-0.###;0}'}" Width="100" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="FontWeight" Value="Bold" />
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Difference" Binding="{Binding Difference, StringFormat='{}{0:+0.###;-0.###;0}'}" Width="100"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
 
-                    <DataGridTextColumn Header="Cost" Binding="{Binding UnitCost, StringFormat='{}{0:N2}'}" Width="90" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Cost" Binding="{Binding UnitCost, Converter={StaticResource MoneyConverter}}" Width="100"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
 
-                    <DataGridTextColumn Header="Val Diff" Binding="{Binding LineValueDifference, StringFormat='{}{0:N2}'}" Width="100" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="FontWeight" Value="SemiBold" />
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Val Diff" Binding="{Binding LineValueDifference, Converter={StaticResource MoneyConverter}}" Width="110"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
 
                     <DataGridTextColumn Header="Note" Binding="{Binding Note}" Width="140" />
 
@@ -190,11 +181,12 @@
                     <DataGridTemplateColumn Width="45">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Content="✕" ToolTip="Remove Line"
+                                <Button Content="X" ToolTip="Remove Line"
                                         Command="{Binding DataContext.RemoveLineItemCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
                                         CommandParameter="{Binding}"
                                         IsEnabled="{Binding DataContext.IsReadOnly, RelativeSource={RelativeSource AncestorType=DataGrid}, Converter={StaticResource InverseBooleanConverter}}"
-                                        Foreground="#EF4444" Background="Transparent" BorderThickness="0" FontWeight="Bold" FontSize="13" Cursor="Hand" />
+                                        Style="{StaticResource GhostButtonStyle}"
+                                        Foreground="{DynamicResource DangerBrush}" FontWeight="Bold" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
@@ -210,17 +202,17 @@
             </Grid.ColumnDefinitions>
 
             <!-- Error message -->
-            <TextBlock Grid.Column="0" Text="{Binding ErrorMessage}" Foreground="#DC2626" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" />
+            <TextBlock Grid.Column="0" Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerBrush}" FontWeight="SemiBold" VerticalAlignment="Center" TextWrapping="Wrap" />
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="Cancel" Command="{Binding CancelCommand}"
-                        Background="#F1F5F9" Foreground="#475569" Padding="16,8" Margin="0,0,10,0" BorderThickness="1" BorderBrush="#CBD5E1" Cursor="Hand" />
+                        Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0" />
                 <Button Content="Save Draft" Command="{Binding SaveDraftCommand}"
                         Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-                        Background="#0284C7" Foreground="White" FontWeight="SemiBold" Padding="16,8" Margin="0,0,10,0" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0" />
                 <Button Content="Save &amp; Post" Command="{Binding SaveAndPostCommand}"
                         Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-                        Background="#16A34A" Foreground="White" FontWeight="Bold" Padding="18,8" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource PrimaryButtonStyle}" />
             </StackPanel>
         </Grid>
     </Grid>

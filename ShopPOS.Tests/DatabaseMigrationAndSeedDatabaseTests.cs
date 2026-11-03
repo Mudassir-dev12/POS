@@ -68,7 +68,8 @@ public class DatabaseMigrationAndSeedDatabaseTests
         var settings = await context.ShopSettings.FirstOrDefaultAsync();
         settings.Should().NotBeNull();
         settings!.ShopName.Should().Be("My Mart & Retail Store");
-        settings.CurrencySymbol.Should().Be("$");
+        settings.CurrencySymbol.Should().Be("Rs");
+        settings.CurrencyDecimals.Should().Be(2);
         settings.ReceiptWidthMm.Should().Be(80);
     }
 
@@ -192,36 +193,36 @@ public class DatabaseMigrationAndSeedDatabaseTests
         var (connection, options) = CreateInMemoryDatabase();
         using var conn = connection;
 
-        int customerId;
+        int supplierId;
         using (var context = new AppDbContext(options))
         {
             await context.Database.MigrateAsync();
 
-            var customer = new Customer
+            var supplier = new Supplier
             {
-                Name = "Alice Retail",
+                Name = "Alice Supplier",
                 Phone = "555-9876",
                 IsDeleted = false
             };
 
-            await context.Customers.AddAsync(customer);
+            await context.Suppliers.AddAsync(supplier);
             await context.SaveChangesAsync();
-            customerId = customer.Id;
+            supplierId = supplier.Id;
 
-            // Act: Soft delete customer
-            customer.IsDeleted = true;
+            // Act: Soft delete supplier
+            supplier.IsDeleted = true;
             await context.SaveChangesAsync();
         }
 
         // Assert: Standard query filter excludes deleted entities
         using (var queryContext = new AppDbContext(options))
         {
-            var activeCustomers = await queryContext.Customers.ToListAsync();
-            activeCustomers.Should().NotContain(c => c.Id == customerId);
+            var activeSuppliers = await queryContext.Suppliers.ToListAsync();
+            activeSuppliers.Should().NotContain(s => s.Id == supplierId);
 
             // Assert: Query with IgnoreQueryFilters includes soft deleted entities
-            var allCustomers = await queryContext.Customers.IgnoreQueryFilters().ToListAsync();
-            allCustomers.Should().Contain(c => c.Id == customerId && c.IsDeleted);
+            var allSuppliers = await queryContext.Suppliers.IgnoreQueryFilters().ToListAsync();
+            allSuppliers.Should().Contain(s => s.Id == supplierId && s.IsDeleted);
         }
     }
 
@@ -262,13 +263,7 @@ public class DatabaseMigrationAndSeedDatabaseTests
                 };
                 ctx.Suppliers.Add(supplier);
 
-                var customer = new Customer
-                {
-                    Name = "Migration Customer",
-                    Phone = "555-4321",
-                    IsActive = true
-                };
-                ctx.Customers.Add(customer);
+
 
                 var cat = new Category { Name = "Migration Test Category", IsActive = true };
                 var unit = new Unit { Name = "Piece", ShortName = "pc", IsActive = true };
@@ -338,9 +333,6 @@ public class DatabaseMigrationAndSeedDatabaseTests
                 var supp = await verifyCtx.Suppliers.FirstOrDefaultAsync(s => s.Name == "Migration Test Supplier");
                 supp.Should().NotBeNull();
 
-                var cust = await verifyCtx.Customers.FirstOrDefaultAsync(c => c.Name == "Migration Customer");
-                cust.Should().NotBeNull();
-
                 var purch = await verifyCtx.Purchases.Include(p => p.Items).FirstOrDefaultAsync(p => p.PurchaseNumber == "PUR-MIG-P5");
                 purch.Should().NotBeNull();
                 purch!.Items.Should().HaveCount(1);
@@ -350,19 +342,21 @@ public class DatabaseMigrationAndSeedDatabaseTests
                 movements.Should().HaveCount(1);
                 movements[0].Quantity.Should().Be(10m);
 
-                // 4. Verify Phase 5 new tables exist and can accept records
-                var shift = new Shift
+                // 4. Verify Sales table exists and can accept records
+                var sale = new Sale
                 {
-                    ShiftNumber = "SHF-MIG-01",
-                    OpenedAt = DateTime.Now,
-                    OpeningCash = 50m,
-                    Status = ShiftStatus.Open,
+                    SaleNumber = "SALE-MIG-01",
+                    SaleDate = DateTime.Now,
+                    Status = SaleStatus.Completed,
+                    SubTotal = 45m,
+                    GrandTotal = 45m,
+                    PaidAmount = 45m,
                     CreatedByUserId = 1
                 };
-                verifyCtx.Shifts.Add(shift);
+                verifyCtx.Sales.Add(sale);
                 await verifyCtx.SaveChangesAsync();
 
-                shift.Id.Should().BeGreaterThan(0);
+                sale.Id.Should().BeGreaterThan(0);
             }
         }
         finally

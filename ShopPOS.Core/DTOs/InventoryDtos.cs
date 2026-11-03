@@ -1,3 +1,4 @@
+using ShopPOS.Core.Interfaces;
 using ShopPOS.Core.Enums;
 
 namespace ShopPOS.Core.DTOs;
@@ -134,8 +135,9 @@ public class StockAdjustmentItemDto
     public string? Note { get; set; }
 }
 
-public class StockAdjustmentListDto
+public class StockAdjustmentListDto : ISelectable
 {
+    public bool IsSelected { get; set; }
     public int Id { get; set; }
     public string AdjustmentNumber { get; set; } = string.Empty;
     public DateTime AdjustmentDate { get; set; }

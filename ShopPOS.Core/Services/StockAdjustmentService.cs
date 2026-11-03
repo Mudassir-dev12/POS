@@ -16,7 +16,6 @@ public class StockAdjustmentService : IStockAdjustmentService
     private readonly INumberSequenceService _sequenceService;
     private readonly ITransactionRunner _transactionRunner;
     private readonly IAuditLogService _auditLogService;
-    private readonly IPermissionService _permissionService;
     private readonly IValidator<CreateStockAdjustmentDto> _createValidator;
     private readonly IValidator<UpdateStockAdjustmentDto> _updateValidator;
 
@@ -28,7 +27,6 @@ public class StockAdjustmentService : IStockAdjustmentService
         INumberSequenceService sequenceService,
         ITransactionRunner transactionRunner,
         IAuditLogService auditLogService,
-        IPermissionService permissionService,
         IValidator<CreateStockAdjustmentDto> createValidator,
         IValidator<UpdateStockAdjustmentDto> updateValidator)
     {
@@ -39,17 +37,13 @@ public class StockAdjustmentService : IStockAdjustmentService
         _sequenceService = sequenceService;
         _transactionRunner = transactionRunner;
         _auditLogService = auditLogService;
-        _permissionService = permissionService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
     }
 
     public async Task<Result<PagedResult<StockAdjustmentListDto>>> GetAdjustmentsAsync(DateTime? fromDate, DateTime? toDate, StockAdjustmentStatus? status, int pageNumber, int pageSize, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageInventory(userRole))
-        {
-            return Result<PagedResult<StockAdjustmentListDto>>.Failure("Permission denied. You do not have access to Stock Adjustments.");
-        }
+        // single-user: no permission check needed
 
         var result = await _adjustmentRepo.GetAdjustmentsAsync(fromDate, toDate, status, pageNumber, pageSize, cancellationToken);
         return Result<PagedResult<StockAdjustmentListDto>>.Ok(result);
@@ -57,10 +51,7 @@ public class StockAdjustmentService : IStockAdjustmentService
 
     public async Task<Result<StockAdjustmentDetailDto>> GetAdjustmentByIdAsync(int id, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageInventory(userRole))
-        {
-            return Result<StockAdjustmentDetailDto>.Failure("Permission denied. You do not have access to Stock Adjustments.");
-        }
+        // single-user: no permission check needed
 
         var detail = await _adjustmentRepo.GetAdjustmentDetailAsync(id, cancellationToken);
         if (detail == null)
@@ -73,10 +64,7 @@ public class StockAdjustmentService : IStockAdjustmentService
 
     public async Task<Result<StockAdjustmentDetailDto>> CreateAdjustmentDraftAsync(CreateStockAdjustmentDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageInventory(userRole))
-        {
-            return Result<StockAdjustmentDetailDto>.Failure("Permission denied. You cannot create stock adjustments.");
-        }
+        // single-user: no permission check needed
 
         var validationResult = await _createValidator.ValidateAsync(dto, cancellationToken);
         if (!validationResult.IsValid)
@@ -133,10 +121,7 @@ public class StockAdjustmentService : IStockAdjustmentService
 
     public async Task<Result<StockAdjustmentDetailDto>> UpdateAdjustmentDraftAsync(UpdateStockAdjustmentDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageInventory(userRole))
-        {
-            return Result<StockAdjustmentDetailDto>.Failure("Permission denied. You cannot edit stock adjustments.");
-        }
+        // single-user: no permission check needed
 
         var validationResult = await _updateValidator.ValidateAsync(dto, cancellationToken);
         if (!validationResult.IsValid)
@@ -204,10 +189,7 @@ public class StockAdjustmentService : IStockAdjustmentService
 
     public async Task<Result<bool>> DeleteAdjustmentDraftAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageInventory(userRole))
-        {
-            return Result<bool>.Failure("Permission denied. You cannot delete stock adjustments.");
-        }
+        // single-user: no permission check needed
 
         var adjustment = await _adjustmentRepo.GetAdjustmentByIdAsync(id, includeItems: false, cancellationToken);
         if (adjustment == null)
@@ -227,10 +209,7 @@ public class StockAdjustmentService : IStockAdjustmentService
 
     public async Task<Result<StockAdjustmentDetailDto>> PostAdjustmentAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageInventory(userRole))
-        {
-            return Result<StockAdjustmentDetailDto>.Failure("Permission denied. You cannot post stock adjustments.");
-        }
+        // single-user: no permission check needed
 
         try
         {
@@ -310,10 +289,7 @@ public class StockAdjustmentService : IStockAdjustmentService
 
     public async Task<Result<bool>> CancelAdjustmentAsync(int id, string reason, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageInventory(userRole))
-        {
-            return Result<bool>.Failure("Permission denied. You cannot cancel stock adjustments.");
-        }
+        // single-user: no permission check needed
 
         if (string.IsNullOrWhiteSpace(reason))
         {
@@ -391,10 +367,7 @@ public class StockAdjustmentService : IStockAdjustmentService
 
     public async Task<Result<bool>> CreateAndPostSingleAdjustmentAsync(int productId, decimal targetQuantity, string reasonText, StockAdjustmentReason reasonType, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAdjustStock(userRole))
-        {
-            return Result<bool>.Failure("Permission denied. Only Admin and Manager can adjust product stock.");
-        }
+        // single-user: no permission check needed
 
         if (string.IsNullOrWhiteSpace(reasonText))
         {
@@ -443,4 +416,72 @@ public class StockAdjustmentService : IStockAdjustmentService
 
         return Result<bool>.Ok(true);
     }
+
+    public async Task<BulkOperationResult> BulkDeleteDraftsAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var adj = await _adjustmentRepo.GetAdjustmentByIdAsync(id, includeItems: false, cancellationToken);
+            if (adj == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Adjustment not found." });
+                result.SkippedCount++;
+                continue;
+            }
+            if (adj.Status != StockAdjustmentStatus.Draft)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = adj.AdjustmentNumber, Success = false, Message = "Cannot delete posted or cancelled adjustment. Cancel instead." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            var delRes = await DeleteAdjustmentDraftAsync(id, userId, null, cancellationToken);
+            if (delRes.Success)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = adj.AdjustmentNumber, Success = true });
+                result.SuccessCount++;
+            }
+            else
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = adj.AdjustmentNumber, Success = false, Message = delRes.ErrorMessage ?? "Delete failed." });
+                result.SkippedCount++;
+            }
+        }
+        return result;
+    }
+
+    public async Task<BulkOperationResult> BulkCancelAdjustmentsAsync(IEnumerable<int> ids, string reason, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var adj = await _adjustmentRepo.GetAdjustmentByIdAsync(id, includeItems: false, cancellationToken);
+            if (adj == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Adjustment not found." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            var cancelRes = await CancelAdjustmentAsync(id, reason, userId, null, cancellationToken);
+            if (cancelRes.Success)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = adj.AdjustmentNumber, Success = true });
+                result.SuccessCount++;
+            }
+            else
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = adj.AdjustmentNumber, Success = false, Message = cancelRes.ErrorMessage ?? "Cannot cancel adjustment." });
+                result.SkippedCount++;
+            }
+        }
+        return result;
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredAdjustmentIdsAsync(DateTime? fromDate, DateTime? toDate, StockAdjustmentStatus? status, CancellationToken cancellationToken = default)
+    {
+        return await _adjustmentRepo.GetFilteredIdsAsync(fromDate, toDate, status, cancellationToken);
+    }
+
 }

@@ -11,12 +11,9 @@ public class SaleService : ISaleService
 {
     private readonly ISaleRepository _saleRepository;
     private readonly IProductRepository _productRepository;
-    private readonly IRepository<Customer> _customerRepository;
     private readonly IRepository<StockMovement> _movementRepository;
     private readonly IStockLedgerQuery _stockLedgerQuery;
-    private readonly ICustomerBalanceQuery _customerBalanceQuery;
     private readonly IShopSettingService _settingService;
-    private readonly IShiftRepository _shiftRepository;
     private readonly INumberSequenceService _numberSequenceService;
     private readonly ITransactionRunner _transactionRunner;
     private readonly IAuditLogService _auditLogService;
@@ -28,35 +25,29 @@ public class SaleService : ISaleService
     public SaleService(
         ISaleRepository saleRepository,
         IProductRepository productRepository,
-        IRepository<Customer> customerRepository,
         IRepository<StockMovement> movementRepository,
         IStockLedgerQuery stockLedgerQuery,
-        ICustomerBalanceQuery customerBalanceQuery,
         IShopSettingService settingService,
-        IShiftRepository shiftRepository,
         INumberSequenceService numberSequenceService,
         ITransactionRunner transactionRunner,
         IAuditLogService auditLogService,
         ICurrentUserProvider currentUserProvider,
-        ISaleCalculator calculator,
-        IValidator<SaveSaleDto> saveValidator,
-        IValidator<CompleteSaleDto> completeValidator)
+        ISaleCalculator? calculator = null,
+        IValidator<SaveSaleDto>? saveValidator = null,
+        IValidator<CompleteSaleDto>? completeValidator = null)
     {
         _saleRepository = saleRepository;
         _productRepository = productRepository;
-        _customerRepository = customerRepository;
         _movementRepository = movementRepository;
         _stockLedgerQuery = stockLedgerQuery;
-        _customerBalanceQuery = customerBalanceQuery;
         _settingService = settingService;
-        _shiftRepository = shiftRepository;
         _numberSequenceService = numberSequenceService;
         _transactionRunner = transactionRunner;
         _auditLogService = auditLogService;
         _currentUserProvider = currentUserProvider;
-        _calculator = calculator;
-        _saveValidator = saveValidator;
-        _completeValidator = completeValidator;
+        _calculator = calculator ?? new SaleCalculator();
+        _saveValidator = saveValidator ?? new ShopPOS.Core.Validators.SaveSaleValidator();
+        _completeValidator = completeValidator ?? new ShopPOS.Core.Validators.CompleteSaleValidator();
     }
 
     public async Task<Result<SaleDetailDto>> SaveHeldBillAsync(SaveSaleDto dto, CancellationToken cancellationToken = default)
@@ -116,7 +107,6 @@ public class SaleService : ISaleService
             sale.Items.Clear();
         }
 
-        sale.CustomerId = dto.CustomerId;
         sale.PriceLevelId = dto.PriceLevelId;
         sale.Notes = dto.Notes;
         sale.SubTotal = calc.SubTotal;
@@ -155,8 +145,6 @@ public class SaleService : ISaleService
             });
         }
 
-        sale.TotalCost = sale.Items.Sum(i => i.CostPriceSnapshot * i.Quantity);
-
         if (sale.Id == 0)
         {
             await _saleRepository.AddAsync(sale, cancellationToken);
@@ -169,18 +157,18 @@ public class SaleService : ISaleService
 
         await _auditLogService.LogAsync(
             userId: _currentUserProvider.UserId,
-            action: "SaveHeldBill",
+            action: sale.Id == 0 ? "CreateHeldBill" : "UpdateHeldBill",
             entityName: nameof(Sale),
             entityId: sale.Id,
-            details: $"Held bill {holdNumber} saved with {sale.Items.Count} items. Grand total: {sale.GrandTotal:F2}.");
+            details: $"Held bill {holdNumber} saved with {sale.Items.Count} item(s). Grand total: {sale.GrandTotal:F2}");
 
         return await GetSaleByIdAsync(sale.Id, cancellationToken);
     }
 
     public async Task<Result<List<SaleDetailDto>>> ListHeldBillsAsync(CancellationToken cancellationToken = default)
     {
-        var heldList = await _saleRepository.GetHeldBillsWithDetailsAsync(cancellationToken);
-        var dtos = heldList.Select(MapToDetailDto).ToList();
+        var heldBills = await _saleRepository.GetHeldBillsWithDetailsAsync(cancellationToken);
+        var dtos = heldBills.Select(MapToDetailDto).ToList();
         return Result<List<SaleDetailDto>>.Ok(dtos);
     }
 
@@ -194,7 +182,7 @@ public class SaleService : ISaleService
 
         if (sale.Status != SaleStatus.Held)
         {
-            return Result<bool>.Failure($"Only held bills can be deleted. Sale {sale.SaleNumber} has status {sale.Status}.");
+            return Result<bool>.Failure($"Cannot delete sale with status {sale.Status}. Only held bills can be deleted.");
         }
 
         sale.IsDeleted = true;
@@ -223,23 +211,7 @@ public class SaleService : ISaleService
 
         return await _transactionRunner.RunInTransactionAsync(async () =>
         {
-            // 1. Shift check
-            Shift? activeShift = null;
-            if (settings.RequireOpenShiftForSales)
-            {
-                activeShift = await _shiftRepository.GetOpenShiftAsync(cancellationToken);
-                if (activeShift == null)
-                {
-                    return Result<SaleDetailDto>.Failure(
-                        "An active open shift is required to complete sales. Please open a shift before completing transactions.");
-                }
-            }
-            else
-            {
-                activeShift = await _shiftRepository.GetOpenShiftAsync(cancellationToken);
-            }
-
-            // 2. Consume held bill if this sale originated from one
+            // 1. Consume held bill if this sale originated from one
             if (dto.HeldBillId.HasValue && dto.HeldBillId.Value > 0)
             {
                 var heldBill = await _saleRepository.GetByIdAsync(dto.HeldBillId.Value, cancellationToken);
@@ -251,7 +223,7 @@ public class SaleService : ISaleService
                 }
             }
 
-            // 3. Load & validate products
+            // 2. Load & validate products
             var productIds = dto.Items.Select(i => i.ProductId).Distinct().ToList();
             var productList = await _productRepository.GetByIdsWithDetailsAsync(productIds, cancellationToken);
             var products = productList.ToDictionary(p => p.Id);
@@ -277,7 +249,7 @@ public class SaleService : ISaleService
                 }
             }
 
-            // 4. Ledger Stock Check inside the same transaction
+            // 3. Ledger Stock Check inside the same transaction
             foreach (var item in dto.Items)
             {
                 var product = products[item.ProductId];
@@ -292,7 +264,7 @@ public class SaleService : ISaleService
                 }
             }
 
-            // 5. Server-side totals calculation via SaleCalculator
+            // 4. Server-side totals calculation via SaleCalculator
             decimal rawTotalPaid = dto.Payments.Sum(p => p.Amount);
             var lineInputs = dto.Items.Select(i => new SaleLineInput
             {
@@ -311,9 +283,16 @@ public class SaleService : ISaleService
                 settings.CashRoundingStep,
                 rawTotalPaid);
 
+            // 5. Full payment rule: all sales must be paid in full (walk-in counter sales)
+            if (rawTotalPaid < calc.GrandTotal)
+            {
+                return Result<SaleDetailDto>.Failure(
+                    $"Payment total ({rawTotalPaid:F2}) is less than the grand total ({calc.GrandTotal:F2}). All sales must be paid in full at completion; credit sales are not permitted.");
+            }
+
             // 6. Payment & Change rules
             decimal changeAmount = 0m;
-            decimal effectivePaidAmount = 0m;
+            decimal effectivePaidAmount = calc.GrandTotal;
             var paymentEntities = new List<SalePayment>();
 
             if (rawTotalPaid > calc.GrandTotal)
@@ -343,7 +322,6 @@ public class SaleService : ISaleService
                             PaidAt = DateTime.Now,
                             CreatedByUserId = _currentUserProvider.UserId
                         });
-                        effectivePaidAmount += applied;
                     }
                     else
                     {
@@ -356,7 +334,6 @@ public class SaleService : ISaleService
                             PaidAt = DateTime.Now,
                             CreatedByUserId = _currentUserProvider.UserId
                         });
-                        effectivePaidAmount += p.Amount;
                     }
                 }
             }
@@ -373,50 +350,16 @@ public class SaleService : ISaleService
                         PaidAt = DateTime.Now,
                         CreatedByUserId = _currentUserProvider.UserId
                     });
-                    effectivePaidAmount += p.Amount;
                 }
             }
 
-            decimal dueAmount = Math.Max(0m, calc.GrandTotal - effectivePaidAmount);
-
-            // 7. Credit sale validation
-            if (dueAmount > 0m)
-            {
-                if (!dto.CustomerId.HasValue)
-                {
-                    return Result<SaleDetailDto>.Failure("A customer must be selected for credit sales with an outstanding balance.");
-                }
-
-                if (!settings.AllowCreditSales)
-                {
-                    return Result<SaleDetailDto>.Failure("Sales on credit are not permitted by store settings.");
-                }
-
-                var customer = await _customerRepository.GetByIdAsync(dto.CustomerId.Value, cancellationToken);
-                if (customer == null || !customer.IsActive)
-                {
-                    return Result<SaleDetailDto>.Failure("The selected credit customer was not found or is inactive.");
-                }
-
-                if (customer.CreditLimit > 0m)
-                {
-                    decimal currentCustomerBalance = await _customerBalanceQuery.GetCustomerBalanceAsync(customer.Id, cancellationToken);
-                    if (currentCustomerBalance + dueAmount > customer.CreditLimit)
-                    {
-                        return Result<SaleDetailDto>.Failure(
-                            $"Credit limit of {customer.CreditLimit:F2} exceeded for customer '{customer.Name}'. Current balance: {currentCustomerBalance:F2}, New due: {dueAmount:F2}.");
-                    }
-                }
-            }
-
-            // 8. Number sequence assignment
+            // 7. Number sequence assignment
             var saleNumber = await _numberSequenceService.GetNextNumberAsync("INV", cancellationToken);
 
             var sale = new Sale
             {
                 SaleNumber = saleNumber,
                 SaleDate = DateTime.Now,
-                CustomerId = dto.CustomerId,
                 PriceLevelId = dto.PriceLevelId,
                 Status = SaleStatus.Completed,
                 SubTotal = calc.SubTotal,
@@ -427,9 +370,8 @@ public class SaleService : ISaleService
                 GrandTotal = calc.GrandTotal,
                 PaidAmount = effectivePaidAmount,
                 ChangeAmount = changeAmount,
-                DueAmount = dueAmount,
+                DueAmount = 0m,
                 Notes = dto.Notes,
-                ShiftId = activeShift?.Id,
                 CompletedAt = DateTime.Now,
                 CreatedByUserId = _currentUserProvider.UserId,
                 Payments = paymentEntities
@@ -470,7 +412,7 @@ public class SaleService : ISaleService
 
             await _saleRepository.AddAsync(sale, cancellationToken);
 
-            // 9. Write StockMovements for tracked products
+            // 8. Write StockMovements for tracked products
             foreach (var item in sale.Items)
             {
                 var product = products[item.ProductId];
@@ -493,13 +435,13 @@ public class SaleService : ISaleService
                 }
             }
 
-            // 10. Audit log
+            // 9. Audit log
             await _auditLogService.LogAsync(
                 userId: _currentUserProvider.UserId,
                 action: "CompleteSale",
                 entityName: nameof(Sale),
                 entityId: sale.Id,
-                details: $"Sale {saleNumber} completed. Total: {sale.GrandTotal:F2}, Paid: {sale.PaidAmount:F2}, Due: {sale.DueAmount:F2}.");
+                details: $"Sale {saleNumber} completed. Total: {sale.GrandTotal:F2}, Paid: {sale.PaidAmount:F2}, Change: {sale.ChangeAmount:F2}.");
 
             return await GetSaleByIdAsync(sale.Id, cancellationToken);
         }, cancellationToken);
@@ -529,15 +471,11 @@ public class SaleService : ISaleService
             return Result<bool>.Failure($"Sale '{sale.SaleNumber}' cannot be cancelled because it has posted returns. Use a Sale Return instead.");
         }
 
-        // Shift must still be open
-        if (sale.ShiftId.HasValue)
+        // Allowed only if dated today
+        if (sale.SaleDate.Date != DateTime.Today)
         {
-            var shift = await _shiftRepository.GetByIdAsync(sale.ShiftId.Value, cancellationToken);
-            if (shift != null && shift.Status == ShiftStatus.Closed)
-            {
-                return Result<bool>.Failure(
-                    $"Sale '{sale.SaleNumber}' cannot be cancelled because its shift '{shift.ShiftNumber}' has already been closed. Use a Sale Return instead.");
-            }
+            return Result<bool>.Failure(
+                $"Sale '{sale.SaleNumber}' cannot be cancelled because it was completed on {sale.SaleDate:yyyy-MM-dd}. Sales dated before today cannot be cancelled; use a Sale Return instead.");
         }
 
         return await _transactionRunner.RunInTransactionAsync(async () =>
@@ -599,6 +537,12 @@ public class SaleService : ISaleService
         return await _saleRepository.SearchSalesAsync(criteria, cancellationToken);
     }
 
+    public async Task<Result<FilteredSalesPaymentBreakdownDto>> GetFilteredSalesPaymentBreakdownAsync(SaleSearchDto criteria, CancellationToken cancellationToken = default)
+    {
+        var breakdown = await _saleRepository.GetFilteredPaymentBreakdownAsync(criteria, cancellationToken);
+        return Result<FilteredSalesPaymentBreakdownDto>.Ok(breakdown);
+    }
+
     public async Task<Result<TodaySalesSummaryDto>> GetTodaySummaryAsync(CancellationToken cancellationToken = default)
     {
         var now = DateTime.Now;
@@ -617,8 +561,6 @@ public class SaleService : ISaleService
             SaleNumber = sale.SaleNumber,
             HoldNumber = sale.HoldNumber,
             SaleDate = sale.SaleDate,
-            CustomerId = sale.CustomerId,
-            CustomerName = sale.Customer?.Name,
             PriceLevelId = sale.PriceLevelId,
             PriceLevelName = sale.PriceLevel?.Name,
             Status = sale.Status,
@@ -633,8 +575,6 @@ public class SaleService : ISaleService
             DueAmount = sale.DueAmount,
             TotalCost = sale.TotalCost,
             Notes = sale.Notes,
-            ShiftId = sale.ShiftId,
-            ShiftNumber = sale.Shift?.ShiftNumber,
             CompletedAt = sale.CompletedAt,
             CancelledAt = sale.CancelledAt,
             CancelReason = sale.CancelReason,
@@ -667,4 +607,72 @@ public class SaleService : ISaleService
             }).ToList()
         };
     }
+
+    public async Task<BulkOperationResult> BulkDeleteHeldBillsAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var sale = await _saleRepository.GetByIdAsync(id, cancellationToken);
+            if (sale == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Sale not found." });
+                result.SkippedCount++;
+                continue;
+            }
+            if (sale.Status != SaleStatus.Held)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = sale.SaleNumber, Success = false, Message = "Cannot delete completed sale. Cancel instead." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            var delRes = await DeleteHeldBillAsync(id, cancellationToken);
+            if (delRes.Success)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = sale.SaleNumber, Success = true });
+                result.SuccessCount++;
+            }
+            else
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = sale.SaleNumber, Success = false, Message = delRes.ErrorMessage ?? "Delete failed." });
+                result.SkippedCount++;
+            }
+        }
+        return result;
+    }
+
+    public async Task<BulkOperationResult> BulkCancelSalesAsync(IEnumerable<int> ids, string reason, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var sale = await _saleRepository.GetByIdAsync(id, cancellationToken);
+            if (sale == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Sale not found." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            var cancelRes = await CancelSaleAsync(id, reason, cancellationToken);
+            if (cancelRes.Success)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = sale.SaleNumber, Success = true });
+                result.SuccessCount++;
+            }
+            else
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = sale.SaleNumber, Success = false, Message = cancelRes.ErrorMessage ?? "Cannot cancel sale." });
+                result.SkippedCount++;
+            }
+        }
+        return result;
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredSaleIdsAsync(SaleSearchDto criteria, CancellationToken cancellationToken = default)
+    {
+        return await _saleRepository.GetFilteredIdsAsync(criteria, cancellationToken);
+    }
+
 }

@@ -12,8 +12,7 @@ public partial class SupplierPaymentDialogViewModel : ObservableObject
     private readonly ISupplierPaymentService _paymentService;
     private readonly ISupplierService _supplierService;
     private readonly IPurchaseService _purchaseService;
-    private readonly IAuthService _authService;
-
+    
     [ObservableProperty]
     private string _title = "Record Vendor Payment";
 
@@ -54,13 +53,11 @@ public partial class SupplierPaymentDialogViewModel : ObservableObject
     public SupplierPaymentDialogViewModel(
         ISupplierPaymentService paymentService,
         ISupplierService supplierService,
-        IPurchaseService purchaseService,
-        IAuthService authService)
+        IPurchaseService purchaseService)
     {
         _paymentService = paymentService;
         _supplierService = supplierService;
         _purchaseService = purchaseService;
-        _authService = authService;
     }
 
     public async Task InitializeAsync(int? preselectedSupplierId = null, int? preselectedPurchaseId = null)
@@ -68,7 +65,7 @@ public partial class SupplierPaymentDialogViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var supRes = await _supplierService.GetFlatListAsync(false, _authService.CurrentUser?.Role?.Name);
+            var supRes = await _supplierService.GetFlatListAsync(false, "Owner");
             if (supRes.Success && supRes.Data != null)
             {
                 Suppliers.Clear();
@@ -116,7 +113,7 @@ public partial class SupplierPaymentDialogViewModel : ObservableObject
             Status = PurchaseStatus.Posted,
             PageNumber = 1,
             PageSize = 100
-        }, _authService.CurrentUser?.Role?.Name);
+        }, "Owner");
 
         if (res.Success && res.Data != null)
         {
@@ -155,7 +152,7 @@ public partial class SupplierPaymentDialogViewModel : ObservableObject
 
         if (SelectedInvoice != null && Amount > SelectedInvoice.Balance)
         {
-            ErrorMessage = $"Payment amount ({Amount:C}) cannot exceed the invoice outstanding balance ({SelectedInvoice.Balance:C}).";
+            ErrorMessage = $"Payment amount ({ShopPOS.Core.Services.MoneyFormatter.Instance.Format(Amount)}) cannot exceed the invoice outstanding balance ({ShopPOS.Core.Services.MoneyFormatter.Instance.Format(SelectedInvoice.Balance)}).";
             return;
         }
 
@@ -173,8 +170,8 @@ public partial class SupplierPaymentDialogViewModel : ObservableObject
                 Notes = Notes
             };
 
-            int? userId = _authService.CurrentUser?.Id;
-            string? userRole = _authService.CurrentUser?.Role?.Name;
+            int? userId = 1;
+            string? userRole = "Owner";
 
             var res = await _paymentService.RecordPaymentAsync(dto, userId, userRole);
             if (res.Success)

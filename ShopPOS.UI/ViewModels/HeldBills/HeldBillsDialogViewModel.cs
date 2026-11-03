@@ -14,7 +14,7 @@ public partial class HeldBillItemViewModel : ObservableObject
     public int Id => Sale.Id;
     public string? HoldNumber => Sale.HoldNumber;
     public DateTime Date => Sale.SaleDate;
-    public string CustomerName => Sale.CustomerName ?? "Walk-in";
+    public string CustomerName => "Walk-in";
     public int ItemCount => Sale.Items.Count;
     public decimal TotalAmount => Sale.GrandTotal;
     public string? Notes => Sale.Notes;

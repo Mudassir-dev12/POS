@@ -15,7 +15,8 @@ public class ProductBarcodeConfiguration : IEntityTypeConfiguration<ProductBarco
             .HasMaxLength(100);
 
         builder.HasIndex(b => b.Barcode)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("IsDeleted = 0");
 
         builder.HasIndex(b => b.ProductId);
     }

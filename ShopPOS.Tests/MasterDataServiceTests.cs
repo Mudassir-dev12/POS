@@ -22,18 +22,15 @@ public class MasterDataServiceTests : IDisposable
     private readonly BrandRepository _brandRepo;
     private readonly UnitRepository _unitRepo;
     private readonly SupplierRepository _supplierRepo;
-    private readonly CustomerRepository _customerRepo;
     private readonly PriceLevelRepository _priceLevelRepo;
     private readonly Mock<IAuditLogService> _auditMock;
     private readonly Mock<IShopSettingRepository> _shopSettingMock;
-    private readonly PermissionService _permissionService;
 
     private readonly ProductService _productService;
     private readonly CategoryService _categoryService;
     private readonly BrandService _brandService;
     private readonly UnitService _unitService;
     private readonly SupplierService _supplierService;
-    private readonly CustomerService _customerService;
 
     private Category _defaultCategory = null!;
     private Unit _defaultUnit = null!;
@@ -57,22 +54,19 @@ public class MasterDataServiceTests : IDisposable
         _brandRepo = new BrandRepository(_context);
         _unitRepo = new UnitRepository(_context);
         _supplierRepo = new SupplierRepository(_context);
-        _customerRepo = new CustomerRepository(_context);
         _priceLevelRepo = new PriceLevelRepository(_context);
 
         _auditMock = new Mock<IAuditLogService>();
         _shopSettingMock = new Mock<IShopSettingRepository>();
         _shopSettingMock.Setup(s => s.GetCurrentSettingsAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ShopSetting { DefaultTaxPercent = 5.0m, CurrencySymbol = "$" });
+            .ReturnsAsync(new ShopSetting { DefaultTaxPercent = 5.0m, CurrencySymbol = "Rs" });
 
-        _permissionService = new PermissionService();
 
-        _productService = new ProductService(_productRepo, _shopSettingMock.Object, _auditMock.Object, _permissionService);
-        _categoryService = new CategoryService(_categoryRepo, _auditMock.Object, _permissionService);
-        _brandService = new BrandService(_brandRepo, _auditMock.Object, _permissionService);
-        _unitService = new UnitService(_unitRepo, _auditMock.Object, _permissionService);
-        _supplierService = new SupplierService(_supplierRepo, _auditMock.Object, _permissionService);
-        _customerService = new CustomerService(_customerRepo, _auditMock.Object, _permissionService);
+        _productService = new ProductService(_productRepo, _shopSettingMock.Object, _auditMock.Object);
+        _categoryService = new CategoryService(_categoryRepo, _auditMock.Object);
+        _brandService = new BrandService(_brandRepo, _auditMock.Object);
+        _unitService = new UnitService(_unitRepo, _auditMock.Object);
+        _supplierService = new SupplierService(_supplierRepo, _auditMock.Object);
 
         SeedTestData();
     }
@@ -385,17 +379,7 @@ public class MasterDataServiceTests : IDisposable
         var suppRes = await _supplierService.GetPagedSuppliersAsync(new MasterDataSearchQuery(), "Owner");
         suppRes.Success.Should().BeTrue();
 
-        // 3. User CAN create customer
-        var custRes = await _customerService.CreateCustomerAsync(new CreateCustomerDto
-        {
-            Name = "Walk-in Customer",
-            Phone = "555-4321"
-        }, 1, "Owner");
-        custRes.Success.Should().BeTrue();
 
-        // 4. User CAN delete customer
-        var delCustRes = await _customerService.DeleteCustomerAsync(custRes.Data!.Id, 1, "Owner");
-        delCustRes.Success.Should().BeTrue();
     }
 }
 

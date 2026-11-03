@@ -51,28 +51,13 @@ public partial class SalePaymentDialogViewModel : ObservableObject
     private decimal _dueAmount;
 
     [ObservableProperty]
-    private int? _customerId;
-
-    [ObservableProperty]
-    private string? _customerName;
-
-    [ObservableProperty]
-    private decimal _customerCurrentBalance;
-
-    [ObservableProperty]
-    private decimal _customerCreditLimit;
-
-    [ObservableProperty]
-    private bool _allowCreditSales = true;
-
-    [ObservableProperty]
     private string? _errorMessage;
 
     [ObservableProperty]
     private bool _isValid;
 
     [ObservableProperty]
-    private string _currencySymbol = "$";
+    private string _currencySymbol = "Rs";
 
     public ObservableCollection<PaymentLineViewModel> Payments { get; } = new();
 
@@ -86,21 +71,11 @@ public partial class SalePaymentDialogViewModel : ObservableObject
 
     public SalePaymentDialogViewModel(
         decimal grandTotal,
-        int? customerId,
-        string? customerName,
-        decimal customerCurrentBalance,
-        decimal customerCreditLimit,
-        bool allowCreditSales,
         string currencySymbol,
         ISaleCalculator saleCalculator)
     {
         _saleCalculator = saleCalculator;
         GrandTotal = grandTotal;
-        CustomerId = customerId;
-        CustomerName = customerName;
-        CustomerCurrentBalance = customerCurrentBalance;
-        CustomerCreditLimit = customerCreditLimit;
-        AllowCreditSales = allowCreditSales;
         CurrencySymbol = currencySymbol;
 
         // Populate initial payment line with full cash amount
@@ -114,6 +89,19 @@ public partial class SalePaymentDialogViewModel : ObservableObject
 
         BuildQuickCashNotes(grandTotal);
         Recalculate();
+    }
+
+    public SalePaymentDialogViewModel(
+        decimal grandTotal,
+        int? customerId,
+        string? customerName,
+        decimal customerCurrentBalance,
+        decimal customerCreditLimit,
+        bool allowCreditSales,
+        string currencySymbol,
+        ISaleCalculator saleCalculator)
+        : this(grandTotal, currencySymbol, saleCalculator)
+    {
     }
 
     private void BuildQuickCashNotes(decimal total)
@@ -135,7 +123,6 @@ public partial class SalePaymentDialogViewModel : ObservableObject
             }
         }
 
-        // Limit to 5 quick cash notes
         while (QuickCashNotes.Count > 5)
         {
             QuickCashNotes.RemoveAt(QuickCashNotes.Count - 1);
@@ -236,31 +223,15 @@ public partial class SalePaymentDialogViewModel : ObservableObject
 
         TotalPaid = totalPaid;
 
-        // Credit sale validation
-        if (DueAmount > 0m)
+        // Enforce full payment rule for counter sales:
+        if (totalPaid < GrandTotal)
         {
-            if (!CustomerId.HasValue)
-            {
-                ErrorMessage = "An active customer must be selected for sales with an outstanding balance (credit sales).";
-                IsValid = false;
-                return;
-            }
-
-            if (!AllowCreditSales)
-            {
-                ErrorMessage = "Sales on credit are not permitted by store policy.";
-                IsValid = false;
-                return;
-            }
-
-            if (CustomerCreditLimit > 0m && (CustomerCurrentBalance + DueAmount > CustomerCreditLimit))
-            {
-                ErrorMessage = $"Outstanding balance of {(CustomerCurrentBalance + DueAmount):F2} exceeds customer credit limit of {CustomerCreditLimit:F2}.";
-                IsValid = false;
-                return;
-            }
+            ErrorMessage = $"Full payment required. Short by {CurrencySymbol}{DueAmount:F2}. Underpayment is not permitted.";
+            IsValid = false;
+            return;
         }
 
+        DueAmount = 0m;
         IsValid = true;
     }
 
@@ -296,4 +267,3 @@ public partial class SalePaymentDialogViewModel : ObservableObject
         RequestClose?.Invoke();
     }
 }
-

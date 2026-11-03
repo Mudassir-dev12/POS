@@ -7,8 +7,8 @@
              xmlns:enums="clr-namespace:ShopPOS.Core.Enums;assembly=ShopPOS.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:ReorderListViewModel}"
-             Background="#F1F5F9"
-             FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+             Background="{DynamicResource PageBackgroundBrush}"
+             FontFamily="{StaticResource AppFontFamily}"
              Loaded="UserControl_Loaded">
 
     <UserControl.InputBindings>
@@ -35,18 +35,18 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="Inventory Reorder &amp; Purchase Suggestions" FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Automated replenishment suggestions based on current stock, alert thresholds, and reorder multipliers." FontSize="13" Foreground="#64748B" Margin="0,2,0,0" />
+                <TextBlock Text="Inventory Reorder &amp; Purchase Suggestions" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Automated replenishment suggestions based on current stock, alert thresholds, and reorder multipliers." Style="{StaticResource SubTitleStyle}" />
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <Button Content="Refresh (F5)" Command="{Binding LoadDataCommand}"
-                        Background="#E2E8F0" Foreground="#0F172A" FontWeight="SemiBold" Padding="14,8" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}" />
             </StackPanel>
         </Grid>
 
         <!-- Supplier & PO Action Bar -->
-        <Border Grid.Row="1" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,12">
+        <Border Grid.Row="1" Style="{StaticResource FilterBarStyle}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -55,45 +55,33 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <TextBlock Grid.Column="0" Text="Select Supplier for Purchase:" FontWeight="SemiBold" Foreground="#1E293B" VerticalAlignment="Center" Margin="0,0,10,0" />
+                <TextBlock Grid.Column="0" Text="Select Supplier for Purchase:" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0" />
                 <ComboBox Grid.Column="1"
                           ItemsSource="{Binding Suppliers}"
                           SelectedValue="{Binding SelectedSupplierId}"
                           SelectedValuePath="Id"
                           DisplayMemberPath="Name"
-                          Padding="8,6" />
+                          Style="{StaticResource InputComboBoxStyle}" />
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
-                    <TextBlock Text="Selected Items: " Foreground="#475569" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding SelectedCount}" Foreground="#2563EB" FontWeight="Bold" Margin="0,0,16,0" />
+                    <TextBlock Text="Selected Items: " Style="{StaticResource MutedLabelStyle}" />
+                    <TextBlock Text="{Binding SelectedCount}" Foreground="{DynamicResource PrimaryBrush}" FontWeight="Bold" Margin="0,0,16,0" />
 
-                    <TextBlock Text="Estimated Total Cost: " Foreground="#475569" FontWeight="SemiBold" />
-                    <TextBlock Text="{Binding SelectedTotalCost, StringFormat='${0:N2}'}" Foreground="#16A34A" FontWeight="Bold" />
+                    <TextBlock Text="Estimated Total Cost: " Style="{StaticResource MutedLabelStyle}" />
+                    <TextBlock Text="{Binding SelectedTotalCost, Converter={StaticResource MoneyConverter}}" Foreground="{DynamicResource SuccessTextBrush}" FontWeight="Bold" />
                 </StackPanel>
 
                 <Button Grid.Column="3"
                         Content="Create Draft Purchase Order"
                         Command="{Binding CreatePurchaseDraftCommand}"
-                        Background="#16A34A"
-                        Foreground="White"
-                        FontWeight="Bold"
-                        Padding="16,8"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource PrimaryButtonStyle}" />
             </Grid>
         </Border>
 
         <!-- DataGrid -->
-        <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="1">
+        <Border Grid.Row="2" Style="{StaticResource TableContainerBorderStyle}">
             <DataGrid ItemsSource="{Binding Items}"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#F1F5F9"
-                      RowHeight="36"
-                      BorderThickness="0"
-                      Background="White">
+                      Style="{StaticResource AppDataGridStyle}">
                 <DataGrid.Columns>
                     <!-- Checkbox -->
                     <DataGridCheckBoxColumn Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="50">
@@ -104,24 +92,16 @@
                         </DataGridCheckBoxColumn.HeaderTemplate>
                     </DataGridCheckBoxColumn>
 
-                    <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="90" FontWeight="SemiBold" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" Width="*" FontWeight="Bold" IsReadOnly="True" />
+                    <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="100"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" Width="*" FontWeight="SemiBold" IsReadOnly="True" />
                     <DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="130" IsReadOnly="True" />
 
-                    <DataGridTextColumn Header="Current Stock" Binding="{Binding CurrentStock, StringFormat='{}{0:N2}'}" Width="110" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="FontWeight" Value="Bold" />
-                                <Setter Property="Foreground" Value="#DC2626" />
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Current Stock" Binding="{Binding CurrentStock, StringFormat='{}{0:N2}'}" Width="110"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
 
                     <!-- Status -->
-                    <DataGridTemplateColumn Header="Status" Width="105">
+                    <DataGridTemplateColumn Header="Status" Width="110">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Border CornerRadius="3" Padding="6,2" HorizontalAlignment="Center" VerticalAlignment="Center">
@@ -129,13 +109,13 @@
                                         <Style TargetType="Border">
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockStatus.Low}">
-                                                    <Setter Property="Background" Value="#FEF3C7" />
+                                                    <Setter Property="Background" Value="{DynamicResource WarningBackgroundBrush}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockStatus.OutOfStock}">
-                                                    <Setter Property="Background" Value="#FEE2E2" />
+                                                    <Setter Property="Background" Value="{DynamicResource DangerBackgroundBrush}" />
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockStatus.Negative}">
-                                                    <Setter Property="Background" Value="#F3E8FF" />
+                                                    <Setter Property="Background" Value="{DynamicResource DangerBackgroundBrush}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -145,15 +125,15 @@
                                             <Style TargetType="TextBlock">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockStatus.Low}">
-                                                        <Setter Property="Foreground" Value="#B45309" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource WarningTextBrush}" />
                                                         <Setter Property="Text" Value="Low stock" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockStatus.OutOfStock}">
-                                                        <Setter Property="Foreground" Value="#B91C1C" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
                                                         <Setter Property="Text" Value="Out of stock" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockStatus.Negative}">
-                                                        <Setter Property="Foreground" Value="#7E22CE" />
+                                                        <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
                                                         <Setter Property="Text" Value="Negative" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
@@ -165,53 +145,33 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTextColumn Header="Alert Level" Binding="{Binding ReorderLevel, StringFormat='{}{0:N0}'}" Width="90" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Alert Level" Binding="{Binding ReorderLevel, StringFormat='{}{0:N0}'}" Width="90"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
 
-                    <DataGridTextColumn Header="Multiplier" Binding="{Binding Multiplier, StringFormat='{}{0:N1}x'}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Center" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Multiplier" Binding="{Binding Multiplier, StringFormat='{}{0:N1}x'}" Width="80"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
 
                     <!-- Suggested Order Quantity (Editable) -->
-                    <DataGridTemplateColumn Header="Suggested Qty *" Width="120">
+                    <DataGridTemplateColumn Header="Suggested Qty *" Width="130">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <TextBox Text="{Binding SuggestedQuantity, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.###}'}"
                                          FontWeight="Bold"
-                                         Padding="4,2"
+                                         Style="{StaticResource InputTextBoxStyle}"
+                                         Padding="6,2"
                                          HorizontalAlignment="Stretch"
                                          VerticalAlignment="Center" />
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTextColumn Header="Unit Cost" Binding="{Binding CostPrice, StringFormat='${0:N2}'}" Width="100" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+                    <DataGridTextColumn Header="Unit Cost" Binding="{Binding CostPrice, Converter={StaticResource MoneyConverter}}" Width="110"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
 
         <!-- Footer -->
-        <TextBlock Grid.Row="3" Text="{Binding Items.Count, StringFormat='{}Items Needing Reorder: {0}'}" Foreground="#64748B" FontWeight="SemiBold" Margin="4,10,0,0" />
+        <TextBlock Grid.Row="3" Text="{Binding Items.Count, StringFormat='{}Items Needing Reorder: {0}'}" Style="{StaticResource MutedLabelStyle}" Margin="4,10,0,0" />
     </Grid>
 </UserControl>
-

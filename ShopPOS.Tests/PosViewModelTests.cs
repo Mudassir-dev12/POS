@@ -9,7 +9,6 @@ using ShopPOS.Core.Services;
 using ShopPOS.UI.Services;
 using ShopPOS.UI.ViewModels.HeldBills;
 using ShopPOS.UI.ViewModels.Sales;
-using ShopPOS.UI.ViewModels.Shifts;
 using Xunit;
 
 namespace ShopPOS.Tests;
@@ -19,12 +18,9 @@ public class PosViewModelTests
     private readonly Mock<ISaleService> _saleService = new();
     private readonly ISaleCalculator _saleCalculator = new SaleCalculator();
     private readonly Mock<IProductLookupService> _productLookupService = new();
-    private readonly Mock<IShiftService> _shiftService = new();
-    private readonly Mock<ICustomerService> _customerService = new();
     private readonly Mock<IProductService> _productService = new();
     private readonly Mock<IStockLedgerQuery> _stockLedgerQuery = new();
     private readonly Mock<IShopSettingService> _shopSettingService = new();
-    private readonly Mock<ICustomerBalanceQuery> _customerBalanceQuery = new();
     private readonly Mock<IDialogService> _dialogService = new();
     private readonly Mock<INavigationService> _navigationService = new();
     private readonly Mock<IReceiptPrinterService> _receiptPrinterService = new();
@@ -43,38 +39,18 @@ public class PosViewModelTests
             ShopName = "Test Mart",
             Address = "123 High Street",
             Phone = "555-0100",
-            CurrencySymbol = "$",
+            CurrencySymbol = "Rs",
             PricesIncludeTax = true,
             CashRoundingStep = 0m,
             AllowNegativeStock = true,
-            AllowCreditSales = true,
             AllowSellingBelowMinPrice = false,
-            RequireOpenShiftForSales = false,
             AutoPrintReceipt = false
         };
 
         _shopSettingService.Setup(s => s.GetSettingsAsync())
             .ReturnsAsync(_defaultSettings);
 
-        _shiftService.Setup(s => s.GetCurrentOpenShiftAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<Shift?>.Ok(new Shift
-            {
-                Id = 1,
-                ShiftNumber = "SHF-0001",
-                OpeningCash = 100m,
-                OpenedAt = DateTime.UtcNow,
-                Status = ShiftStatus.Open
-            }));
 
-        _shiftService.Setup(s => s.GetShiftSummaryAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<ShiftSummaryDto>.Ok(new ShiftSummaryDto
-            {
-                ShiftId = 1,
-                ShiftNumber = "SHF-0001",
-                OpeningCash = 100m,
-                ExpectedCash = 100m,
-                GrossSales = 0m
-            }));
 
         _saleService.Setup(s => s.ListHeldBillsAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<List<SaleDetailDto>>.Ok(new List<SaleDetailDto>()));
@@ -151,22 +127,22 @@ public class PosViewModelTests
         _stockLedgerQuery.Setup(s => s.GetCurrentStockAsync(20, It.IsAny<CancellationToken>()))
             .ReturnsAsync(8m);
 
-        _customerBalanceQuery.Setup(c => c.GetCustomerBalanceAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(0m);
     }
 
     private PosSaleViewModel CreateViewModel()
     {
+        var mockPriceLevelService = new Mock<IPriceLevelService>();
+        mockPriceLevelService.Setup(p => p.GetAllAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<IReadOnlyList<PriceLevelDto>>.Ok(new List<PriceLevelDto>()));
+
         return new PosSaleViewModel(
             _saleService.Object,
             _saleCalculator,
             _productLookupService.Object,
-            _shiftService.Object,
-            _customerService.Object,
             _productService.Object,
+            mockPriceLevelService.Object,
             _stockLedgerQuery.Object,
             _shopSettingService.Object,
-            _customerBalanceQuery.Object,
             _dialogService.Object,
             _navigationService.Object,
             _receiptPrinterService.Object);
@@ -326,8 +302,6 @@ public class PosViewModelTests
         await vm.AddProductToCartAsync(10, 3m);
         await vm.AddProductToCartAsync(20, 2m);
 
-        vm.SelectedCustomerId = 42;
-        vm.CustomerDisplayName = "Alice Johnson";
         vm.Notes = "Hold for customer pickup";
         vm.BillDiscountAmount = 2.00m;
 
@@ -345,22 +319,18 @@ public class PosViewModelTests
 
         // Assert 1: Cart is cleared and SaveHeldBillAsync was called with exact items
         _saleService.Verify(s => s.SaveHeldBillAsync(It.Is<SaveSaleDto>(dto =>
-            dto.CustomerId == 42 &&
             dto.Notes == "Hold for customer pickup" &&
             dto.BillDiscountAmount == 2.00m &&
             dto.Items.Count == 2), It.IsAny<CancellationToken>()), Times.Once);
 
         vm.CartItems.Should().BeEmpty();
         vm.HasCartItems.Should().BeFalse();
-        vm.SelectedCustomerId.Should().BeNull();
 
         // Act 2: Resume held bill
         var heldSale = new SaleDetailDto
         {
             Id = 101,
             SaleNumber = "HOLD-0001",
-            CustomerId = 42,
-            CustomerName = "Alice Johnson",
             Notes = "Hold for customer pickup",
             BillDiscountAmount = 2.00m,
             GrandTotal = 15.50m,
@@ -375,8 +345,6 @@ public class PosViewModelTests
 
         // Assert 2: Cart state and customer restored
         vm.OriginatingHeldBillId.Should().Be(101);
-        vm.SelectedCustomerId.Should().Be(42);
-        vm.CustomerDisplayName.Should().Be("Alice Johnson");
         vm.Notes.Should().Be("Hold for customer pickup");
         vm.CartItems.Should().HaveCount(2);
         vm.CartItems.First(i => i.ProductId == 10).Quantity.Should().Be(3m);
@@ -423,7 +391,7 @@ public class PosViewModelTests
             customerCurrentBalance: 0m,
             customerCreditLimit: 0m,
             allowCreditSales: true,
-            currencySymbol: "$",
+            currencySymbol: "Rs",
             saleCalculator: _saleCalculator);
 
         vm.ChangeAmount.Should().Be(0m);
@@ -445,50 +413,33 @@ public class PosViewModelTests
         vm.IsValid.Should().BeFalse();
         vm.ErrorMessage.Should().Contain("Non-cash payments");
 
-        // Scenario 4: Partial payment without customer (Walk-in credit attempt)
+        // Scenario 4: Partial payment (underpayment) rejected by full payment rule
         vm.Payments.Clear();
         vm.Payments.Add(new PaymentLineViewModel { Method = PaymentMethod.Cash, Amount = 50.00m });
         vm.Recalculate();
 
-        vm.DueAmount.Should().Be(30.00m);
         vm.IsValid.Should().BeFalse();
-        vm.ErrorMessage.Should().Contain("active customer must be selected");
+        vm.ErrorMessage.Should().Contain("Full payment required");
 
-        // Scenario 5: Partial payment with valid customer within credit limit
-        var custVm = new SalePaymentDialogViewModel(
-            grandTotal: 80.00m,
-            customerId: 5,
-            customerName: "Loyal Customer",
-            customerCurrentBalance: 10.00m,
-            customerCreditLimit: 100.00m,
-            allowCreditSales: true,
-            currencySymbol: "$",
-            saleCalculator: _saleCalculator);
+        // Scenario 5: Split payment (Card $50 + Cash $30 = $80) is valid
+        vm.Payments.Clear();
+        vm.Payments.Add(new PaymentLineViewModel { Method = PaymentMethod.Card, Amount = 50.00m });
+        vm.Payments.Add(new PaymentLineViewModel { Method = PaymentMethod.Cash, Amount = 30.00m });
+        vm.Recalculate();
 
-        custVm.SetCashAmount(50.00m);
-        custVm.DueAmount.Should().Be(30.00m);
-        custVm.IsValid.Should().BeTrue();
+        vm.IsValid.Should().BeTrue();
+        vm.ChangeAmount.Should().Be(0m);
+        vm.DueAmount.Should().Be(0m);
 
-        // Scenario 6: Customer exceeding credit limit (Balance $80 + Due $30 = $110 > Limit $100)
-        custVm.CustomerCurrentBalance = 80.00m;
-        custVm.Recalculate();
-        custVm.IsValid.Should().BeFalse();
-        custVm.ErrorMessage.Should().Contain("exceeds customer credit limit");
+        // Scenario 6: Split payment with cash over-tender (Card $50 + Cash $40 = $90 for $80 total)
+        vm.Payments.Clear();
+        vm.Payments.Add(new PaymentLineViewModel { Method = PaymentMethod.Card, Amount = 50.00m });
+        vm.Payments.Add(new PaymentLineViewModel { Method = PaymentMethod.Cash, Amount = 40.00m });
+        vm.Recalculate();
 
-        // Scenario 7: Credit sales disallowed by store policy
-        var noCreditVm = new SalePaymentDialogViewModel(
-            grandTotal: 80.00m,
-            customerId: 5,
-            customerName: "Loyal Customer",
-            customerCurrentBalance: 0m,
-            customerCreditLimit: 100.00m,
-            allowCreditSales: false,
-            currencySymbol: "$",
-            saleCalculator: _saleCalculator);
-
-        noCreditVm.SetCashAmount(50.00m);
-        noCreditVm.IsValid.Should().BeFalse();
-        noCreditVm.ErrorMessage.Should().Contain("not permitted by store policy");
+        vm.IsValid.Should().BeTrue();
+        vm.ChangeAmount.Should().Be(10.00m);
+        vm.DueAmount.Should().Be(0m);
     }
 
     [Fact]
@@ -564,34 +515,7 @@ public class PosViewModelTests
         vm.CartItems[0].Quantity.Should().Be(2m);
     }
 
-    [Fact]
-    public async Task PosSaleViewModel_RequireOpenShiftForSales_ShouldPromptShift()
-    {
-        // Arrange: Shift required but none open
-        _defaultSettings.RequireOpenShiftForSales = true;
-        _shiftService.Setup(s => s.GetCurrentOpenShiftAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<Shift?>.Ok(null));
-
-        var vm = CreateViewModel();
-        await vm.InitializeAsync();
-
-        // Setup scan
-        _productLookupService.Setup(l => l.LookupProductAsync("123456789012", It.IsAny<int?>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ProductLookupResult { Found = true, ParsedQuantity = 1m, Product = _sampleProduct1Entity });
-
-        // User declines to open shift
-        _dialogService.Setup(d => d.ShowConfirmation(It.IsAny<string>(), "Open Shift Required"))
-            .Returns(false);
-
-        // Act
-        vm.ScanInput = "123456789012";
-        await vm.ProcessScanInputAsync();
-
-        // Assert: Scan aborted because shift prompt declined
-        _dialogService.Verify(d => d.ShowConfirmation(It.IsAny<string>(), "Open Shift Required"), Times.Once);
-        vm.CartItems.Should().BeEmpty();
-    }
-
+    
     [Fact]
     public void SaleReturnDialogViewModel_QuantityEnforcement()
     {
@@ -654,48 +578,4 @@ public class PosViewModelTests
         _saleService.Verify(s => s.CompleteSaleAsync(It.IsAny<CompleteSaleDto>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
-    [Fact]
-    public async Task ShiftsViewModel_CashMovementAndCloseShift_Calculations()
-    {
-        // 1. Close shift discrepancy calculation
-        var closeVm = new CloseShiftDialogViewModel(
-            shiftId: 1,
-            shiftNumber: "SHF-0001",
-            expectedCash: 500.00m,
-            currencySymbol: "$",
-            shiftService: _shiftService.Object);
-
-        closeVm.CountedCash = 475.00m;
-        closeVm.Difference.Should().Be(-25.00m);
-
-        closeVm.CountedCash = 550.00m;
-        closeVm.Difference.Should().Be(50.00m);
-
-        // 2. Cash movement validation
-        var cashVm = new CashMovementDialogViewModel(
-            shiftId: 1,
-            currencySymbol: "$",
-            shiftService: _shiftService.Object);
-
-        // Act & Assert: Amount <= 0 is invalid
-        cashVm.Amount = 0m;
-        await cashVm.SaveAsync();
-        cashVm.Confirmed.Should().BeFalse();
-        cashVm.ErrorMessage.Should().Contain("greater than zero");
-
-        // Act & Assert: Missing reason is invalid
-        cashVm.Amount = 50.00m;
-        cashVm.Reason = "";
-        await cashVm.SaveAsync();
-        cashVm.Confirmed.Should().BeFalse();
-        cashVm.ErrorMessage.Should().Contain("Reason is required");
-
-        // Act & Assert: Valid cash movement succeeds
-        _shiftService.Setup(s => s.AddCashMovementAsync(It.IsAny<CashMovementDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<CashMovement>.Ok(new CashMovement { ShiftId = 1, Amount = 50.00m, Reason = "Change from bank" }));
-
-        cashVm.Reason = "Change from bank";
-        await cashVm.SaveAsync();
-        cashVm.Confirmed.Should().BeTrue();
     }
-}

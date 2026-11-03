@@ -1,6 +1,8 @@
+using ShopPOS.Core.Interfaces;
+
 namespace ShopPOS.Core.DTOs;
 
-public class CategoryDto
+public class CategoryDto : ISelectable
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -9,6 +11,7 @@ public class CategoryDto
     public bool IsActive { get; set; } = true;
     public int ProductCount { get; set; }
     public List<CategoryDto> SubCategories { get; set; } = new();
+    public bool IsSelected { get; set; }
 }
 
 public class CreateCategoryDto
@@ -25,13 +28,14 @@ public class UpdateCategoryDto
     public bool IsActive { get; set; } = true;
 }
 
-public class BrandDto
+public class BrandDto : ISelectable
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
     public int ProductCount { get; set; }
+    public bool IsSelected { get; set; }
 }
 
 public class CreateBrandDto
@@ -48,7 +52,7 @@ public class UpdateBrandDto
     public bool IsActive { get; set; } = true;
 }
 
-public class UnitDto
+public class UnitDto : ISelectable
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -56,6 +60,7 @@ public class UnitDto
     public bool AllowDecimal { get; set; }
     public bool IsActive { get; set; } = true;
     public int ProductCount { get; set; }
+    public bool IsSelected { get; set; }
 }
 
 public class CreateUnitDto
@@ -74,7 +79,7 @@ public class UpdateUnitDto
     public bool IsActive { get; set; } = true;
 }
 
-public class SupplierDto
+public class SupplierDto : ISelectable
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -86,6 +91,7 @@ public class SupplierDto
     public string? Notes { get; set; }
     public decimal OpeningBalance { get; set; }
     public decimal CurrentBalance { get; set; }
+    public bool IsSelected { get; set; }
     public bool IsActive { get; set; } = true;
     public bool HasTransactions { get; set; }
 }
@@ -117,54 +123,6 @@ public class UpdateSupplierDto
     public bool IsActive { get; set; } = true;
 }
 
-public class CustomerDto
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? Phone { get; set; }
-    public string? Email { get; set; }
-    public string? TaxNumber { get; set; }
-    public string? Address { get; set; }
-    public string? Notes { get; set; }
-    public decimal CreditLimit { get; set; }
-    public decimal CurrentBalance { get; set; }
-    public decimal OpeningBalance { get; set; }
-    public int? DefaultPriceLevelId { get; set; }
-    public string? DefaultPriceLevelName { get; set; }
-    public bool IsActive { get; set; } = true;
-    public bool HasTransactions { get; set; }
-}
-
-public class CreateCustomerDto
-{
-    public string Name { get; set; } = string.Empty;
-    public string? Phone { get; set; }
-    public string? Email { get; set; }
-    public string? TaxNumber { get; set; }
-    public string? Address { get; set; }
-    public string? Notes { get; set; }
-    public decimal CreditLimit { get; set; }
-    public decimal CurrentBalance { get; set; }
-    public decimal OpeningBalance { get; set; }
-    public int? DefaultPriceLevelId { get; set; }
-}
-
-public class UpdateCustomerDto
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string? Phone { get; set; }
-    public string? Email { get; set; }
-    public string? TaxNumber { get; set; }
-    public string? Address { get; set; }
-    public string? Notes { get; set; }
-    public decimal CreditLimit { get; set; }
-    public decimal CurrentBalance { get; set; }
-    public decimal OpeningBalance { get; set; }
-    public int? DefaultPriceLevelId { get; set; }
-    public bool IsActive { get; set; } = true;
-}
-
 public class PriceLevelDto
 {
     public int Id { get; set; }
@@ -180,4 +138,3 @@ public class MasterDataSearchQuery
     public string SortBy { get; set; } = "Name";
     public bool SortDescending { get; set; }
 }
-

@@ -8,9 +8,8 @@
         Title="Held Bills (Parked Carts)"
         Height="480"
         Width="780"
-        WindowStartupLocation="CenterOwner"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+        Style="{DynamicResource DialogWindowStyle}"
+        WindowStartupLocation="CenterOwner">
 
     <Grid Margin="22">
         <Grid.RowDefinitions>
@@ -21,21 +20,21 @@
 
         <Grid Grid.Row="0" Margin="0,0,0,14">
             <StackPanel>
-                <TextBlock Text="Parked Sales / Held Bills (F5)" FontSize="18" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Resume a parked transaction into the active cart or delete it." FontSize="13" Foreground="#64748B" Margin="0,3,0,0" />
+                <TextBlock Text="Parked Sales / Held Bills (F5)" Style="{DynamicResource SectionHeaderStyle}" />
+                <TextBlock Text="Resume a parked transaction into the active cart or delete it." Style="{DynamicResource SubtitleStyle}" Margin="0,3,0,0" />
             </StackPanel>
         </Grid>
 
-        <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1">
+        <Border Grid.Row="1" Style="{DynamicResource CardBorderStyle}">
             <DataGrid ItemsSource="{Binding Bills}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}" AutoGenerateColumns="False" IsReadOnly="True" SelectionMode="Single" BorderThickness="0" Background="Transparent" RowHeight="38">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Hold #" Binding="{Binding HoldNumber}" Width="120" FontWeight="Bold" />
                     <DataGridTextColumn Header="Time" Binding="{Binding Date, StringFormat='{}{0:HH:mm}'}" Width="70" />
-                    <DataGridTextColumn Header="Age" Binding="{Binding AgeText}" Width="85" Foreground="#64748B" />
+                    <DataGridTextColumn Header="Age" Binding="{Binding AgeText}" Width="85" />
                     <DataGridTextColumn Header="Customer" Binding="{Binding CustomerName}" Width="1.5*" />
                     <DataGridTextColumn Header="Items" Binding="{Binding ItemCount}" Width="65" />
-                    <DataGridTextColumn Header="Total" Binding="{Binding TotalAmount, StringFormat='${0:F2}'}" Width="95" FontWeight="Bold" />
-                    <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*" Foreground="#64748B" />
+                    <DataGridTextColumn Header="Total" Binding="{Binding TotalAmount, Converter={StaticResource MoneyConverter}}" Width="95" FontWeight="Bold" />
+                    <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
@@ -46,13 +45,12 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <Button Grid.Column="0" Content="Delete Held Bill" Command="{Binding DeleteCommand}" HorizontalAlignment="Left" Background="#FEE2E2" Foreground="#DC2626" FontWeight="SemiBold" Padding="14,8" BorderThickness="0" Cursor="Hand" />
+            <Button Grid.Column="0" Content="Delete Held Bill" Command="{Binding DeleteCommand}" HorizontalAlignment="Left" Style="{DynamicResource DangerOutlineButtonStyle}" />
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="Resume Into Cart (Enter)" Command="{Binding ResumeCommand}" IsDefault="True" Background="#2563EB" Foreground="White" FontWeight="Bold" Padding="16,8" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
-                <Button Content="Close (Esc)" Command="{Binding CloseCommand}" IsCancel="True" Background="#E2E8F0" Foreground="#0F172A" FontWeight="SemiBold" Padding="14,8" BorderThickness="0" Cursor="Hand" />
+                <Button Content="Resume Into Cart (Enter)" Command="{Binding ResumeCommand}" IsDefault="True" Style="{DynamicResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+                <Button Content="Close (Esc)" Command="{Binding CloseCommand}" IsCancel="True" Style="{DynamicResource SecondaryButtonStyle}" />
             </StackPanel>
         </Grid>
     </Grid>
 </Window>
-

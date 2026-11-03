@@ -16,7 +16,11 @@ public class ShopSettingConfiguration : IEntityTypeConfiguration<ShopSetting>
 
         builder.Property(s => s.CurrencySymbol)
             .IsRequired()
-            .HasMaxLength(10);
+            .HasMaxLength(10)
+            .HasDefaultValue("Rs");
+
+        builder.Property(s => s.CurrencyDecimals)
+            .HasDefaultValue(2);
 
         builder.Property(s => s.DefaultTaxPercent)
             .HasPrecision(5, 2);
@@ -27,12 +31,6 @@ public class ShopSettingConfiguration : IEntityTypeConfiguration<ShopSetting>
         builder.Property(s => s.DefaultReorderMultiplier)
             .HasDefaultValue(2.0m)
             .HasPrecision(5, 2);
-
-        builder.Property(s => s.RequireOpenShiftForSales)
-            .HasDefaultValue(true);
-
-        builder.Property(s => s.AllowCreditSales)
-            .HasDefaultValue(true);
 
         builder.Property(s => s.AllowSellingBelowMinPrice)
             .HasDefaultValue(false);

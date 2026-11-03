@@ -8,10 +8,9 @@
         Title="Apply Bill Discount (F6)"
         Height="270"
         Width="380"
+        Style="{DynamicResource DialogWindowStyle}"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+        ResizeMode="NoResize">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -21,29 +20,28 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <TextBlock Grid.Row="0" Text="Bill Discount" FontSize="16" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,12" />
+        <TextBlock Grid.Row="0" Text="Bill Discount" Style="{DynamicResource SectionHeaderStyle}" Margin="0,0,0,12" />
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,14">
-            <RadioButton Content="Percentage (%)" IsChecked="{Binding IsPercentage, Mode=TwoWay}" Margin="0,0,16,0" FontWeight="SemiBold" />
-            <RadioButton Content="Fixed Amount" IsChecked="{Binding IsPercentage, Converter={StaticResource InverseBooleanConverter}, Mode=TwoWay}" FontWeight="SemiBold" />
+            <RadioButton Content="Percentage (%)" IsChecked="{Binding IsPercentage, Mode=TwoWay}" Margin="0,0,16,0" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+            <RadioButton Content="Fixed Amount" IsChecked="{Binding IsPercentage, Converter={StaticResource InverseBooleanConverter}, Mode=TwoWay}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
         </StackPanel>
 
         <StackPanel Grid.Row="2" VerticalAlignment="Center">
             <StackPanel Visibility="{Binding IsPercentage, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <TextBlock Text="Discount Percentage (%):" FontSize="12" Foreground="#475569" Margin="0,0,0,4" />
+                <TextBlock Text="Discount Percentage (%):" Style="{DynamicResource FormLabelStyle}" />
                 <TextBox Text="{Binding DiscountPercent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" FontSize="15" Padding="8,6" />
             </StackPanel>
 
             <StackPanel Visibility="{Binding IsPercentage, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                <TextBlock Text="Discount Fixed Amount:" FontSize="12" Foreground="#475569" Margin="0,0,0,4" />
+                <TextBlock Text="Discount Fixed Amount:" Style="{DynamicResource FormLabelStyle}" />
                 <TextBox Text="{Binding DiscountAmount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" FontSize="15" Padding="8,6" />
             </StackPanel>
         </StackPanel>
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Apply Discount" Command="{Binding ApplyCommand}" IsDefault="True" Background="#2563EB" Foreground="White" FontWeight="Bold" Padding="14,8" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
-            <Button Content="Cancel" Command="{Binding CancelCommand}" IsCancel="True" Background="#E2E8F0" Foreground="#0F172A" FontWeight="SemiBold" Padding="14,8" BorderThickness="0" Cursor="Hand" />
+            <Button Content="Apply Discount" Command="{Binding ApplyCommand}" IsDefault="True" Style="{DynamicResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+            <Button Content="Cancel" Command="{Binding CancelCommand}" IsCancel="True" Style="{DynamicResource SecondaryButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>
-

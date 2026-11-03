@@ -62,13 +62,26 @@ public class BrandRepository : Repository<Brand>, IBrandRepository
 
     public async Task<bool> HasProductsAsync(int brandId, CancellationToken cancellationToken = default)
     {
-        return await Context.Products.AnyAsync(p => p.BrandId == brandId, cancellationToken);
+        return await Context.Products.AnyAsync(p => p.BrandId == brandId && !p.IsDeleted, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default)
+    {
+        var query = Context.Brands.AsNoTracking().AsQueryable();
+        if (!includeInactive)
+            query = query.Where(b => b.IsActive);
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim().ToLower();
+            query = query.Where(b => b.Name.ToLower().Contains(term));
+        }
+        return await query.Select(b => b.Id).ToListAsync(cancellationToken);
     }
 
     public async Task<bool> IsNameTakenAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {
-        var clean = name.Trim().ToLower();
-        var query = Context.Brands.Where(b => b.Name.ToLower() == clean);
+        var cleanName = name.Trim().ToLower();
+        var query = Context.Brands.Where(b => b.Name.ToLower() == cleanName);
         if (excludeId.HasValue)
         {
             query = query.Where(b => b.Id != excludeId.Value);
@@ -134,13 +147,26 @@ public class UnitRepository : Repository<Unit>, IUnitRepository
 
     public async Task<bool> HasProductsAsync(int unitId, CancellationToken cancellationToken = default)
     {
-        return await Context.Products.AnyAsync(p => p.UnitId == unitId, cancellationToken);
+        return await Context.Products.AnyAsync(p => p.UnitId == unitId && !p.IsDeleted, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default)
+    {
+        var query = Context.Units.AsNoTracking().AsQueryable();
+        if (!includeInactive)
+            query = query.Where(u => u.IsActive);
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim().ToLower();
+            query = query.Where(u => u.Name.ToLower().Contains(term) || u.ShortName.ToLower().Contains(term));
+        }
+        return await query.Select(u => u.Id).ToListAsync(cancellationToken);
     }
 
     public async Task<bool> IsNameTakenAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default)
     {
-        var clean = name.Trim().ToLower();
-        var query = Context.Units.Where(u => u.Name.ToLower() == clean);
+        var cleanName = name.Trim().ToLower();
+        var query = Context.Units.Where(u => u.Name.ToLower() == cleanName);
         if (excludeId.HasValue)
         {
             query = query.Where(u => u.Id != excludeId.Value);
@@ -195,8 +221,9 @@ public class SupplierRepository : Repository<Supplier>, ISupplierRepository
                 Address = s.Address,
                 Notes = s.Notes,
                 OpeningBalance = s.OpeningBalance,
+                CurrentBalance = s.OpeningBalance,
                 IsActive = s.IsActive,
-                HasTransactions = false // In Phase 2, purchases/receiving don't exist yet
+                HasTransactions = false
             })
             .ToListAsync(cancellationToken);
 
@@ -213,10 +240,24 @@ public class SupplierRepository : Repository<Supplier>, ISupplierRepository
         return await query.OrderBy(s => s.Name).ToListAsync(cancellationToken);
     }
 
-    public Task<bool> HasTransactionsAsync(int supplierId, CancellationToken cancellationToken = default)
+    public async Task<bool> HasTransactionsAsync(int supplierId, CancellationToken cancellationToken = default)
     {
-        // Phase 2: Purchases/transactions will be implemented in future phase
-        return Task.FromResult(false);
+        return await Context.Purchases.AnyAsync(p => p.SupplierId == supplierId && !p.IsDeleted, cancellationToken) ||
+               await Context.SupplierPayments.AnyAsync(sp => sp.SupplierId == supplierId && !sp.IsDeleted, cancellationToken) ||
+               await Context.PurchaseReturns.AnyAsync(pr => pr.SupplierId == supplierId && !pr.IsDeleted, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default)
+    {
+        var query = Context.Suppliers.AsNoTracking().AsQueryable();
+        if (!includeInactive)
+            query = query.Where(s => s.IsActive);
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim().ToLower();
+            query = query.Where(s => s.Name.ToLower().Contains(term) || (s.Phone != null && s.Phone.ToLower().Contains(term)) || (s.ContactPerson != null && s.ContactPerson.ToLower().Contains(term)));
+        }
+        return await query.Select(s => s.Id).ToListAsync(cancellationToken);
     }
 
     public async Task<bool> IsNamePhoneTakenAsync(string name, string? phone, int? excludeId = null, CancellationToken cancellationToken = default)
@@ -228,94 +269,6 @@ public class SupplierRepository : Repository<Supplier>, ISupplierRepository
         if (excludeId.HasValue)
         {
             query = query.Where(s => s.Id != excludeId.Value);
-        }
-        return await query.AnyAsync(cancellationToken);
-    }
-}
-
-public class CustomerRepository : Repository<Customer>, ICustomerRepository
-{
-    public CustomerRepository(AppDbContext context) : base(context)
-    {
-    }
-
-    public async Task<PagedResult<CustomerDto>> GetPagedAsync(MasterDataSearchQuery query, CancellationToken cancellationToken = default)
-    {
-        var baseQuery = Context.Customers
-            .AsNoTracking()
-            .Include(c => c.DefaultPriceLevel)
-            .AsQueryable();
-
-        if (query.IsActive.HasValue)
-        {
-            baseQuery = baseQuery.Where(c => c.IsActive == query.IsActive.Value);
-        }
-
-        if (!string.IsNullOrWhiteSpace(query.SearchTerm))
-        {
-            var term = query.SearchTerm.Trim().ToLower();
-            baseQuery = baseQuery.Where(c =>
-                c.Name.ToLower().Contains(term) ||
-                (c.Phone != null && c.Phone.ToLower().Contains(term)) ||
-                (c.Email != null && c.Email.ToLower().Contains(term)));
-        }
-
-        int totalCount = await baseQuery.CountAsync(cancellationToken);
-
-        baseQuery = query.SortDescending ? baseQuery.OrderByDescending(c => c.Name) : baseQuery.OrderBy(c => c.Name);
-
-        int pageNumber = query.PageNumber > 0 ? query.PageNumber : 1;
-        int pageSize = query.PageSize > 0 ? query.PageSize : 50;
-
-        var items = await baseQuery
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .Select(c => new CustomerDto
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Phone = c.Phone,
-                Email = c.Email,
-                TaxNumber = c.TaxNumber,
-                Address = c.Address,
-                Notes = c.Notes,
-                CreditLimit = c.CreditLimit,
-                OpeningBalance = c.OpeningBalance,
-                DefaultPriceLevelId = c.DefaultPriceLevelId,
-                DefaultPriceLevelName = c.DefaultPriceLevel != null ? c.DefaultPriceLevel.Name : null,
-                IsActive = c.IsActive,
-                HasTransactions = false // Phase 2: Sales don't exist yet
-            })
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<CustomerDto>(items, totalCount, pageNumber, pageSize);
-    }
-
-    public async Task<IReadOnlyList<Customer>> GetAllFlatAsync(bool includeInactive = false, CancellationToken cancellationToken = default)
-    {
-        var query = Context.Customers.AsNoTracking().AsQueryable();
-        if (!includeInactive)
-        {
-            query = query.Where(c => c.IsActive);
-        }
-        return await query.OrderBy(c => c.Name).ToListAsync(cancellationToken);
-    }
-
-    public Task<bool> HasTransactionsAsync(int customerId, CancellationToken cancellationToken = default)
-    {
-        // Phase 2: Sales/invoices will be implemented in future phase
-        return Task.FromResult(false);
-    }
-
-    public async Task<bool> IsPhoneTakenAsync(string phone, int? excludeId = null, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(phone)) return false;
-        var cleanPhone = phone.Trim().ToLower();
-
-        var query = Context.Customers.Where(c => c.Phone != null && c.Phone.ToLower() == cleanPhone);
-        if (excludeId.HasValue)
-        {
-            query = query.Where(c => c.Id != excludeId.Value);
         }
         return await query.AnyAsync(cancellationToken);
     }
@@ -335,4 +288,3 @@ public class PriceLevelRepository : Repository<PriceLevel>, IPriceLevelRepositor
             .ToListAsync(cancellationToken);
     }
 }
-

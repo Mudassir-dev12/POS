@@ -8,9 +8,8 @@
         d:DataContext="{d:DesignInstance vm:ReceiptPreviewDialogViewModel}"
         Title="{Binding Title}"
         Height="740" Width="680"
-        WindowStartupLocation="CenterScreen"
-        WindowStyle="SingleBorderWindow"
-        Background="#0F172A">
+        Style="{DynamicResource DialogWindowStyle}"
+        WindowStartupLocation="CenterScreen">
 
     <Grid>
         <Grid.RowDefinitions>
@@ -20,7 +19,7 @@
         </Grid.RowDefinitions>
 
         <!-- Top Control Bar -->
-        <Border Grid.Row="0" Background="#1E293B" Padding="16,12" BorderBrush="#334155" BorderThickness="0,0,0,1">
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}" Padding="16,12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
@@ -28,23 +27,23 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding DocumentTitle}" FontSize="16" FontWeight="Bold" Foreground="White" />
-                    <TextBlock Text="{Binding Subtitle}" FontSize="12" Foreground="#94A3B8" />
+                    <TextBlock Text="{Binding DocumentTitle}" Style="{DynamicResource SectionHeaderStyle}" />
+                    <TextBlock Text="{Binding Subtitle}" Style="{DynamicResource SubtitleStyle}" Margin="0,2,0,0" />
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <Button Content="Save PDF" Command="{Binding SavePdfCommand}"
-                            Padding="14,8" FontWeight="SemiBold" Background="#334155" Foreground="White" Margin="0,0,8,0" />
+                            Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,8,0" />
                     <Button Content="Print Document" Command="{Binding PrintCommand}"
-                            Padding="16,8" FontWeight="Bold" Background="#2563EB" Foreground="White" Margin="0,0,8,0" />
+                            Style="{DynamicResource PrimaryButtonStyle}" Margin="0,0,8,0" />
                     <Button Content="Close" Command="{Binding CloseCommand}"
-                            Padding="14,8" Background="#475569" Foreground="White" />
+                            Style="{DynamicResource SecondaryButtonStyle}" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Paper Preview Surface -->
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="#334155" Padding="20">
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="{DynamicResource MutedBrush}" Padding="20">
             <ItemsControl ItemsSource="{Binding PageImages}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -55,7 +54,7 @@
                     <DataTemplate>
                         <Border Background="White" CornerRadius="2" Margin="0,0,0,20">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="12" ShadowDepth="4" Opacity="0.4" />
+                                <DropShadowEffect BlurRadius="12" ShadowDepth="4" Opacity="0.3" />
                             </Border.Effect>
                             <Image Source="{Binding}" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" />
                         </Border>
@@ -65,9 +64,9 @@
         </ScrollViewer>
 
         <!-- Status Bottom Bar -->
-        <Border Grid.Row="2" Background="#1E293B" Padding="14,8" BorderBrush="#334155" BorderThickness="0,1,0,0">
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" Padding="14,8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
             <TextBlock Text="{Binding StatusMessage, FallbackValue='Preview Ready. Click Print or Save PDF.'}"
-                       FontSize="12" Foreground="#E2E8F0" />
+                       FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
         </Border>
     </Grid>
 </Window>

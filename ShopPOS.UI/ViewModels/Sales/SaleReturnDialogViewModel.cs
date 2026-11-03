@@ -105,7 +105,7 @@ public partial class SaleReturnDialogViewModel : ObservableObject
     private string? _errorMessage;
 
     [ObservableProperty]
-    private string _currencySymbol = "$";
+    private string _currencySymbol = "Rs";
 
     [ObservableProperty]
     private bool _allowReturnWithoutReceipt;
@@ -214,8 +214,8 @@ public partial class SaleReturnDialogViewModel : ObservableObject
             LoadedSaleId = sale.Id;
             LoadedSaleNumber = sale.SaleNumber;
             LoadedSaleDate = sale.SaleDate;
-            LoadedCustomerId = sale.CustomerId;
-            LoadedCustomerName = sale.CustomerName ?? "Walk-in";
+            LoadedCustomerId = null;
+            LoadedCustomerName = "Walk-in";
 
             var linesResult = await _saleReturnService.LoadReturnableLinesAsync(saleId);
             if (!linesResult.Success || linesResult.Data == null || linesResult.Data.Count == 0)
@@ -264,11 +264,7 @@ public partial class SaleReturnDialogViewModel : ObservableObject
             return;
         }
 
-        if (RefundMethod == PaymentMethod.StoreCredit && !LoadedCustomerId.HasValue)
-        {
-            ErrorMessage = "Store Credit refunds can only be issued to registered customers.";
-            return;
-        }
+
 
         bool confirm = _dialogService.ShowConfirmation(
             $"Confirm return of {selected.Count} line(s) for a total refund of {CurrencySymbol}{TotalRefundAmount:F2} via {RefundMethod}?",
@@ -282,7 +278,6 @@ public partial class SaleReturnDialogViewModel : ObservableObject
             var dto = new CreateSaleReturnDto
             {
                 SaleId = LoadedSaleId,
-                CustomerId = LoadedCustomerId,
                 RefundMethod = RefundMethod,
                 Reason = string.IsNullOrWhiteSpace(GlobalReason) ? "Customer Return" : GlobalReason.Trim(),
                 Items = selected.Select(s => new CreateSaleReturnItemDto

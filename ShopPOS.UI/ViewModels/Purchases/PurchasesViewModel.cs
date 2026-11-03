@@ -40,11 +40,11 @@ public partial class PurchasesViewModel : BaseCrudViewModel<PurchaseListDto>
         ISupplierService supplierService,
         IDialogService dialogService,
         IServiceProvider serviceProvider,
-        IAuthService authService,
-        IPermissionService permissionService,
         IShopSettingService shopSettingService)
-        : base(authService, permissionService, shopSettingService)
+        : base(shopSettingService, dialogService)
     {
+        CanShowDeleteSelected = true;
+        CanShowCancelSelected = true;
         _purchaseService = purchaseService;
         _supplierService = supplierService;
         _dialogService = dialogService;
@@ -53,18 +53,10 @@ public partial class PurchasesViewModel : BaseCrudViewModel<PurchaseListDto>
 
     protected override void ApplyPermissions()
     {
-        string? role = GetCurrentRole();
-        bool canManage = PermissionService.CanManagePurchases(role);
-
-        CanAdd = canManage;
-        CanEdit = canManage;
-        CanDelete = canManage;
-        CanDeactivate = canManage;
-
-        if (!canManage)
-        {
-            ErrorMessage = "Access Denied: Cashiers do not have permission to access Purchases.";
-        }
+        CanAdd = true;
+        CanEdit = true;
+        CanDelete = true;
+        CanDeactivate = true;
     }
 
     public override async Task InitializeAsync()
@@ -91,12 +83,6 @@ public partial class PurchasesViewModel : BaseCrudViewModel<PurchaseListDto>
 
     public override async Task LoadDataAsync(CancellationToken cancellationToken = default)
     {
-        if (!PermissionService.CanManagePurchases(GetCurrentRole()))
-        {
-            ErrorMessage = "Access Denied: Cashiers do not have permission to access Purchases.";
-            return;
-        }
-
         IsLoading = true;
         ErrorMessage = null;
 
@@ -184,7 +170,7 @@ public partial class PurchasesViewModel : BaseCrudViewModel<PurchaseListDto>
     {
         if (SelectedItem == null || SelectedItem.Status != PurchaseStatus.Draft) return;
 
-        string prompt = $"Post purchase '{SelectedItem.PurchaseNumber}' for total {SelectedItem.GrandTotal:C}?\n\nThis will immediately adjust stock inventory and update product weighted average costs.";
+        string prompt = $"Post purchase '{SelectedItem.PurchaseNumber}' for total {ShopPOS.Core.Services.MoneyFormatter.Instance.Format(SelectedItem.GrandTotal)}?\n\nThis will immediately adjust stock inventory and update product weighted average costs.";
         var confirm = _dialogService.ShowConfirmActionDialog("Post Purchase", prompt, isReferenced: false);
         if (confirm != ConfirmActionResult.Delete)
         {
@@ -276,4 +262,29 @@ public partial class PurchasesViewModel : BaseCrudViewModel<PurchaseListDto>
             IsLoading = false;
         }
     }
+
+    protected override async Task<IReadOnlyList<int>> FetchAllFilteredIdsAsync()
+    {
+        var query = new PurchaseSearchQuery
+        {
+            SearchTerm = SearchTerm,
+            SupplierId = SelectedSupplierId,
+            Status = SelectedStatus,
+            PaymentStatus = SelectedPaymentStatus,
+            FromDate = FromDate,
+            ToDate = ToDate
+        };
+        return await _purchaseService.GetFilteredPurchaseIdsAsync(query);
+    }
+
+    protected override async Task<BulkOperationResult> ExecuteBulkDeleteAsync(IReadOnlyList<int> ids)
+    {
+        return await _purchaseService.BulkDeleteDraftsAsync(ids, GetCurrentUserId());
+    }
+
+    protected override async Task<BulkOperationResult> ExecuteBulkCancelAsync(IReadOnlyList<int> ids, string reason)
+    {
+        return await _purchaseService.BulkCancelPurchasesAsync(ids, reason, GetCurrentUserId());
+    }
+
 }

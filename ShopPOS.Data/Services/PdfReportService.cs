@@ -38,7 +38,7 @@ public class PdfReportService : IPdfReportService
         return Task.FromResult(pdfBytes);
     }
 
-    public Task<byte[]> GenerateStockOverviewPdfAsync(IReadOnlyList<StockOverviewItemDto> items, ShopSettingDto settings, bool isCashier, CancellationToken cancellationToken = default)
+    public Task<byte[]> GenerateStockOverviewPdfAsync(IReadOnlyList<StockOverviewItemDto> items, ShopSettingDto settings, bool isCashier = false, CancellationToken cancellationToken = default)
     {
         var cur = settings.CurrencySymbol;
         var doc = Document.Create(container =>
@@ -69,11 +69,8 @@ public class PdfReportService : IPdfReportService
                             columns.ConstantColumn(45);
                             columns.ConstantColumn(50);
                             columns.ConstantColumn(50);
-                            if (!isCashier)
-                            {
-                                columns.ConstantColumn(60);
-                                columns.ConstantColumn(65);
-                            }
+                            columns.ConstantColumn(60);
+                            columns.ConstantColumn(65);
                         });
 
                         table.Header(header =>
@@ -84,11 +81,8 @@ public class PdfReportService : IPdfReportService
                             header.Cell().Background("#F1F5F9").Padding(4).Text("Unit").Bold();
                             header.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text("Stock").Bold();
                             header.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text("Alert").Bold();
-                            if (!isCashier)
-                            {
-                                header.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text("Cost").Bold();
-                                header.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text("Total Value").Bold();
-                            }
+                            header.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text("Cost").Bold();
+                            header.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text("Total Value").Bold();
                         });
 
                         int idx = 0;
@@ -101,11 +95,8 @@ public class PdfReportService : IPdfReportService
                             table.Cell().Background(bg).Padding(4).Text(it.UnitName);
                             table.Cell().Background(bg).Padding(4).AlignRight().Text(it.CurrentStock.ToString("N2")).Bold();
                             table.Cell().Background(bg).Padding(4).AlignRight().Text(it.ReorderLevel.ToString("N0"));
-                            if (!isCashier)
-                            {
-                                table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur}{it.CostPrice:N2}");
-                                table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur}{it.StockValueAtCost:N2}").Bold();
-                            }
+                            table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur} {it.CostPrice:N2}");
+                            table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur} {it.StockValueAtCost:N2}").Bold();
                             idx++;
                         }
                     });
@@ -181,9 +172,9 @@ public class PdfReportService : IPdfReportService
                             table.Cell().Background(bg).Padding(4).Text(v.CategoryName);
                             table.Cell().Background(bg).Padding(4).AlignRight().Text(v.ProductCount.ToString());
                             table.Cell().Background(bg).Padding(4).AlignRight().Text(v.TotalUnits.ToString("N2"));
-                            table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur}{v.TotalCostValue:N2}");
-                            table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur}{v.TotalRetailValue:N2}");
-                            table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur}{v.PotentialProfit:N2}");
+                            table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur} {v.TotalCostValue:N2}");
+                            table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur} {v.TotalRetailValue:N2}");
+                            table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur} {v.PotentialProfit:N2}");
                             table.Cell().Background(bg).Padding(4).AlignRight().Text($"{v.ProfitMarginPercent:N1}%");
                             idx++;
                         }
@@ -192,9 +183,9 @@ public class PdfReportService : IPdfReportService
                         table.Cell().Background("#F1F5F9").Padding(4).Text("TOTALS").Bold();
                         table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text(valuations.Sum(v => v.ProductCount).ToString()).Bold();
                         table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text(valuations.Sum(v => v.TotalUnits).ToString("N2")).Bold();
-                        table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur}{valuations.Sum(v => v.TotalCostValue):N2}").Bold();
-                        table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur}{valuations.Sum(v => v.TotalRetailValue):N2}").Bold();
-                        table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur}{valuations.Sum(v => v.PotentialProfit):N2}").Bold();
+                        table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur} {valuations.Sum(v => v.TotalCostValue):N2}").Bold();
+                        table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur} {valuations.Sum(v => v.TotalRetailValue):N2}").Bold();
+                        table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur} {valuations.Sum(v => v.PotentialProfit):N2}").Bold();
                         table.Cell().Background("#F1F5F9").Padding(4).Text(string.Empty);
                     });
                 });
@@ -317,10 +308,10 @@ public class PdfReportService : IPdfReportService
                     table.Cell().Background(bg).Padding(5).Text(item.Sku);
                     table.Cell().Background(bg).Padding(5).Text(item.ProductName);
                     table.Cell().Background(bg).Padding(5).AlignRight().Text(item.Quantity.ToString("G29", CultureInfo.InvariantCulture));
-                    table.Cell().Background(bg).Padding(5).AlignRight().Text($"{cur}{item.UnitCost:N2}");
+                    table.Cell().Background(bg).Padding(5).AlignRight().Text($"{cur} {item.UnitCost:N2}");
                     table.Cell().Background(bg).Padding(5).AlignRight().Text($"{item.DiscountPercent:0.#}%");
                     table.Cell().Background(bg).Padding(5).AlignRight().Text($"{item.TaxPercent:0.#}%");
-                    table.Cell().Background(bg).Padding(5).AlignRight().Text($"{cur}{item.LineTotal:N2}").Bold();
+                    table.Cell().Background(bg).Padding(5).AlignRight().Text($"{cur} {item.LineTotal:N2}").Bold();
                     idx++;
                 }
             });
@@ -328,18 +319,18 @@ public class PdfReportService : IPdfReportService
             // Totals section
             col.Item().PaddingTop(12).AlignRight().Width(240).Column(tc =>
             {
-                tc.Item().Row(r => { r.RelativeItem().Text("Sub Total:"); r.RelativeItem().AlignRight().Text($"{cur}{p.SubTotal:N2}"); });
+                tc.Item().Row(r => { r.RelativeItem().Text("Sub Total:"); r.RelativeItem().AlignRight().Text($"{cur} {p.SubTotal:N2}"); });
                 if (p.DiscountAmount > 0)
-                    tc.Item().Row(r => { r.RelativeItem().Text("Invoice Discount:"); r.RelativeItem().AlignRight().Text($"-{cur}{p.DiscountAmount:N2}"); });
+                    tc.Item().Row(r => { r.RelativeItem().Text("Invoice Discount:"); r.RelativeItem().AlignRight().Text($"-{cur} {p.DiscountAmount:N2}"); });
                 if (p.TaxAmount > 0)
-                    tc.Item().Row(r => { r.RelativeItem().Text("Tax Amount:"); r.RelativeItem().AlignRight().Text($"{cur}{p.TaxAmount:N2}"); });
+                    tc.Item().Row(r => { r.RelativeItem().Text("Tax Amount:"); r.RelativeItem().AlignRight().Text($"{cur} {p.TaxAmount:N2}"); });
                 if (p.FreightAmount > 0)
-                    tc.Item().Row(r => { r.RelativeItem().Text("Freight:"); r.RelativeItem().AlignRight().Text($"{cur}{p.FreightAmount:N2}"); });
+                    tc.Item().Row(r => { r.RelativeItem().Text("Freight:"); r.RelativeItem().AlignRight().Text($"{cur} {p.FreightAmount:N2}"); });
 
                 tc.Item().PaddingTop(4).LineHorizontal(1).LineColor("#94A3B8");
-                tc.Item().PaddingTop(2).Row(r => { r.RelativeItem().Text("Grand Total:").FontSize(11).Bold(); r.RelativeItem().AlignRight().Text($"{cur}{p.GrandTotal:N2}").FontSize(12).Bold().FontColor("#2563EB"); });
-                tc.Item().Row(r => { r.RelativeItem().Text("Paid Amount:"); r.RelativeItem().AlignRight().Text($"{cur}{p.PaidAmount:N2}"); });
-                tc.Item().Row(r => { r.RelativeItem().Text("Balance Due:").Bold(); r.RelativeItem().AlignRight().Text($"{cur}{p.Balance:N2}").Bold().FontColor(p.Balance > 0 ? "#DC2626" : "#16A34A"); });
+                tc.Item().PaddingTop(2).Row(r => { r.RelativeItem().Text("Grand Total:").FontSize(11).Bold(); r.RelativeItem().AlignRight().Text($"{cur} {p.GrandTotal:N2}").FontSize(12).Bold().FontColor("#2563EB"); });
+                tc.Item().Row(r => { r.RelativeItem().Text("Paid Amount:"); r.RelativeItem().AlignRight().Text($"{cur} {p.PaidAmount:N2}"); });
+                tc.Item().Row(r => { r.RelativeItem().Text("Balance Due:").Bold(); r.RelativeItem().AlignRight().Text($"{cur} {p.Balance:N2}").Bold().FontColor(p.Balance > 0 ? "#DC2626" : "#16A34A"); });
             });
 
             if (!string.IsNullOrWhiteSpace(p.Notes))
@@ -400,7 +391,7 @@ public class PdfReportService : IPdfReportService
                 row.RelativeItem().AlignRight().Column(c =>
                 {
                     string cur = s.CurrencySymbol;
-                    c.Item().Text($"Closing Balance: {cur}{l.ClosingBalance:N2}").FontSize(11).Bold().FontColor(l.ClosingBalance > 0 ? "#DC2626" : "#16A34A");
+                    c.Item().Text($"Closing Balance: {cur} {l.ClosingBalance:N2}").FontSize(11).Bold().FontColor(l.ClosingBalance > 0 ? "#DC2626" : "#16A34A");
                 });
             });
 
@@ -445,7 +436,7 @@ public class PdfReportService : IPdfReportService
                 table.Cell().Background("#EFF6FF").Padding(4).Text(string.Empty);
                 table.Cell().Background("#EFF6FF").Padding(4).AlignRight().Text(string.Empty);
                 table.Cell().Background("#EFF6FF").Padding(4).AlignRight().Text(string.Empty);
-                table.Cell().Background("#EFF6FF").Padding(4).AlignRight().Text($"{cur}{l.OpeningBalance:N2}").Bold();
+                table.Cell().Background("#EFF6FF").Padding(4).AlignRight().Text($"{cur} {l.OpeningBalance:N2}").Bold();
 
                 int idx = 2;
                 foreach (var entry in l.Entries)
@@ -455,9 +446,9 @@ public class PdfReportService : IPdfReportService
                     table.Cell().Background(bg).Padding(4).Text(entry.Type);
                     table.Cell().Background(bg).Padding(4).Text(entry.Reference);
                     table.Cell().Background(bg).Padding(4).Text(entry.Notes ?? string.Empty);
-                    table.Cell().Background(bg).Padding(4).AlignRight().Text(entry.Debit > 0 ? $"{cur}{entry.Debit:N2}" : string.Empty);
-                    table.Cell().Background(bg).Padding(4).AlignRight().Text(entry.Credit > 0 ? $"{cur}{entry.Credit:N2}" : string.Empty);
-                    table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur}{entry.RunningBalance:N2}").Bold();
+                    table.Cell().Background(bg).Padding(4).AlignRight().Text(entry.Debit > 0 ? $"{cur} {entry.Debit:N2}" : string.Empty);
+                    table.Cell().Background(bg).Padding(4).AlignRight().Text(entry.Credit > 0 ? $"{cur} {entry.Credit:N2}" : string.Empty);
+                    table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur} {entry.RunningBalance:N2}").Bold();
                     idx++;
                 }
 
@@ -466,9 +457,9 @@ public class PdfReportService : IPdfReportService
                 table.Cell().Background("#F1F5F9").Padding(4).Text(string.Empty);
                 table.Cell().Background("#F1F5F9").Padding(4).Text(string.Empty);
                 table.Cell().Background("#F1F5F9").Padding(4).Text(string.Empty);
-                table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur}{l.TotalDebits:N2}").Bold();
-                table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur}{l.TotalCredits:N2}").Bold();
-                table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur}{l.ClosingBalance:N2}").Bold();
+                table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur} {l.TotalDebits:N2}").Bold();
+                table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur} {l.TotalCredits:N2}").Bold();
+                table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur} {l.ClosingBalance:N2}").Bold();
             });
         });
     }
@@ -501,10 +492,7 @@ public class PdfReportService : IPdfReportService
                         row.RelativeItem().Text($"Receipt: {sale.SaleNumber}").Bold();
                         row.RelativeItem().AlignRight().Text($"Date: {sale.SaleDate:yyyy-MM-dd HH:mm}");
                     });
-                    if (!string.IsNullOrWhiteSpace(sale.CustomerName))
-                    {
-                        col.Item().Text($"Customer: {sale.CustomerName}").FontSize(8).FontColor("#334155");
-                    }
+
                     col.Item().PaddingTop(6).LineHorizontal(1).LineColor("#CBD5E1");
                 });
 
@@ -536,8 +524,8 @@ public class PdfReportService : IPdfReportService
                             table.Cell().Text(idx.ToString());
                             table.Cell().Text(item.ProductName);
                             table.Cell().AlignRight().Text($"{item.Quantity:0.##}");
-                            table.Cell().AlignRight().Text($"{cur}{item.UnitPrice:F2}");
-                            table.Cell().AlignRight().Text($"{cur}{item.LineTotal:F2}");
+                            table.Cell().AlignRight().Text($"{cur} {item.UnitPrice:F2}");
+                            table.Cell().AlignRight().Text($"{cur} {item.LineTotal:F2}");
                             idx++;
                         }
                     });
@@ -546,32 +534,32 @@ public class PdfReportService : IPdfReportService
 
                     col.Item().PaddingTop(4).AlignRight().Column(totals =>
                     {
-                        totals.Item().Text($"Subtotal: {cur}{sale.SubTotal:F2}");
+                        totals.Item().Text($"Subtotal: {cur} {sale.SubTotal:F2}");
                         if (sale.LineDiscountTotal > 0 || sale.BillDiscountAmount > 0)
                         {
-                            totals.Item().Text($"Discount: -{cur}{(sale.LineDiscountTotal + sale.BillDiscountAmount):F2}").FontColor("#DC2626");
+                            totals.Item().Text($"Discount: -{cur} {(sale.LineDiscountTotal + sale.BillDiscountAmount):F2}").FontColor("#DC2626");
                         }
                         if (sale.TaxAmount > 0)
                         {
-                            totals.Item().Text($"Tax: {cur}{sale.TaxAmount:F2}");
+                            totals.Item().Text($"Tax: {cur} {sale.TaxAmount:F2}");
                         }
                         if (sale.RoundOff != 0)
                         {
-                            totals.Item().Text($"Round-off: {cur}{sale.RoundOff:F2}");
+                            totals.Item().Text($"Round-off: {cur} {sale.RoundOff:F2}");
                         }
-                        totals.Item().PaddingTop(2).Text($"Grand Total: {cur}{sale.GrandTotal:F2}").FontSize(12).Bold();
+                        totals.Item().PaddingTop(2).Text($"Grand Total: {cur} {sale.GrandTotal:F2}").FontSize(12).Bold();
 
                         foreach (var p in sale.Payments)
                         {
-                            totals.Item().Text($"Paid ({p.Method}): {cur}{p.Amount:F2}");
+                            totals.Item().Text($"Paid ({p.Method}): {cur} {p.Amount:F2}");
                         }
                         if (sale.ChangeAmount > 0)
                         {
-                            totals.Item().Text($"Change Due: {cur}{sale.ChangeAmount:F2}").Bold().FontColor("#16A34A");
+                            totals.Item().Text($"Change Due: {cur} {sale.ChangeAmount:F2}").Bold().FontColor("#16A34A");
                         }
                         if (sale.DueAmount > 0)
                         {
-                            totals.Item().Text($"Balance Due: {cur}{sale.DueAmount:F2}").Bold().FontColor("#EA580C");
+                            totals.Item().Text($"Balance Due: {cur} {sale.DueAmount:F2}").Bold().FontColor("#EA580C");
                         }
                     });
 
@@ -582,117 +570,6 @@ public class PdfReportService : IPdfReportService
                 });
 
                 page.Footer().AlignCenter().Text("Thank you for shopping with us!").FontSize(8).FontColor("#94A3B8");
-            });
-        });
-
-        return Task.FromResult(doc.GeneratePdf());
-    }
-
-    public Task<byte[]> GenerateShiftReportPdfAsync(ShiftSummaryDto shift, ShopSettingDto settings, bool isZReport, CancellationToken cancellationToken = default)
-    {
-        var cur = settings.CurrencySymbol;
-        string reportTitle = isZReport ? "SHIFT Z REPORT (FINAL CLOSING)" : "SHIFT X REPORT (INTERIM READING)";
-
-        var doc = Document.Create(container =>
-        {
-            container.Page(page =>
-            {
-                page.Size(PageSizes.A4);
-                page.Margin(30);
-                page.DefaultTextStyle(x => x.FontSize(10).FontFamily("Segoe UI"));
-
-                page.Header().Column(col =>
-                {
-                    col.Item().Text(settings.ShopName).FontSize(16).Bold().FontColor("#1E293B");
-                    col.Item().Text(reportTitle).FontSize(13).Bold().FontColor(isZReport ? "#1E3A8A" : "#0D9488");
-                    col.Item().PaddingTop(2).Text($"Shift Number: {shift.ShiftNumber} | Status: {shift.Status}").SemiBold();
-                    col.Item().Text($"Opened: {shift.OpenedAt:yyyy-MM-dd HH:mm} | Closed: {(shift.ClosedAt.HasValue ? shift.ClosedAt.Value.ToString("yyyy-MM-dd HH:mm") : "Currently Open")}").FontSize(9).FontColor("#64748B");
-                    col.Item().PaddingTop(6).LineHorizontal(1).LineColor("#CBD5E1");
-                });
-
-                page.Content().PaddingTop(12).Column(col =>
-                {
-                    col.Item().Text("1. Cash Drawer Movement Summary").Bold().FontSize(11).FontColor("#334155");
-                    col.Item().PaddingTop(4).Table(table =>
-                    {
-                        table.ColumnsDefinition(cols =>
-                        {
-                            cols.RelativeColumn(3);
-                            cols.RelativeColumn(2);
-                        });
-
-                        table.Cell().Background("#F8FAFC").Padding(4).Text("Opening Cash Float");
-                        table.Cell().Background("#F8FAFC").Padding(4).AlignRight().Text($"{cur}{shift.OpeningCash:F2}").Bold();
-
-                        table.Cell().Background("#FFFFFF").Padding(4).Text("Total Cash Sales");
-                        var cashSales = shift.PaymentsByMethod.TryGetValue(PaymentMethod.Cash, out var cs) ? cs : 0m;
-                        table.Cell().Background("#FFFFFF").Padding(4).AlignRight().Text($"{cur}{cashSales:F2}");
-
-                        table.Cell().Background("#F8FAFC").Padding(4).Text("Cash In (Additions to drawer)");
-                        table.Cell().Background("#F8FAFC").Padding(4).AlignRight().Text($"{cur}{shift.CashIn:F2}");
-
-                        table.Cell().Background("#FFFFFF").Padding(4).Text("Cash Out (Expenses / Payouts)");
-                        table.Cell().Background("#FFFFFF").Padding(4).AlignRight().Text($"-{cur}{shift.CashOut:F2}").FontColor("#DC2626");
-
-                        table.Cell().Background("#EFF6FF").Padding(4).Text("Expected Cash in Drawer").Bold();
-                        table.Cell().Background("#EFF6FF").Padding(4).AlignRight().Text($"{cur}{shift.ExpectedCash:F2}").Bold().FontColor("#2563EB");
-
-                        if (shift.CountedCash.HasValue)
-                        {
-                            table.Cell().Background("#F8FAFC").Padding(4).Text("Counted Cash (Physical count)").Bold();
-                            table.Cell().Background("#F8FAFC").Padding(4).AlignRight().Text($"{cur}{shift.CountedCash.Value:F2}").Bold();
-
-                            table.Cell().Background(shift.Difference == 0 ? "#DCFCE7" : "#FEE2E2").Padding(4).Text("Cash Difference (Overage / Shortage)").Bold();
-                            table.Cell().Background(shift.Difference == 0 ? "#DCFCE7" : "#FEE2E2").Padding(4).AlignRight()
-                                .Text($"{(shift.Difference >= 0 ? "+" : "")}{cur}{shift.Difference:F2}").Bold();
-                        }
-                    });
-
-                    col.Item().PaddingTop(16).Text("2. Sales & Payment Breakdown").Bold().FontSize(11).FontColor("#334155");
-                    col.Item().PaddingTop(4).Table(table =>
-                    {
-                        table.ColumnsDefinition(cols =>
-                        {
-                            cols.RelativeColumn(3);
-                            cols.RelativeColumn(2);
-                        });
-
-                        table.Cell().Background("#F8FAFC").Padding(4).Text("Total Completed Sales Count");
-                        table.Cell().Background("#F8FAFC").Padding(4).AlignRight().Text(shift.SalesCount.ToString()).Bold();
-
-                        table.Cell().Background("#FFFFFF").Padding(4).Text("Gross Sales");
-                        table.Cell().Background("#FFFFFF").Padding(4).AlignRight().Text($"{cur}{shift.GrossSales:F2}");
-
-                        table.Cell().Background("#F8FAFC").Padding(4).Text("Total Discounts");
-                        table.Cell().Background("#F8FAFC").Padding(4).AlignRight().Text($"-{cur}{shift.TotalDiscounts:F2}").FontColor("#DC2626");
-
-                        table.Cell().Background("#FFFFFF").Padding(4).Text("Total Tax");
-                        table.Cell().Background("#FFFFFF").Padding(4).AlignRight().Text($"{cur}{shift.TotalTax:F2}");
-
-                        table.Cell().Background("#F1F5F9").Padding(4).Text("Net Sales Revenue").Bold();
-                        table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur}{shift.NetSales:F2}").Bold();
-
-                        foreach (var kvp in shift.PaymentsByMethod)
-                        {
-                            table.Cell().Background("#FFFFFF").Padding(4).Text($"Paid by {kvp.Key}");
-                            table.Cell().Background("#FFFFFF").Padding(4).AlignRight().Text($"{cur}{kvp.Value:F2}");
-                        }
-
-                        table.Cell().Background("#F8FAFC").Padding(4).Text($"Sales Returns ({shift.ReturnsCount} items)");
-                        table.Cell().Background("#F8FAFC").Padding(4).AlignRight().Text($"-{cur}{shift.TotalReturns:F2}").FontColor("#DC2626");
-                    });
-
-                    if (shift.HeldBillsCount > 0)
-                    {
-                        col.Item().PaddingTop(12).Text($"Active Held Bills in System: {shift.HeldBillsCount}").FontColor("#EA580C").Bold();
-                    }
-                });
-
-                page.Footer().Row(row =>
-                {
-                    row.RelativeItem().Text($"Report generated on {DateTime.Now:yyyy-MM-dd HH:mm}").FontSize(8).FontColor("#94A3B8");
-                    row.RelativeItem().AlignRight().Text("ShopPOS Offline Engine").FontSize(8).FontColor("#94A3B8");
-                });
             });
         });
 
@@ -736,7 +613,7 @@ public class PdfReportService : IPdfReportService
                     {
                         header.Cell().Background("#1E293B").Padding(4).Text("Doc #").FontColor("#FFFFFF").Bold();
                         header.Cell().Background("#1E293B").Padding(4).Text("Date").FontColor("#FFFFFF").Bold();
-                        header.Cell().Background("#1E293B").Padding(4).Text("Customer").FontColor("#FFFFFF").Bold();
+                        header.Cell().Background("#1E293B").Padding(4).Text("Payments").FontColor("#FFFFFF").Bold();
                         header.Cell().Background("#1E293B").Padding(4).AlignRight().Text("Items").FontColor("#FFFFFF").Bold();
                         header.Cell().Background("#1E293B").Padding(4).AlignRight().Text("Total").FontColor("#FFFFFF").Bold();
                         header.Cell().Background("#1E293B").Padding(4).AlignRight().Text("Paid").FontColor("#FFFFFF").Bold();
@@ -750,11 +627,11 @@ public class PdfReportService : IPdfReportService
                         string bg = idx % 2 == 0 ? "#FFFFFF" : "#F8FAFC";
                         table.Cell().Background(bg).Padding(4).Text(s.SaleNumber).Bold();
                         table.Cell().Background(bg).Padding(4).Text(s.SaleDate.ToString("yyyy-MM-dd HH:mm"));
-                        table.Cell().Background(bg).Padding(4).Text(s.CustomerName ?? "Walk-in");
+                        table.Cell().Background(bg).Padding(4).Text(s.PaymentMethodsSummary);
                         table.Cell().Background(bg).Padding(4).AlignRight().Text(s.ItemCount.ToString());
-                        table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur}{s.GrandTotal:F2}").Bold();
-                        table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur}{s.PaidAmount:F2}");
-                        table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur}{s.DueAmount:F2}");
+                        table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur} {s.GrandTotal:F2}").Bold();
+                        table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur} {s.PaidAmount:F2}");
+                        table.Cell().Background(bg).Padding(4).AlignRight().Text($"{cur} {s.DueAmount:F2}");
                         table.Cell().Background(bg).Padding(4).Text(s.Status.ToString());
                         idx++;
                     }
@@ -764,9 +641,9 @@ public class PdfReportService : IPdfReportService
                     table.Cell().Background("#F1F5F9").Padding(4).Text(string.Empty);
                     table.Cell().Background("#F1F5F9").Padding(4).Text(string.Empty);
                     table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text(sales.Sum(s => s.ItemCount).ToString()).Bold();
-                    table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur}{sales.Sum(s => s.GrandTotal):F2}").Bold();
-                    table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur}{sales.Sum(s => s.PaidAmount):F2}").Bold();
-                    table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur}{sales.Sum(s => s.DueAmount):F2}").Bold();
+                    table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur} {sales.Sum(s => s.GrandTotal):F2}").Bold();
+                    table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur} {sales.Sum(s => s.PaidAmount):F2}").Bold();
+                    table.Cell().Background("#F1F5F9").Padding(4).AlignRight().Text($"{cur} {sales.Sum(s => s.DueAmount):F2}").Bold();
                     table.Cell().Background("#F1F5F9").Padding(4).Text(string.Empty);
                 });
 
@@ -857,10 +734,7 @@ public class PdfReportService : IPdfReportService
                         r.RelativeItem().AlignRight().Text(doc.DateTime.ToString("yyyy-MM-dd HH:mm"));
                     });
                     col.Item().Text($"Cashier: {doc.CashierName}");
-                    if (!string.IsNullOrWhiteSpace(doc.CustomerName))
-                    {
-                        col.Item().Text($"Customer: {doc.CustomerName}").FontColor("#334155");
-                    }
+
 
                     col.Item().PaddingTop(2).LineHorizontal(1).LineColor("#CBD5E1");
 
@@ -877,12 +751,12 @@ public class PdfReportService : IPdfReportService
                             table.Cell().Column(ic =>
                             {
                                 ic.Item().Text(item.ItemName).Bold();
-                                string sub = $"{item.Quantity:0.##} x {cur}{item.UnitPrice:F2}";
-                                if (item.DiscountAmount > 0) sub += $" (-{cur}{item.DiscountAmount:F2})";
+                                string sub = $"{item.Quantity:0.##} x {cur} {item.UnitPrice:F2}";
+                                if (item.DiscountAmount > 0) sub += $" (-{cur} {item.DiscountAmount:F2})";
                                 ic.Item().Text(sub).FontSize(fontSize - 1).FontColor("#64748B");
                             });
 
-                            table.Cell().AlignRight().Text($"{cur}{item.LineTotal:F2}").Bold();
+                            table.Cell().AlignRight().Text($"{cur} {item.LineTotal:F2}").Bold();
                         }
                     });
 
@@ -893,7 +767,7 @@ public class PdfReportService : IPdfReportService
                         totals.Item().Row(r =>
                         {
                             r.RelativeItem().Text("Subtotal:");
-                            r.RelativeItem().AlignRight().Text($"{cur}{doc.SubTotal:F2}");
+                            r.RelativeItem().AlignRight().Text($"{cur} {doc.SubTotal:F2}");
                         });
 
                         if (doc.TotalDiscount > 0)
@@ -901,7 +775,7 @@ public class PdfReportService : IPdfReportService
                             totals.Item().Row(r =>
                             {
                                 r.RelativeItem().Text("Total Discount:").FontColor("#DC2626");
-                                r.RelativeItem().AlignRight().Text($"-{cur}{doc.TotalDiscount:F2}").FontColor("#DC2626");
+                                r.RelativeItem().AlignRight().Text($"-{cur} {doc.TotalDiscount:F2}").FontColor("#DC2626");
                             });
                         }
 
@@ -910,7 +784,7 @@ public class PdfReportService : IPdfReportService
                             totals.Item().Row(r =>
                             {
                                 r.RelativeItem().Text("Tax / VAT:");
-                                r.RelativeItem().AlignRight().Text($"{cur}{doc.TaxAmount:F2}");
+                                r.RelativeItem().AlignRight().Text($"{cur} {doc.TaxAmount:F2}");
                             });
                         }
 
@@ -919,7 +793,7 @@ public class PdfReportService : IPdfReportService
                             totals.Item().Row(r =>
                             {
                                 r.RelativeItem().Text("Round-off:");
-                                r.RelativeItem().AlignRight().Text($"{cur}{doc.RoundOff:F2}");
+                                r.RelativeItem().AlignRight().Text($"{cur} {doc.RoundOff:F2}");
                             });
                         }
 
@@ -928,7 +802,7 @@ public class PdfReportService : IPdfReportService
                         totals.Item().PaddingTop(2).Row(r =>
                         {
                             r.RelativeItem().Text("GRAND TOTAL:").FontSize(fontSize + 2).Bold();
-                            r.RelativeItem().AlignRight().Text($"{cur}{doc.GrandTotal:F2}").FontSize(fontSize + 2).Bold();
+                            r.RelativeItem().AlignRight().Text($"{cur} {doc.GrandTotal:F2}").FontSize(fontSize + 2).Bold();
                         });
 
                         totals.Item().PaddingTop(2).LineHorizontal(1).LineColor("#CBD5E1");
@@ -938,7 +812,7 @@ public class PdfReportService : IPdfReportService
                             totals.Item().Row(r =>
                             {
                                 r.RelativeItem().Text($"Paid ({p.Method}):");
-                                r.RelativeItem().AlignRight().Text($"{cur}{p.Amount:F2}");
+                                r.RelativeItem().AlignRight().Text($"{cur} {p.Amount:F2}");
                             });
                         }
 
@@ -947,7 +821,7 @@ public class PdfReportService : IPdfReportService
                             totals.Item().Row(r =>
                             {
                                 r.RelativeItem().Text("Change Due:").Bold().FontColor("#16A34A");
-                                r.RelativeItem().AlignRight().Text($"{cur}{doc.ChangeAmount:F2}").Bold().FontColor("#16A34A");
+                                r.RelativeItem().AlignRight().Text($"{cur} {doc.ChangeAmount:F2}").Bold().FontColor("#16A34A");
                             });
                         }
 
@@ -956,22 +830,9 @@ public class PdfReportService : IPdfReportService
                             totals.Item().Row(r =>
                             {
                                 r.RelativeItem().Text("Balance Due:").Bold().FontColor("#EA580C");
-                                r.RelativeItem().AlignRight().Text($"{cur}{doc.DueAmount:F2}").Bold().FontColor("#EA580C");
+                                r.RelativeItem().AlignRight().Text($"{cur} {doc.DueAmount:F2}").Bold().FontColor("#EA580C");
                             });
 
-                            if (doc.CustomerPreviousBalance.HasValue)
-                            {
-                                totals.Item().Row(r =>
-                                {
-                                    r.RelativeItem().Text("Previous Balance:").FontSize(fontSize - 1).FontColor("#64748B");
-                                    r.RelativeItem().AlignRight().Text($"{cur}{doc.CustomerPreviousBalance.Value:F2}").FontSize(fontSize - 1).FontColor("#64748B");
-                                });
-                                totals.Item().Row(r =>
-                                {
-                                    r.RelativeItem().Text("Total Account Balance:").FontSize(fontSize - 1).Bold().FontColor("#334155");
-                                    r.RelativeItem().AlignRight().Text($"{cur}{(doc.CustomerNewBalance ?? 0m):F2}").FontSize(fontSize - 1).Bold().FontColor("#334155");
-                                });
-                            }
                         }
                     });
 
@@ -1035,10 +896,8 @@ public class PdfReportService : IPdfReportService
                     {
                         r.RelativeItem().Border(1).BorderColor("#E2E8F0").Background("#F8FAFC").Padding(8).Column(bc =>
                         {
-                            bc.Item().Text("BILL TO / CUSTOMER:").FontSize(8.5f).Bold().FontColor("#64748B");
-                            bc.Item().Text(!string.IsNullOrWhiteSpace(doc.CustomerName) ? doc.CustomerName : "Walk-in Customer").FontSize(11).Bold().FontColor("#0F172A");
-                            if (!string.IsNullOrWhiteSpace(doc.CustomerPhone)) bc.Item().Text($"Phone: {doc.CustomerPhone}").FontColor("#334155");
-                            if (!string.IsNullOrWhiteSpace(doc.CustomerTaxNumber)) bc.Item().Text($"Tax / VAT #: {doc.CustomerTaxNumber}").Bold().FontColor("#334155");
+                            bc.Item().Text("BILL TO:").FontSize(8.5f).Bold().FontColor("#64748B");
+                            bc.Item().Text("Walk-in Counter Sale").FontSize(11).Bold().FontColor("#0F172A");
                         });
                     });
 
@@ -1081,10 +940,10 @@ public class PdfReportService : IPdfReportService
                             table.Cell().Background(bg).Padding(5).Text(item.Sku);
                             table.Cell().Background(bg).Padding(5).Text(item.ItemName);
                             table.Cell().Background(bg).Padding(5).AlignRight().Text($"{item.Quantity:0.##}");
-                            table.Cell().Background(bg).Padding(5).AlignRight().Text($"{cur}{item.UnitPrice:F2}");
-                            table.Cell().Background(bg).Padding(5).AlignRight().Text(item.DiscountAmount > 0 ? $"-{cur}{item.DiscountAmount:F2}" : "0.00");
+                            table.Cell().Background(bg).Padding(5).AlignRight().Text($"{cur} {item.UnitPrice:F2}");
+                            table.Cell().Background(bg).Padding(5).AlignRight().Text(item.DiscountAmount > 0 ? $"-{cur} {item.DiscountAmount:F2}" : "0.00");
                             table.Cell().Background(bg).Padding(5).AlignRight().Text($"{item.TaxPercent:0.#}%");
-                            table.Cell().Background(bg).Padding(5).AlignRight().Text($"{cur}{item.LineTotal:F2}").Bold();
+                            table.Cell().Background(bg).Padding(5).AlignRight().Text($"{cur} {item.LineTotal:F2}").Bold();
                             idx++;
                         }
                     });
@@ -1096,19 +955,16 @@ public class PdfReportService : IPdfReportService
                             pc.Item().Text("PAYMENT DETAILS").FontSize(9).Bold().FontColor("#64748B");
                             foreach (var p in doc.Payments)
                             {
-                                pc.Item().Text($"• {p.Method}: {cur}{p.Amount:F2} {(p.Reference != null ? $"({p.Reference})" : "")}");
+                                pc.Item().Text($"• {p.Method}: {cur} {p.Amount:F2} {(p.Reference != null ? $"({p.Reference})" : "")}");
                             }
                             if (doc.ChangeAmount > 0)
                             {
-                                pc.Item().Text($"• Change Returned: {cur}{doc.ChangeAmount:F2}").FontColor("#16A34A").Bold();
+                                pc.Item().Text($"• Change Returned: {cur} {doc.ChangeAmount:F2}").FontColor("#16A34A").Bold();
                             }
                             if (doc.DueAmount > 0)
                             {
-                                pc.Item().Text($"• Outstanding Balance Due: {cur}{doc.DueAmount:F2}").FontColor("#EA580C").Bold();
-                                if (doc.CustomerPreviousBalance.HasValue)
-                                {
-                                    pc.Item().Text($"• Total Customer Balance: {cur}{(doc.CustomerNewBalance ?? 0m):F2}").Bold();
-                                }
+                                pc.Item().Text($"• Outstanding Balance Due: {cur} {doc.DueAmount:F2}").FontColor("#EA580C").Bold();
+                                // no customer balance
                             }
 
                             if (!string.IsNullOrWhiteSpace(doc.FooterText))
@@ -1122,7 +978,7 @@ public class PdfReportService : IPdfReportService
                             tc.Item().Row(tr =>
                             {
                                 tr.RelativeItem().Text("Subtotal:");
-                                tr.RelativeItem().AlignRight().Text($"{cur}{doc.SubTotal:F2}");
+                                tr.RelativeItem().AlignRight().Text($"{cur} {doc.SubTotal:F2}");
                             });
 
                             if (doc.TotalDiscount > 0)
@@ -1130,7 +986,7 @@ public class PdfReportService : IPdfReportService
                                 tc.Item().Row(tr =>
                                 {
                                     tr.RelativeItem().Text("Discounts:").FontColor("#DC2626");
-                                    tr.RelativeItem().AlignRight().Text($"-{cur}{doc.TotalDiscount:F2}").FontColor("#DC2626");
+                                    tr.RelativeItem().AlignRight().Text($"-{cur} {doc.TotalDiscount:F2}").FontColor("#DC2626");
                                 });
                             }
 
@@ -1139,7 +995,7 @@ public class PdfReportService : IPdfReportService
                                 tc.Item().Row(tr =>
                                 {
                                     tr.RelativeItem().Text("Tax / VAT:");
-                                    tr.RelativeItem().AlignRight().Text($"{cur}{doc.TaxAmount:F2}");
+                                    tr.RelativeItem().AlignRight().Text($"{cur} {doc.TaxAmount:F2}");
                                 });
                             }
 
@@ -1148,7 +1004,7 @@ public class PdfReportService : IPdfReportService
                                 tc.Item().Row(tr =>
                                 {
                                     tr.RelativeItem().Text("Round-off:");
-                                    tr.RelativeItem().AlignRight().Text($"{cur}{doc.RoundOff:F2}");
+                                    tr.RelativeItem().AlignRight().Text($"{cur} {doc.RoundOff:F2}");
                                 });
                             }
 
@@ -1157,13 +1013,13 @@ public class PdfReportService : IPdfReportService
                             tc.Item().PaddingTop(2).Row(tr =>
                             {
                                 tr.RelativeItem().Text("GRAND TOTAL:").Bold().FontSize(12);
-                                tr.RelativeItem().AlignRight().Text($"{cur}{doc.GrandTotal:F2}").Bold().FontSize(12).FontColor("#2563EB");
+                                tr.RelativeItem().AlignRight().Text($"{cur} {doc.GrandTotal:F2}").Bold().FontSize(12).FontColor("#2563EB");
                             });
 
                             tc.Item().Row(tr =>
                             {
                                 tr.RelativeItem().Text("Paid Amount:").Bold();
-                                tr.RelativeItem().AlignRight().Text($"{cur}{doc.PaidAmount:F2}").Bold();
+                                tr.RelativeItem().AlignRight().Text($"{cur} {doc.PaidAmount:F2}").Bold();
                             });
                         });
                     });

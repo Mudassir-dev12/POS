@@ -109,6 +109,19 @@ public class CategoryRepository : Repository<Category>, ICategoryRepository
         return false;
     }
 
+    public async Task<IReadOnlyList<int>> GetFilteredIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default)
+    {
+        var query = Context.Categories.AsNoTracking().AsQueryable();
+        if (!includeInactive)
+            query = query.Where(c => c.IsActive);
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var term = searchTerm.Trim().ToLower();
+            query = query.Where(c => c.Name.ToLower().Contains(term));
+        }
+        return await query.Select(c => c.Id).ToListAsync(cancellationToken);
+    }
+
     public async Task<bool> IsNameTakenUnderParentAsync(string name, int? parentId, int? excludeId = null, CancellationToken cancellationToken = default)
     {
         var cleanName = name.Trim().ToLower();

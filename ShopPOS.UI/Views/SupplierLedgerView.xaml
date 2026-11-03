@@ -7,8 +7,8 @@
              xmlns:dto="clr-namespace:ShopPOS.Core.DTOs;assembly=ShopPOS.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:SupplierLedgerViewModel}"
-             Background="#F1F5F9"
-             FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+             Background="{DynamicResource PageBackgroundBrush}"
+             FontFamily="{StaticResource AppFontFamily}"
              Loaded="UserControl_Loaded">
 
     <UserControl.InputBindings>
@@ -35,44 +35,29 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="Supplier Ledger Statement" FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Audit chronological debits, credits, running balance, and export accounting statements." FontSize="13" Foreground="#64748B" Margin="0,2,0,0" />
+                <TextBlock Text="Supplier Ledger Statement" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Audit chronological debits, credits, running balance, and export accounting statements." Style="{StaticResource SubTitleStyle}" />
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="📄 Export PDF"
+                <Button Content="Export PDF"
                         Command="{Binding ExportPdfCommand}"
-                        Background="#2563EB"
-                        Foreground="White"
-                        FontWeight="Bold"
-                        Padding="14,8"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource SecondaryButtonStyle}" />
 
-                <Button Content="📊 Export CSV"
+                <Button Content="Export CSV"
                         Command="{Binding ExportCsvCommand}"
-                        Background="#334155"
-                        Foreground="White"
-                        FontWeight="SemiBold"
-                        Padding="14,8"
-                        Margin="8,0,0,0"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Margin="8,0,0,0" />
 
-                <Button Content="🔄 Refresh (F5)"
+                <Button Content="Refresh (F5)"
                         Command="{Binding LoadLedgerCommand}"
-                        Background="#E2E8F0"
-                        Foreground="#334155"
-                        FontWeight="SemiBold"
-                        Padding="12,8"
-                        Margin="8,0,0,0"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Margin="8,0,0,0" />
             </StackPanel>
         </Grid>
 
         <!-- ================= 2. FILTERS ================= -->
-        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="16,12" Margin="0,0,0,14" BorderBrush="#E2E8F0" BorderThickness="1">
+        <Border Grid.Row="1" Style="{StaticResource FilterBarStyle}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="260" />
@@ -88,31 +73,25 @@
                           ItemsSource="{Binding Suppliers}"
                           SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
                           DisplayMemberPath="Name"
-                          Padding="8,6"
-                          FontSize="13" />
+                          Style="{StaticResource InputComboBoxStyle}" />
 
                 <!-- Date Range -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="From:" Foreground="#64748B" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBlock Text="From:" Foreground="{DynamicResource TextMutedBrush}" FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0" />
                     <DatePicker SelectedDate="{Binding FromDate, Mode=TwoWay}" Width="120" Padding="4,2" />
-                    <TextBlock Text="To:" Foreground="#64748B" FontSize="12" VerticalAlignment="Center" Margin="10,0,6,0" />
+                    <TextBlock Text="To:" Foreground="{DynamicResource TextMutedBrush}" FontSize="12" VerticalAlignment="Center" Margin="10,0,6,0" />
                     <DatePicker SelectedDate="{Binding ToDate, Mode=TwoWay}" Width="120" Padding="4,2" />
                 </StackPanel>
 
                 <Button Grid.Column="4"
                         Content="Generate Statement"
                         Command="{Binding LoadLedgerCommand}"
-                        Background="#0F172A"
-                        Foreground="White"
-                        FontWeight="Bold"
-                        Padding="14,6"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource PrimaryButtonStyle}" />
 
                 <!-- Error Message -->
                 <TextBlock Grid.Column="5"
                            Text="{Binding ErrorMessage}"
-                           Foreground="#DC2626"
+                           Foreground="{DynamicResource DangerBrush}"
                            FontWeight="SemiBold"
                            HorizontalAlignment="Right"
                            VerticalAlignment="Center" />
@@ -132,58 +111,56 @@
             </Grid.ColumnDefinitions>
 
             <!-- Card 1: Opening Balance -->
-            <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="16,12">
+            <Border Grid.Column="0" Style="{StaticResource SurfaceCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="OPENING BALANCE" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
-                    <TextBlock Text="{Binding OpeningBalance, StringFormat='{}{0:C}'}" FontSize="18" FontWeight="Bold" Foreground="#334155" Margin="0,4,0,0" />
+                    <TextBlock Text="OPENING BALANCE" Style="{StaticResource KpiLabelStyle}" />
+                    <TextBlock Text="{Binding OpeningBalance, Converter={StaticResource MoneyConverter}}" Style="{StaticResource KpiValueStyle}" />
                 </StackPanel>
             </Border>
 
             <!-- Card 2: Total Debits (Purchases) -->
-            <Border Grid.Column="2" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="16,12">
+            <Border Grid.Column="2" Style="{StaticResource SurfaceCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="TOTAL PURCHASES (DEBITS +)" FontSize="10" FontWeight="Bold" Foreground="#1E40AF" />
-                    <TextBlock Text="{Binding TotalDebits, StringFormat='{}{0:C}'}" FontSize="18" FontWeight="Bold" Foreground="#2563EB" Margin="0,4,0,0" />
+                    <TextBlock Text="TOTAL PURCHASES (DEBITS +)" Style="{StaticResource KpiLabelStyle}" />
+                    <TextBlock Text="{Binding TotalDebits, Converter={StaticResource MoneyConverter}}" Style="{StaticResource KpiValueStyle}" />
                 </StackPanel>
             </Border>
 
             <!-- Card 3: Total Credits (Payments & Returns) -->
-            <Border Grid.Column="4" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="16,12">
+            <Border Grid.Column="4" Style="{StaticResource SurfaceCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="PAYMENTS &amp; RETURNS (CREDITS -)" FontSize="10" FontWeight="Bold" Foreground="#166534" />
-                    <TextBlock Text="{Binding TotalCredits, StringFormat='{}{0:C}'}" FontSize="18" FontWeight="Bold" Foreground="#16A34A" Margin="0,4,0,0" />
+                    <TextBlock Text="PAYMENTS &amp; RETURNS (CREDITS -)" Style="{StaticResource KpiLabelStyle}" />
+                    <TextBlock Text="{Binding TotalCredits, Converter={StaticResource MoneyConverter}}" Style="{StaticResource KpiValueStyle}" />
                 </StackPanel>
             </Border>
 
             <!-- Card 4: Closing Balance -->
-            <Border Grid.Column="6" Background="#EFF6FF" CornerRadius="8" BorderBrush="#93C5FD" BorderThickness="1" Padding="16,12">
+            <Border Grid.Column="6" Style="{StaticResource SurfaceCardStyle}">
                 <StackPanel>
-                    <TextBlock Text="CLOSING BALANCE DUE" FontSize="10" FontWeight="Bold" Foreground="#1E3A8A" />
-                    <TextBlock Text="{Binding ClosingBalance, StringFormat='{}{0:C}'}" FontSize="20" FontWeight="Bold" Foreground="#1D4ED8" Margin="0,4,0,0" />
+                    <TextBlock Text="CLOSING BALANCE DUE" Style="{StaticResource KpiLabelStyle}" />
+                    <TextBlock Text="{Binding ClosingBalance, Converter={StaticResource MoneyConverter}}" Style="{StaticResource KpiValueStyle}" Foreground="{DynamicResource PrimaryBrush}" />
                 </StackPanel>
             </Border>
         </Grid>
 
         <!-- ================= 4. DATA GRID ================= -->
-        <Border Grid.Row="3" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1">
+        <Border Grid.Row="3" Style="{StaticResource TableContainerBorderStyle}">
             <DataGrid ItemsSource="{Binding Entries}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      SelectionMode="Single"
-                      Background="White"
-                      BorderThickness="0"
-                      RowHeight="36">
+                      Style="{StaticResource AppDataGridStyle}">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat='{}{0:dd MMM yyyy HH:mm}'}" Width="135" />
-                    <DataGridTextColumn Header="Type" Binding="{Binding EntryType}" Width="110" FontWeight="Bold" />
-                    <DataGridTextColumn Header="Doc / Ref #" Binding="{Binding ReferenceNumber, TargetNullValue='—'}" Width="120" FontWeight="SemiBold" />
+                    <DataGridTextColumn Header="Date" Binding="{Binding Date, Converter={StaticResource DateDisplayConverter}}" Width="140" />
+                    <DataGridTextColumn Header="Type" Binding="{Binding EntryType}" Width="120" FontWeight="SemiBold" />
+                    <DataGridTextColumn Header="Doc / Ref #" Binding="{Binding ReferenceNumber, TargetNullValue='—'}" Width="130"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
                     <DataGridTextColumn Header="Description / Details" Binding="{Binding Description}" Width="2*" />
-                    <DataGridTextColumn Header="Debit (+)" Binding="{Binding Debit, StringFormat='{}{0:0.00}'}" Width="110" Foreground="#2563EB" FontWeight="SemiBold" />
-                    <DataGridTextColumn Header="Credit (-)" Binding="{Binding Credit, StringFormat='{}{0:0.00}'}" Width="110" Foreground="#16A34A" FontWeight="SemiBold" />
-                    <DataGridTextColumn Header="Running Balance" Binding="{Binding RunningBalance, StringFormat='{}{0:0.00}'}" Width="130" FontWeight="Bold" />
+                    <DataGridTextColumn Header="Debit (+)" Binding="{Binding Debit, Converter={StaticResource MoneyConverter}}" Width="120"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
+                    <DataGridTextColumn Header="Credit (-)" Binding="{Binding Credit, Converter={StaticResource MoneyConverter}}" Width="120"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
+                    <DataGridTextColumn Header="Running Balance" Binding="{Binding RunningBalance, Converter={StaticResource MoneyConverter}}" Width="140"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
     </Grid>
 </UserControl>
-

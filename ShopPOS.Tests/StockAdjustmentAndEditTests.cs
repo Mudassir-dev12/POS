@@ -27,7 +27,6 @@ public class StockAdjustmentAndEditTests : IDisposable
     private readonly PriceLevelRepository _priceLevelRepo;
     private readonly Mock<IAuditLogService> _auditMock;
     private readonly Mock<IShopSettingRepository> _shopSettingMock;
-    private readonly PermissionService _permissionService;
     private readonly ProductService _productService;
     private readonly CategoryService _categoryService;
     private readonly BrandService _brandService;
@@ -61,14 +60,13 @@ public class StockAdjustmentAndEditTests : IDisposable
         _auditMock = new Mock<IAuditLogService>();
         _shopSettingMock = new Mock<IShopSettingRepository>();
         _shopSettingMock.Setup(s => s.GetCurrentSettingsAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ShopSetting { DefaultTaxPercent = 5.0m, CurrencySymbol = "$" });
+            .ReturnsAsync(new ShopSetting { DefaultTaxPercent = 5.0m, CurrencySymbol = "Rs" });
 
-        _permissionService = new PermissionService();
 
-        _productService = new ProductService(_productRepo, _shopSettingMock.Object, _auditMock.Object, _permissionService);
-        _categoryService = new CategoryService(_categoryRepo, _auditMock.Object, _permissionService);
-        _brandService = new BrandService(_brandRepo, _auditMock.Object, _permissionService);
-        _unitService = new UnitService(_unitRepo, _auditMock.Object, _permissionService);
+        _productService = new ProductService(_productRepo, _shopSettingMock.Object, _auditMock.Object);
+        _categoryService = new CategoryService(_categoryRepo, _auditMock.Object);
+        _brandService = new BrandService(_brandRepo, _auditMock.Object);
+        _unitService = new UnitService(_unitRepo, _auditMock.Object);
 
         _priceLevelServiceMock = new Mock<IPriceLevelService>();
         _priceLevelServiceMock.Setup(p => p.GetAllAsync(It.IsAny<CancellationToken>()))

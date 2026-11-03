@@ -13,9 +13,7 @@ public partial class SupplierLedgerViewModel : ObservableObject
     private readonly ISupplierLedgerService _ledgerService;
     private readonly ISupplierService _supplierService;
     private readonly IDialogService _dialogService;
-    private readonly IAuthService _authService;
-    private readonly IPermissionService _permissionService;
-    private readonly IShopSettingService _shopSettingService;
+            private readonly IShopSettingService _shopSettingService;
 
     [ObservableProperty]
     private SupplierDto? _selectedSupplier;
@@ -39,7 +37,7 @@ public partial class SupplierLedgerViewModel : ObservableObject
     private decimal _closingBalance;
 
     [ObservableProperty]
-    private string _currencySymbol = "$";
+    private string _currencySymbol = "Rs";
 
     [ObservableProperty]
     private string? _errorMessage;
@@ -54,26 +52,16 @@ public partial class SupplierLedgerViewModel : ObservableObject
         ISupplierLedgerService ledgerService,
         ISupplierService supplierService,
         IDialogService dialogService,
-        IAuthService authService,
-        IPermissionService permissionService,
         IShopSettingService shopSettingService)
     {
         _ledgerService = ledgerService;
         _supplierService = supplierService;
         _dialogService = dialogService;
-        _authService = authService;
-        _permissionService = permissionService;
         _shopSettingService = shopSettingService;
     }
 
     public async Task InitializeAsync(int? preselectedSupplierId = null)
     {
-        if (!_permissionService.CanManagePurchases(_authService.CurrentUser?.Role?.Name))
-        {
-            ErrorMessage = "Access Denied: Cashiers do not have permission to view the Supplier Ledger.";
-            return;
-        }
-
         try
         {
             var settings = await _shopSettingService.GetSettingsAsync();
@@ -81,13 +69,13 @@ public partial class SupplierLedgerViewModel : ObservableObject
         }
         catch
         {
-            CurrencySymbol = "$";
+            CurrencySymbol = "Rs";
         }
 
         IsLoading = true;
         try
         {
-            var supRes = await _supplierService.GetFlatListAsync(false, _authService.CurrentUser?.Role?.Name);
+            var supRes = await _supplierService.GetFlatListAsync(false, "Owner");
             if (supRes.Success && supRes.Data != null)
             {
                 Suppliers.Clear();
@@ -138,12 +126,6 @@ public partial class SupplierLedgerViewModel : ObservableObject
     {
         if (SelectedSupplier == null) return;
 
-        if (!_permissionService.CanManagePurchases(_authService.CurrentUser?.Role?.Name))
-        {
-            ErrorMessage = "Access Denied: Cashiers do not have permission to view the Supplier Ledger.";
-            return;
-        }
-
         IsLoading = true;
         ErrorMessage = null;
 
@@ -153,7 +135,7 @@ public partial class SupplierLedgerViewModel : ObservableObject
                 SelectedSupplier.Id,
                 FromDate,
                 ToDate,
-                _authService.CurrentUser?.Role?.Name);
+                "Owner");
 
             if (res.Success && res.Data != null)
             {
@@ -196,7 +178,7 @@ public partial class SupplierLedgerViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var res = await _ledgerService.ExportLedgerPdfAsync(SelectedSupplier.Id, FromDate, ToDate, _authService.CurrentUser?.Role?.Name);
+            var res = await _ledgerService.ExportLedgerPdfAsync(SelectedSupplier.Id, FromDate, ToDate, "Owner");
             if (res.Success && res.Data != null)
             {
                 await File.WriteAllBytesAsync(targetPath, res.Data);
@@ -229,7 +211,7 @@ public partial class SupplierLedgerViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var res = await _ledgerService.ExportLedgerCsvAsync(SelectedSupplier.Id, FromDate, ToDate, _authService.CurrentUser?.Role?.Name);
+            var res = await _ledgerService.ExportLedgerCsvAsync(SelectedSupplier.Id, FromDate, ToDate, "Owner");
             if (res.Success && res.Data != null)
             {
                 await File.WriteAllBytesAsync(targetPath, res.Data);

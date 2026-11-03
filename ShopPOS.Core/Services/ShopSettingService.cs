@@ -27,7 +27,7 @@ public class ShopSettingService : IShopSettingService
         var defaultSetting = new ShopSetting
         {
             ShopName = "Shop POS",
-            CurrencySymbol = "$",
+            CurrencySymbol = "Rs",
             ReceiptWidthMm = 80,
             DefaultTaxPercent = 0m,
             ReceiptFooter = "Thank you for shopping with us!"

@@ -16,7 +16,6 @@ public class InventoryService : IInventoryService
     private readonly ISupplierLedgerRepository _supplierLedgerRepo;
     private readonly IInventoryRepository _inventoryRepo;
     private readonly IPurchaseService _purchaseService;
-    private readonly IPermissionService _permissionService;
     private readonly IPdfReportService _pdfReportService;
 
     public InventoryService(
@@ -28,7 +27,6 @@ public class InventoryService : IInventoryService
         ISupplierLedgerRepository supplierLedgerRepo,
         IInventoryRepository inventoryRepo,
         IPurchaseService purchaseService,
-        IPermissionService permissionService,
         IPdfReportService pdfReportService)
     {
         _stockLedgerQuery = stockLedgerQuery;
@@ -39,16 +37,12 @@ public class InventoryService : IInventoryService
         _supplierLedgerRepo = supplierLedgerRepo;
         _inventoryRepo = inventoryRepo;
         _purchaseService = purchaseService;
-        _permissionService = permissionService;
         _pdfReportService = pdfReportService;
     }
 
     public async Task<Result<PagedResult<StockOverviewItemDto>>> GetStockOverviewAsync(StockOverviewFilterQuery query, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessInventory(userRole))
-        {
-            return Result<PagedResult<StockOverviewItemDto>>.Failure("Permission denied. You do not have access to Stock Overview.");
-        }
+        // single-user: no permission check needed
 
         bool isCashier = string.Equals(userRole, RoleDefaults.Cashier, StringComparison.OrdinalIgnoreCase);
         var result = await _inventoryRepo.GetStockOverviewAsync(query, isCashier, cancellationToken);
@@ -57,10 +51,7 @@ public class InventoryService : IInventoryService
 
     public async Task<Result<StockOverviewSummaryDto>> GetStockOverviewSummaryAsync(string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessInventory(userRole))
-        {
-            return Result<StockOverviewSummaryDto>.Failure("Permission denied.");
-        }
+        // single-user: no permission check needed
 
         bool isCashier = string.Equals(userRole, RoleDefaults.Cashier, StringComparison.OrdinalIgnoreCase);
         var result = await _inventoryRepo.GetStockOverviewSummaryAsync(isCashier, cancellationToken);
@@ -69,10 +60,7 @@ public class InventoryService : IInventoryService
 
     public async Task<Result<StockOverviewItemDto>> GetProductStockDetailAsync(int productId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessInventory(userRole))
-        {
-            return Result<StockOverviewItemDto>.Failure("Permission denied.");
-        }
+        // single-user: no permission check needed
 
         bool isCashier = string.Equals(userRole, RoleDefaults.Cashier, StringComparison.OrdinalIgnoreCase);
 
@@ -118,10 +106,7 @@ public class InventoryService : IInventoryService
 
     public async Task<Result<PagedResult<MovementHistoryItemDto>>> GetMovementHistoryAsync(MovementHistoryFilterQuery query, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageInventory(userRole))
-        {
-            return Result<PagedResult<MovementHistoryItemDto>>.Failure("Permission denied. You do not have access to Stock Movement History.");
-        }
+        // single-user: no permission check needed
 
         var result = await _inventoryRepo.GetMovementHistoryAsync(query, cancellationToken);
         return Result<PagedResult<MovementHistoryItemDto>>.Ok(result);
@@ -129,10 +114,7 @@ public class InventoryService : IInventoryService
 
     public async Task<Result<IReadOnlyList<CategoryValuationDto>>> GetCategoryValuationsAsync(string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageInventory(userRole))
-        {
-            return Result<IReadOnlyList<CategoryValuationDto>>.Failure("Permission denied. You do not have access to Stock Valuation.");
-        }
+        // single-user: no permission check needed
 
         var allProducts = await _productRepo.GetAllAsync(cancellationToken);
         var activeStockProducts = allProducts.Where(p => p.IsActive && p.TrackStock).ToList();
@@ -177,10 +159,7 @@ public class InventoryService : IInventoryService
 
     public async Task<Result<IReadOnlyList<ReorderItemDto>>> GetReorderListAsync(string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageInventory(userRole))
-        {
-            return Result<IReadOnlyList<ReorderItemDto>>.Failure("Permission denied. You do not have access to the Reorder List.");
-        }
+        // single-user: no permission check needed
 
         var settings = await _shopSettingRepo.GetCurrentSettingsAsync(cancellationToken);
         decimal multiplier = settings?.DefaultReorderMultiplier > 0 ? settings.DefaultReorderMultiplier : 2.0m;
@@ -231,10 +210,7 @@ public class InventoryService : IInventoryService
 
     public async Task<Result<PurchaseDetailDto>> CreatePurchaseDraftFromReorderAsync(CreatePurchaseFromReorderDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result<PurchaseDetailDto>.Failure("Permission denied. You cannot create purchase orders.");
-        }
+        // single-user: no permission check needed
 
         if (dto.SupplierId <= 0)
         {
@@ -315,7 +291,7 @@ public class InventoryService : IInventoryService
             ShopName = settings?.ShopName ?? "ShopPOS",
             Address = settings?.Address,
             Phone = settings?.Phone,
-            CurrencySymbol = settings?.CurrencySymbol ?? "$"
+            CurrencySymbol = settings?.CurrencySymbol ?? "Rs"
         };
 
         bool isCashier = string.Equals(userRole, RoleDefaults.Cashier, StringComparison.OrdinalIgnoreCase);
@@ -325,10 +301,7 @@ public class InventoryService : IInventoryService
 
     public async Task<Result<byte[]>> ExportMovementHistoryCsvAsync(MovementHistoryFilterQuery query, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageInventory(userRole))
-        {
-            return Result<byte[]>.Failure("Permission denied. You do not have access to Stock Movement History.");
-        }
+        // single-user: no permission check needed
 
         var movements = await _inventoryRepo.GetAllMovementHistoryAsync(query, cancellationToken);
 
@@ -356,7 +329,7 @@ public class InventoryService : IInventoryService
             ShopName = settings?.ShopName ?? "ShopPOS",
             Address = settings?.Address,
             Phone = settings?.Phone,
-            CurrencySymbol = settings?.CurrencySymbol ?? "$"
+            CurrencySymbol = settings?.CurrencySymbol ?? "Rs"
         };
 
         var pdfBytes = await _pdfReportService.GenerateValuationPdfAsync(valuationResult.Data!, settingsDto, cancellationToken);
@@ -383,10 +356,7 @@ public class InventoryService : IInventoryService
 
     public async Task<Result<DashboardStatsDto>> GetDashboardStatsAsync(string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanAccessMenuItem(userRole, PermissionService.MenuDashboard))
-        {
-            return Result<DashboardStatsDto>.Failure("Permission denied.");
-        }
+        // single-user: no permission check needed
 
         bool isCashier = string.Equals(userRole, RoleDefaults.Cashier, StringComparison.OrdinalIgnoreCase);
 

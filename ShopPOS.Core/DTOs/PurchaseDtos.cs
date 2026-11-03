@@ -1,3 +1,5 @@
+using ShopPOS.Core.Interfaces;
+
 using ShopPOS.Core.Enums;
 
 namespace ShopPOS.Core.DTOs;
@@ -107,8 +109,9 @@ public class UpdatePurchaseDto : CreatePurchaseDto
     public int Id { get; set; }
 }
 
-public class SupplierPaymentDto
+public class SupplierPaymentDto : ISelectable
 {
+    public bool IsSelected { get; set; }
     public int Id { get; set; }
     public string PaymentNumber { get; set; } = string.Empty;
     public int SupplierId { get; set; }
@@ -149,8 +152,9 @@ public class PurchaseReturnItemDto
     public string? Note { get; set; }
 }
 
-public class PurchaseReturnDto
+public class PurchaseReturnDto : ISelectable
 {
+    public bool IsSelected { get; set; }
     public int Id { get; set; }
     public string ReturnNumber { get; set; } = string.Empty;
     public int SupplierId { get; set; }
@@ -211,7 +215,7 @@ public class ShopSettingDto
     public string? Address { get; set; }
     public string? Phone { get; set; }
     public string? TaxNumber { get; set; }
-    public string CurrencySymbol { get; set; } = "$";
+    public string CurrencySymbol { get; set; } = "Rs";
     public string? ReceiptFooterText { get; set; }
     public int ReceiptWidthMm { get; set; } = 80;
     public Core.Enums.PrinterMode PrinterMode { get; set; } = Core.Enums.PrinterMode.PdfPreview;

@@ -41,8 +41,7 @@ public partial class PurchaseReturnDialogViewModel : ObservableObject
     private readonly IPurchaseReturnService _returnService;
     private readonly ISupplierService _supplierService;
     private readonly IPurchaseService _purchaseService;
-    private readonly IAuthService _authService;
-
+    
     [ObservableProperty]
     private string _title = "Create Purchase Return (Debit Note)";
 
@@ -76,13 +75,11 @@ public partial class PurchaseReturnDialogViewModel : ObservableObject
     public PurchaseReturnDialogViewModel(
         IPurchaseReturnService returnService,
         ISupplierService supplierService,
-        IPurchaseService purchaseService,
-        IAuthService authService)
+        IPurchaseService purchaseService)
     {
         _returnService = returnService;
         _supplierService = supplierService;
         _purchaseService = purchaseService;
-        _authService = authService;
     }
 
     public async Task InitializeAsync(int? preselectedSupplierId = null, int? preselectedPurchaseId = null)
@@ -90,7 +87,7 @@ public partial class PurchaseReturnDialogViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var supRes = await _supplierService.GetFlatListAsync(false, _authService.CurrentUser?.Role?.Name);
+            var supRes = await _supplierService.GetFlatListAsync(false, "Owner");
             if (supRes.Success && supRes.Data != null)
             {
                 Suppliers.Clear();
@@ -140,7 +137,7 @@ public partial class PurchaseReturnDialogViewModel : ObservableObject
             Status = PurchaseStatus.Posted,
             PageNumber = 1,
             PageSize = 100
-        }, _authService.CurrentUser?.Role?.Name);
+        }, "Owner");
 
         if (res.Success && res.Data != null)
         {
@@ -163,7 +160,7 @@ public partial class PurchaseReturnDialogViewModel : ObservableObject
 
         if (!purchaseId.HasValue) return;
 
-        var res = await _purchaseService.GetPurchaseByIdAsync(purchaseId.Value, _authService.CurrentUser?.Role?.Name);
+        var res = await _purchaseService.GetPurchaseByIdAsync(purchaseId.Value, "Owner");
         if (res.Success && res.Data != null)
         {
             foreach (var item in res.Data.Items)
@@ -242,8 +239,8 @@ public partial class PurchaseReturnDialogViewModel : ObservableObject
                 }).ToList()
             };
 
-            int? userId = _authService.CurrentUser?.Id;
-            string? userRole = _authService.CurrentUser?.Role?.Name;
+            int? userId = 1;
+            string? userRole = "Owner";
 
             var res = await _returnService.PostReturnAsync(dto, userId, userRole);
             if (res.Success)

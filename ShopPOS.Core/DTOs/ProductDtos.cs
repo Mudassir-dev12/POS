@@ -1,6 +1,7 @@
+using ShopPOS.Core.Interfaces;
 namespace ShopPOS.Core.DTOs;
 
-public class ProductListItemDto
+public class ProductListItemDto : ISelectable
 {
     public int Id { get; set; }
     public string Sku { get; set; } = string.Empty;
@@ -24,6 +25,7 @@ public class ProductListItemDto
 
     public bool IsLowStock => TrackStock && CurrentStock > 0 && CurrentStock <= ReorderLevel;
     public bool IsOutOfStock => TrackStock && CurrentStock <= 0;
+    public bool IsSelected { get; set; }
 }
 
 public class ProductDto
@@ -54,6 +56,7 @@ public class ProductDto
 
     public List<ProductBarcodeDto> AdditionalBarcodes { get; set; } = new();
     public List<ProductPriceDto> ProductPrices { get; set; } = new();
+    public List<ProductPriceDto> Prices => ProductPrices;
 }
 
 public class CreateProductDto
@@ -78,6 +81,7 @@ public class CreateProductDto
 
     public List<string> AdditionalBarcodes { get; set; } = new();
     public List<ProductPriceDto> ProductPrices { get; set; } = new();
+    public List<ProductPriceDto> Prices => ProductPrices;
 }
 
 public class UpdateProductDto
@@ -103,6 +107,7 @@ public class UpdateProductDto
 
     public List<string> AdditionalBarcodes { get; set; } = new();
     public List<ProductPriceDto> ProductPrices { get; set; } = new();
+    public List<ProductPriceDto> Prices => ProductPrices;
 
     /// <summary>
     /// Optional adjusted stock quantity on hand. If set and different from current stock, a StockMovement of type Adjustment is recorded.
@@ -150,6 +155,7 @@ public class ProductSearchQuery
     public int? BrandId { get; set; }
     public bool? IsActive { get; set; }
     public bool LowStockOnly { get; set; }
+    public bool OutOfStockOnly { get; set; }
     public string SortBy { get; set; } = "Name";
     public bool SortDescending { get; set; }
     public int PageNumber { get; set; } = 1;

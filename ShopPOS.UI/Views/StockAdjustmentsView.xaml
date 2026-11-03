@@ -7,11 +7,12 @@
              xmlns:enums="clr-namespace:ShopPOS.Core.Enums;assembly=ShopPOS.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:StockAdjustmentsViewModel}"
-             Background="#F1F5F9"
-             FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+             Background="{DynamicResource PageBackgroundBrush}"
+             FontFamily="{StaticResource AppFontFamily}"
              Loaded="UserControl_Loaded">
 
     <UserControl.InputBindings>
+        <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllOnPageCommand}" />
         <KeyBinding Key="N" Modifiers="Ctrl" Command="{Binding NewAdjustmentCommand}" />
         <KeyBinding Key="Enter" Command="{Binding OpenAdjustmentCommand}" />
         <KeyBinding Key="F5" Command="{Binding LoadDataCommand}" />
@@ -37,34 +38,34 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="Inventory Stock Adjustments" FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Record and audit manual stock adjustments for damages, expirations, discrepancies, and corrections." FontSize="13" Foreground="#64748B" Margin="0,2,0,0" />
+                <TextBlock Text="Inventory Stock Adjustments" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Record and audit manual stock adjustments for damages, expirations, discrepancies, and corrections." Style="{StaticResource SubTitleStyle}" />
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <Button Content="+ New Adjustment (Ctrl+N)"
                         Command="{Binding NewAdjustmentCommand}"
-                        Background="#2563EB" Foreground="White" FontWeight="Bold" Padding="14,8" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
                 <Button Content="Open / Edit (Enter)"
                         Command="{Binding OpenAdjustmentCommand}"
-                        Background="#E2E8F0" Foreground="#0F172A" FontWeight="SemiBold" Padding="12,8" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
                 <Button Content="Post"
                         Command="{Binding PostAdjustmentCommand}"
-                        Background="#16A34A" Foreground="White" FontWeight="SemiBold" Padding="14,8" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
                 <Button Content="Cancel Adjustment"
                         Command="{Binding CancelAdjustmentCommand}"
-                        Background="#E2E8F0" Foreground="#B91C1C" FontWeight="SemiBold" Padding="12,8" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
                 <Button Content="Delete Draft"
                         Command="{Binding DeleteAdjustmentCommand}"
-                        Background="#FEE2E2" Foreground="#B91C1C" FontWeight="SemiBold" Padding="12,8" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0" />
                 <Button Content="Refresh (F5)"
                         Command="{Binding LoadDataCommand}"
-                        Background="#E2E8F0" Foreground="#0F172A" FontWeight="SemiBold" Padding="12,8" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}" />
             </StackPanel>
         </Grid>
 
         <!-- Filters Bar -->
-        <Border Grid.Row="1" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,12">
+        <Border Grid.Row="1" Style="{StaticResource FilterBarStyle}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="160" />
@@ -75,20 +76,20 @@
 
                 <!-- From Date -->
                 <StackPanel Grid.Column="0" Margin="0,0,10,0">
-                    <TextBlock Text="From Date" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBlock Text="From Date" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                     <DatePicker SelectedDate="{Binding FromDate}" Padding="6,4" />
                 </StackPanel>
 
                 <!-- To Date -->
                 <StackPanel Grid.Column="1" Margin="0,0,10,0">
-                    <TextBlock Text="To Date" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBlock Text="To Date" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                     <DatePicker SelectedDate="{Binding ToDate}" Padding="6,4" />
                 </StackPanel>
 
                 <!-- Status -->
                 <StackPanel Grid.Column="2" Margin="0,0,10,0">
-                    <TextBlock Text="Status" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4" />
-                    <ComboBox SelectedItem="{Binding SelectedStatus}" Padding="6,4">
+                    <TextBlock Text="Status" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                    <ComboBox SelectedItem="{Binding SelectedStatus}" Style="{StaticResource InputComboBoxStyle}">
                         <x:Null />
                         <enums:StockAdjustmentStatus>Draft</enums:StockAdjustmentStatus>
                         <enums:StockAdjustmentStatus>Posted</enums:StockAdjustmentStatus>
@@ -99,121 +100,162 @@
                 <!-- Action Button -->
                 <Button Grid.Column="3" Content="Filter" Command="{Binding LoadDataCommand}"
                         VerticalAlignment="Bottom" HorizontalAlignment="Left"
-                        Background="#0F172A" Foreground="White" FontWeight="SemiBold" Padding="16,7" BorderThickness="0" Cursor="Hand" />
+                        Style="{StaticResource PrimaryButtonStyle}" />
             </Grid>
         </Border>
 
         <!-- DataGrid -->
-        <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="1">
-            <DataGrid ItemsSource="{Binding Items}"
-                      SelectedItem="{Binding SelectedAdjustment}"
-                      AutoGenerateColumns="False"
-                      CanUserAddRows="False"
-                      CanUserDeleteRows="False"
-                      GridLinesVisibility="Horizontal"
-                      HorizontalGridLinesBrush="#F1F5F9"
-                      RowHeight="38"
-                      BorderThickness="0"
-                      Background="White">
-                <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow">
-                        <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick" />
-                    </Style>
-                </DataGrid.RowStyle>
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Adjustment #" Binding="{Binding AdjustmentNumber}" Width="140" FontWeight="Bold" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Date" Binding="{Binding AdjustmentDate, StringFormat='{}{0:dd MMM yyyy HH:mm}'}" Width="135" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Reason" Binding="{Binding Reason}" Width="140" FontWeight="SemiBold" IsReadOnly="True" />
-                    <DataGridTextColumn Header="Items" Binding="{Binding ItemCount}" Width="80" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-                    <DataGridTextColumn Header="Total Val Diff" Binding="{Binding TotalValueDifference, StringFormat='${0:N2}'}" Width="130" IsReadOnly="True">
-                        <DataGridTextColumn.ElementStyle>
-                            <Style TargetType="TextBlock">
-                                <Setter Property="FontWeight" Value="Bold" />
-                                <Setter Property="HorizontalAlignment" Value="Right" />
-                                <Setter Property="VerticalAlignment" Value="Center" />
-                                <Setter Property="Padding" Value="0,0,10,0" />
-                            </Style>
-                        </DataGridTextColumn.ElementStyle>
-                    </DataGridTextColumn>
+            <!-- Bulk Selection Banner & Toolbar -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SurfaceCardSubtleBrush}"
+                    BorderBrush="{DynamicResource TableSelectedBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SelectionStatusText}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        <Button Content="Clear selection" Command="{Binding ClearSelectionCommand}"
+                                Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0" />
+                    </StackPanel>
 
-                    <!-- Status -->
-                    <DataGridTemplateColumn Header="Status" Width="120">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Border CornerRadius="4" Padding="8,2" HorizontalAlignment="Center" VerticalAlignment="Center">
-                                    <Border.Style>
-                                        <Style TargetType="Border">
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockAdjustmentStatus.Posted}">
-                                                    <Setter Property="Background" Value="#DCFCE7" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockAdjustmentStatus.Draft}">
-                                                    <Setter Property="Background" Value="#EFF6FF" />
-                                                </DataTrigger>
-                                                <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockAdjustmentStatus.Cancelled}">
-                                                    <Setter Property="Background" Value="#FEE2E2" />
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Border.Style>
-                                    <TextBlock Text="{Binding Status}" FontWeight="Bold" FontSize="11">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Delete Selected" Command="{Binding DeleteSelectedCommand}"
+                                Visibility="{Binding CanShowDeleteSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0" />
+                        <Button Content="Cancel Selected" Command="{Binding CancelSelectedCommand}"
+                                Visibility="{Binding CanShowCancelSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Select All Filtered Results Banner -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource WarningBackgroundBrush}"
+                    BorderBrush="{DynamicResource WarningBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding ShowSelectAllResultsBanner, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding SelectAllResultsBannerText}" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Medium" VerticalAlignment="Center" />
+                    <Button Content="Click here to select all matching results" Command="{Binding SelectAllFilteredResultsCommand}"
+                            Style="{StaticResource GhostButtonStyle}" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Bold" Margin="8,0,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2" Style="{StaticResource TableContainerBorderStyle}">
+                <DataGrid ItemsSource="{Binding Items}"
+                          SelectedItem="{Binding SelectedAdjustment}"
+                          Style="{StaticResource AppDataGridStyle}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <!-- Selection Checkbox Column -->
+                        <DataGridTemplateColumn Width="40" CanUserResize="False">
+                            <DataGridTemplateColumn.Header>
+                                <CheckBox IsChecked="{Binding DataContext.IsAllOnPageSelected, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
+                                          Command="{Binding DataContext.ToggleSelectAllOnPageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                              Command="{Binding DataContext.ItemSelectionChangedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                              CommandParameter="{Binding}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="Adjustment #" Binding="{Binding AdjustmentNumber}" Width="150"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
+                        <DataGridTextColumn Header="Date" Binding="{Binding AdjustmentDate, Converter={StaticResource DateDisplayConverter}}" Width="140" IsReadOnly="True" />
+                        <DataGridTextColumn Header="Reason" Binding="{Binding Reason}" Width="150" FontWeight="Medium" IsReadOnly="True" />
+                        <DataGridTextColumn Header="Items" Binding="{Binding ItemCount}" Width="80"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
+
+                        <DataGridTextColumn Header="Total Val Diff" Binding="{Binding TotalValueDifference, Converter={StaticResource MoneyConverter}}" Width="140"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" IsReadOnly="True" />
+
+                        <!-- Status -->
+                        <DataGridTemplateColumn Header="Status" Width="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border CornerRadius="4" Padding="8,2" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockAdjustmentStatus.Posted}">
-                                                        <Setter Property="Foreground" Value="#15803D" />
+                                                        <Setter Property="Background" Value="{DynamicResource SuccessBackgroundBrush}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockAdjustmentStatus.Draft}">
-                                                        <Setter Property="Foreground" Value="#1D4ED8" />
+                                                        <Setter Property="Background" Value="{DynamicResource SurfaceCardSubtleBrush}" />
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockAdjustmentStatus.Cancelled}">
-                                                        <Setter Property="Foreground" Value="#B91C1C" />
+                                                        <Setter Property="Background" Value="{DynamicResource DangerBackgroundBrush}" />
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </Border>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                                        </Border.Style>
+                                        <TextBlock Text="{Binding Status}" FontWeight="Bold" FontSize="11">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockAdjustmentStatus.Posted}">
+                                                            <Setter Property="Foreground" Value="{DynamicResource SuccessTextBrush}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockAdjustmentStatus.Draft}">
+                                                            <Setter Property="Foreground" Value="{DynamicResource TextPrimaryBrush}" />
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding Status}" Value="{x:Static enums:StockAdjustmentStatus.Cancelled}">
+                                                            <Setter Property="Foreground" Value="{DynamicResource DangerBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
 
-                    <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*" IsReadOnly="True" />
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
+                        <DataGridTextColumn Header="Notes" Binding="{Binding Notes}" Width="*" IsReadOnly="True" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+        </Grid>
 
         <!-- Footer Paging -->
-        <Grid Grid.Row="3" Margin="0,12,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+        <Border Grid.Row="3" Style="{StaticResource PaginationBarStyle}">
+            <Grid>
+                <TextBlock Grid.Column="0" Text="{Binding RowCountText}" Style="{StaticResource MutedLabelStyle}" VerticalAlignment="Center" />
 
-            <TextBlock Grid.Column="0" Text="{Binding RowCountText}" Foreground="#64748B" FontWeight="SemiBold" VerticalAlignment="Center" />
-
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="&lt; Prev" Command="{Binding PreviousPageCommand}"
-                        Background="#E2E8F0" Foreground="#0F172A" FontWeight="SemiBold" Padding="12,6" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
-                <TextBlock VerticalAlignment="Center" Margin="0,0,8,0">
-                    <Run Text="Page " Foreground="#64748B" />
-                    <Run Text="{Binding CurrentPage}" FontWeight="Bold" Foreground="#0F172A" />
-                    <Run Text=" of " Foreground="#64748B" />
-                    <Run Text="{Binding TotalPages}" FontWeight="Bold" Foreground="#0F172A" />
-                </TextBlock>
-                <Button Content="Next &gt;" Command="{Binding NextPageCommand}"
-                        Background="#E2E8F0" Foreground="#0F172A" FontWeight="SemiBold" Padding="12,6" BorderThickness="0" Cursor="Hand" />
-            </StackPanel>
-        </Grid>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="&lt; Prev" Command="{Binding PreviousPageCommand}" Style="{StaticResource PaginationButtonStyle}" />
+                    <TextBlock VerticalAlignment="Center" Margin="8,0">
+                        <Run Text="Page " Foreground="{DynamicResource TextMutedBrush}" />
+                        <Run Text="{Binding CurrentPage}" FontWeight="Bold" />
+                        <Run Text=" of " Foreground="{DynamicResource TextMutedBrush}" />
+                        <Run Text="{Binding TotalPages}" FontWeight="Bold" />
+                    </TextBlock>
+                    <Button Content="Next &gt;" Command="{Binding NextPageCommand}" Style="{StaticResource PaginationButtonStyle}" />
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>
-

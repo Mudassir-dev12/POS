@@ -8,10 +8,9 @@
         Title="Cart Has Items"
         Height="220"
         Width="440"
+        Style="{DynamicResource DialogWindowStyle}"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+        ResizeMode="NoResize">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -20,15 +19,14 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" VerticalAlignment="Center">
-            <TextBlock Text="⚠️ Unsaved Cart Items" FontSize="16" FontWeight="Bold" Foreground="#0F172A" />
-            <TextBlock Text="{Binding Message}" FontSize="13" Foreground="#475569" TextWrapping="Wrap" Margin="0,8,0,0" />
+            <TextBlock Text="Unsaved Cart Items" Style="{DynamicResource SectionHeaderStyle}" />
+            <TextBlock Text="{Binding Message}" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,8,0,0" />
         </StackPanel>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Hold Bill" Command="{Binding HoldBillCommand}" Background="#2563EB" Foreground="White" FontWeight="Bold" Padding="14,8" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
-            <Button Content="Discard Cart" Command="{Binding DiscardCommand}" Background="#DC2626" Foreground="White" FontWeight="Bold" Padding="14,8" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
-            <Button Content="Keep / Cancel" Command="{Binding KeepCommand}" Background="#E2E8F0" Foreground="#0F172A" FontWeight="SemiBold" Padding="14,8" BorderThickness="0" Cursor="Hand" />
+            <Button Content="Hold Bill" Command="{Binding HoldBillCommand}" Style="{DynamicResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+            <Button Content="Discard Cart" Command="{Binding DiscardCommand}" Style="{DynamicResource DangerButtonStyle}" Margin="0,0,8,0" />
+            <Button Content="Keep / Cancel" Command="{Binding KeepCommand}" Style="{DynamicResource SecondaryButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>
-

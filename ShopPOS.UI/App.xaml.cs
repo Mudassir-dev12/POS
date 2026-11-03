@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using ShopPOS.Core;
+using ShopPOS.Core.Interfaces;
 using ShopPOS.Core.Entities;
 using ShopPOS.Core.Models;
 using ShopPOS.Data;
@@ -87,12 +88,33 @@ public partial class App : Application
             using (var scope = _host.Services.CreateScope())
             {
                 var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+                // Check pending migrations and create safe pre-migration backup
+                var pendingMigrations = (await dbContext.Database.GetPendingMigrationsAsync()).ToList();
+                if (pendingMigrations.Any())
+                {
+                    Log.Information("Pending migrations detected ({Count}): {Migrations}. Creating pre-migration database backup...",
+                        pendingMigrations.Count, string.Join(", ", pendingMigrations));
+
+                    foreach (var migration in pendingMigrations)
+                    {
+                        ShopPOS.Data.Services.DatabaseBackupHelper.CreatePreMigrationBackup(dbOptions.DbPath, migration);
+                    }
+                }
+
                 Log.Information("Applying EF Core migrations...");
                 await dbContext.Database.MigrateAsync();
 
                 var seeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
                 Log.Information("Executing initial database seeding if required...");
                 await seeder.SeedAsync();
+
+                var settingRepo = scope.ServiceProvider.GetRequiredService<IShopSettingRepository>();
+                var settings = await settingRepo.GetCurrentSettingsAsync();
+                if (settings != null)
+                {
+                    ShopPOS.Core.Services.MoneyFormatter.Instance.UpdateSettings(settings.CurrencySymbol, settings.CurrencyDecimals);
+                }
             }
 
             // 6. Launch Main Window directly (single-user mode, no login required)

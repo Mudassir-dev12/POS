@@ -13,8 +13,7 @@ public partial class StockMovementHistoryViewModel : ObservableObject
 {
     private readonly IInventoryService _inventoryService;
     private readonly IProductService _productService;
-    private readonly IAuthService _authService;
-    private readonly IDialogService _dialogService;
+        private readonly IDialogService _dialogService;
 
     [ObservableProperty]
     private int? _selectedProductId;
@@ -63,12 +62,10 @@ public partial class StockMovementHistoryViewModel : ObservableObject
     public StockMovementHistoryViewModel(
         IInventoryService inventoryService,
         IProductService productService,
-        IAuthService authService,
         IDialogService dialogService)
     {
         _inventoryService = inventoryService;
         _productService = productService;
-        _authService = authService;
         _dialogService = dialogService;
     }
 
@@ -85,7 +82,7 @@ public partial class StockMovementHistoryViewModel : ObservableObject
         ErrorMessage = null;
         try
         {
-            var userRole = _authService.CurrentUser?.Role?.Name;
+            var userRole = "Owner";
             var query = new MovementHistoryFilterQuery
             {
                 ProductId = SelectedProductId,
@@ -200,7 +197,7 @@ public partial class StockMovementHistoryViewModel : ObservableObject
             var filePath = _dialogService.ShowSaveFileDialog("CSV Files (*.csv)|*.csv", $"MovementHistory_{DateTime.Now:yyyyMMdd_HHmm}.csv");
             if (string.IsNullOrWhiteSpace(filePath)) return;
 
-            var userRole = _authService.CurrentUser?.Role?.Name;
+            var userRole = "Owner";
             var query = new MovementHistoryFilterQuery
             {
                 ProductId = SelectedProductId,

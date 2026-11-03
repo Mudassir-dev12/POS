@@ -7,6 +7,5 @@ public enum PaymentMethod
     Cheque = 3,
     Other = 4,
     Card = 5,
-    MobileWallet = 6,
-    StoreCredit = 7
+    MobileWallet = 6
 }

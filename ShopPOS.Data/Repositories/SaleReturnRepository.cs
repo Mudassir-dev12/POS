@@ -1,3 +1,4 @@
+using ShopPOS.Core.Enums;
 using Microsoft.EntityFrameworkCore;
 using ShopPOS.Core.DTOs;
 using ShopPOS.Core.Entities;
@@ -17,8 +18,6 @@ public class SaleReturnRepository : Repository<SaleReturn>, ISaleReturnRepositor
         return await Context.SaleReturns
             .Include(r => r.Items)
             .Include(r => r.Sale)
-            .Include(r => r.Customer)
-            .Include(r => r.Shift)
             .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
     }
 
@@ -35,8 +34,6 @@ public class SaleReturnRepository : Repository<SaleReturn>, ISaleReturnRepositor
         var query = Context.SaleReturns
             .Include(r => r.Items)
             .Include(r => r.Sale)
-            .Include(r => r.Customer)
-            .Include(r => r.Shift)
             .AsNoTracking();
 
         if (criteria.Status.HasValue)
@@ -47,16 +44,6 @@ public class SaleReturnRepository : Repository<SaleReturn>, ISaleReturnRepositor
         if (criteria.SaleId.HasValue)
         {
             query = query.Where(r => r.SaleId == criteria.SaleId.Value);
-        }
-
-        if (criteria.CustomerId.HasValue)
-        {
-            query = query.Where(r => r.CustomerId == criteria.CustomerId.Value);
-        }
-
-        if (criteria.ShiftId.HasValue)
-        {
-            query = query.Where(r => r.ShiftId == criteria.ShiftId.Value);
         }
 
         if (criteria.DateFrom.HasValue)
@@ -74,8 +61,7 @@ public class SaleReturnRepository : Repository<SaleReturn>, ISaleReturnRepositor
             var term = criteria.SearchTerm.Trim().ToLower();
             query = query.Where(r =>
                 r.ReturnNumber.ToLower().Contains(term) ||
-                (r.Sale != null && r.Sale.SaleNumber != null && r.Sale.SaleNumber.ToLower().Contains(term)) ||
-                (r.Customer != null && r.Customer.Name.ToLower().Contains(term)));
+                (r.Sale != null && r.Sale.SaleNumber != null && r.Sale.SaleNumber.ToLower().Contains(term)));
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -91,10 +77,6 @@ public class SaleReturnRepository : Repository<SaleReturn>, ISaleReturnRepositor
                 ReturnDate = r.ReturnDate,
                 SaleId = r.SaleId,
                 SaleNumber = r.Sale != null ? r.Sale.SaleNumber : null,
-                CustomerId = r.CustomerId,
-                CustomerName = r.Customer != null ? r.Customer.Name : null,
-                ShiftId = r.ShiftId,
-                ShiftNumber = r.Shift != null ? r.Shift.ShiftNumber : null,
                 Status = r.Status,
                 SubTotal = r.SubTotal,
                 TaxAmount = r.TaxAmount,
@@ -122,5 +104,39 @@ public class SaleReturnRepository : Repository<SaleReturn>, ISaleReturnRepositor
             .ToListAsync(cancellationToken);
 
         return new PagedResult<SaleReturnDetailDto>(items, totalCount, criteria.PageNumber, criteria.PageSize);
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredIdsAsync(SaleReturnSearchDto criteria, CancellationToken cancellationToken = default)
+    {
+        var query = Context.SaleReturns.AsNoTracking();
+
+        if (criteria.Status.HasValue)
+            query = query.Where(r => r.Status == criteria.Status.Value);
+
+        if (criteria.SaleId.HasValue)
+            query = query.Where(r => r.SaleId == criteria.SaleId.Value);
+
+        if (criteria.DateFrom.HasValue)
+            query = query.Where(r => r.ReturnDate >= criteria.DateFrom.Value);
+
+        if (criteria.DateTo.HasValue)
+            query = query.Where(r => r.ReturnDate <= criteria.DateTo.Value);
+
+        if (!string.IsNullOrWhiteSpace(criteria.SearchTerm))
+        {
+            var term = criteria.SearchTerm.Trim().ToLower();
+            query = query.Where(r =>
+                r.ReturnNumber.ToLower().Contains(term) ||
+                (r.Reason != null && r.Reason.ToLower().Contains(term)));
+        }
+
+        return await query.Select(r => r.Id).ToListAsync(cancellationToken);
+    }
+
+    public async Task<decimal> GetTotalReturnedQuantityForSaleItemAsync(int saleItemId, CancellationToken cancellationToken = default)
+    {
+        return await Context.SaleReturnItems
+            .Where(i => i.SaleItemId == saleItemId && i.SaleReturn != null && i.SaleReturn.Status == SaleReturnStatus.Posted && !i.IsDeleted)
+            .SumAsync(i => (decimal?)i.Quantity, cancellationToken) ?? 0m;
     }
 }

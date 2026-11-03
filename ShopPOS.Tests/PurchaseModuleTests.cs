@@ -29,7 +29,6 @@ public class PurchaseModuleTests : IDisposable
     private readonly ShopSettingRepository _shopSettingRepo;
     private readonly ProductRepository _productRepo;
     private readonly Mock<IAuditLogService> _auditMock;
-    private readonly PermissionService _permissionService;
     private readonly NumberSequenceService _sequenceService;
     private readonly TransactionRunner _transactionRunner;
     private readonly PurchaseCalculatorService _calculatorService;
@@ -69,7 +68,6 @@ public class PurchaseModuleTests : IDisposable
         _productRepo = new ProductRepository(_context);
 
         _auditMock = new Mock<IAuditLogService>();
-        _permissionService = new PermissionService();
         _sequenceService = new NumberSequenceService(_context);
         _transactionRunner = new TransactionRunner(_context);
         _calculatorService = new PurchaseCalculatorService();
@@ -86,7 +84,6 @@ public class PurchaseModuleTests : IDisposable
             _shopSettingRepo,
             _sequenceService,
             _auditMock.Object,
-            _permissionService,
             pdfMock.Object,
             new ShopPOS.Core.Validators.CreatePurchaseValidator(),
             new ShopPOS.Core.Validators.UpdatePurchaseValidator());
@@ -98,7 +95,6 @@ public class PurchaseModuleTests : IDisposable
             _purchaseRepo,
             _sequenceService,
             _auditMock.Object,
-            _permissionService,
             new ShopPOS.Core.Validators.CreateSupplierPaymentValidator());
 
         _returnService = new PurchaseReturnService(
@@ -109,15 +105,13 @@ public class PurchaseModuleTests : IDisposable
             _shopSettingRepo,
             _sequenceService,
             _auditMock.Object,
-            _permissionService,
             new ShopPOS.Core.Validators.CreatePurchaseReturnValidator());
 
         _ledgerService = new SupplierLedgerService(
             _ledgerRepo,
             _supplierRepo,
             _shopSettingRepo,
-            pdfMock.Object,
-            _permissionService);
+            pdfMock.Object);
 
         SeedTestData();
     }
@@ -974,9 +968,9 @@ public class PurchaseModuleTests : IDisposable
                 var seq = new NumberSequenceService(draftCtx);
                 var audit = new Mock<IAuditLogService>().Object;
                 var pdf = new Mock<IPdfReportService>().Object;
-                var perm = new PermissionService();
+                
 
-                var pService = new PurchaseService(runner, pRepo, sRepo, prRepo, ssRepo, seq, audit, perm, pdf,
+                var pService = new PurchaseService(runner, pRepo, sRepo, prRepo, ssRepo, seq, audit, pdf,
                     new ShopPOS.Core.Validators.CreatePurchaseValidator(),
                     new ShopPOS.Core.Validators.UpdatePurchaseValidator());
 
@@ -1011,9 +1005,9 @@ public class PurchaseModuleTests : IDisposable
                 var seq1 = new NumberSequenceService(ctx1);
                 var audit1 = new Mock<IAuditLogService>().Object;
                 var pdf1 = new Mock<IPdfReportService>().Object;
-                var perm1 = new PermissionService();
+                
 
-                var pService1 = new PurchaseService(runner1, pRepo1, sRepo1, prRepo1, ssRepo1, seq1, audit1, perm1, pdf1,
+                var pService1 = new PurchaseService(runner1, pRepo1, sRepo1, prRepo1, ssRepo1, seq1, audit1, pdf1,
                     new ShopPOS.Core.Validators.CreatePurchaseValidator(),
                     new ShopPOS.Core.Validators.UpdatePurchaseValidator());
 
@@ -1031,9 +1025,9 @@ public class PurchaseModuleTests : IDisposable
                 var seq2 = new NumberSequenceService(ctx2);
                 var audit2 = new Mock<IAuditLogService>().Object;
                 var pdf2 = new Mock<IPdfReportService>().Object;
-                var perm2 = new PermissionService();
+                
 
-                var pService2 = new PurchaseService(runner2, pRepo2, sRepo2, prRepo2, ssRepo2, seq2, audit2, perm2, pdf2,
+                var pService2 = new PurchaseService(runner2, pRepo2, sRepo2, prRepo2, ssRepo2, seq2, audit2, pdf2,
                     new ShopPOS.Core.Validators.CreatePurchaseValidator(),
                     new ShopPOS.Core.Validators.UpdatePurchaseValidator());
 

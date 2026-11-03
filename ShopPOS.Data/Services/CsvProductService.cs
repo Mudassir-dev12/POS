@@ -17,18 +17,15 @@ public class CsvProductService : ICsvProductService
     private readonly AppDbContext _context;
     private readonly IProductRepository _productRepository;
     private readonly IAuditLogService _auditLogService;
-    private readonly IPermissionService _permissionService;
 
     public CsvProductService(
         AppDbContext context,
         IProductRepository productRepository,
-        IAuditLogService auditLogService,
-        IPermissionService permissionService)
+        IAuditLogService auditLogService)
     {
         _context = context;
         _productRepository = productRepository;
         _auditLogService = auditLogService;
-        _permissionService = permissionService;
     }
 
     public async Task<byte[]> ExportProductsToCsvAsync(ProductSearchQuery query, CancellationToken cancellationToken = default)
@@ -326,10 +323,7 @@ public class CsvProductService : ICsvProductService
         IProgress<int>? progress = null,
         CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManageCatalog(options.UserRole))
-        {
-            return Result.Failure<CsvImportResult>("Permission denied. Cashiers cannot import products.");
-        }
+        // single-user: no permission check needed
 
         try
         {

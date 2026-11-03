@@ -14,6 +14,7 @@ public interface IStockAdjustmentRepository
     Task UpdateAdjustmentAsync(StockAdjustment adjustment, CancellationToken cancellationToken = default);
     Task SoftDeleteAdjustmentAsync(int id, CancellationToken cancellationToken = default);
     Task AddStockMovementAsync(StockMovement movement, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredIdsAsync(DateTime? fromDate, DateTime? toDate, StockAdjustmentStatus? status, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }
 

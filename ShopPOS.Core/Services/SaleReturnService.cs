@@ -12,12 +12,9 @@ public class SaleReturnService : ISaleReturnService
     private readonly ISaleReturnRepository _returnRepository;
     private readonly ISaleRepository _saleRepository;
     private readonly IProductRepository _productRepository;
-    private readonly IRepository<Customer> _customerRepository;
     private readonly IRepository<StockMovement> _movementRepository;
     private readonly IStockLedgerQuery _stockLedgerQuery;
-    private readonly ICustomerBalanceQuery _customerBalanceQuery;
     private readonly IShopSettingService _settingService;
-    private readonly IShiftRepository _shiftRepository;
     private readonly INumberSequenceService _numberSequenceService;
     private readonly ITransactionRunner _transactionRunner;
     private readonly IAuditLogService _auditLogService;
@@ -29,34 +26,28 @@ public class SaleReturnService : ISaleReturnService
         ISaleReturnRepository returnRepository,
         ISaleRepository saleRepository,
         IProductRepository productRepository,
-        IRepository<Customer> customerRepository,
         IRepository<StockMovement> movementRepository,
         IStockLedgerQuery stockLedgerQuery,
-        ICustomerBalanceQuery customerBalanceQuery,
         IShopSettingService settingService,
-        IShiftRepository shiftRepository,
         INumberSequenceService numberSequenceService,
         ITransactionRunner transactionRunner,
         IAuditLogService auditLogService,
         ICurrentUserProvider currentUserProvider,
-        ISaleCalculator calculator,
-        IValidator<CreateSaleReturnDto> returnValidator)
+        ISaleCalculator? calculator = null,
+        IValidator<CreateSaleReturnDto>? returnValidator = null)
     {
         _returnRepository = returnRepository;
         _saleRepository = saleRepository;
         _productRepository = productRepository;
-        _customerRepository = customerRepository;
         _movementRepository = movementRepository;
         _stockLedgerQuery = stockLedgerQuery;
-        _customerBalanceQuery = customerBalanceQuery;
         _settingService = settingService;
-        _shiftRepository = shiftRepository;
         _numberSequenceService = numberSequenceService;
         _transactionRunner = transactionRunner;
         _auditLogService = auditLogService;
         _currentUserProvider = currentUserProvider;
-        _calculator = calculator;
-        _returnValidator = returnValidator;
+        _calculator = calculator ?? new SaleCalculator();
+        _returnValidator = returnValidator ?? new ShopPOS.Core.Validators.CreateSaleReturnValidator();
     }
 
     public async Task<Result<List<ReturnableLineDto>>> LoadReturnableLinesAsync(int saleId, CancellationToken cancellationToken = default)
@@ -69,24 +60,17 @@ public class SaleReturnService : ISaleReturnService
 
         if (sale.Status != SaleStatus.Completed)
         {
-            return Result<List<ReturnableLineDto>>.Failure($"Sale '{sale.SaleNumber}' cannot be returned because its status is {sale.Status}.");
+            return Result<List<ReturnableLineDto>>.Failure($"Sale '{sale.SaleNumber}' status is {sale.Status}. Only completed sales can be returned.");
         }
 
-        var pastReturns = await _returnRepository.GetReturnsForSaleAsync(saleId, cancellationToken);
-        var alreadyReturnedMap = pastReturns
-            .Where(r => r.Status == SaleReturnStatus.Posted)
-            .SelectMany(r => r.Items)
-            .Where(i => i.SaleItemId.HasValue)
-            .GroupBy(i => i.SaleItemId!.Value)
-            .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
+        var lines = new List<ReturnableLineDto>();
 
-        var returnableLines = new List<ReturnableLineDto>();
         foreach (var item in sale.Items)
         {
-            decimal alreadyReturned = alreadyReturnedMap.TryGetValue(item.Id, out var qty) ? qty : 0m;
+            decimal alreadyReturned = await _returnRepository.GetTotalReturnedQuantityForSaleItemAsync(item.Id, cancellationToken);
             decimal remaining = Math.Max(0m, item.Quantity - alreadyReturned);
 
-            returnableLines.Add(new ReturnableLineDto
+            lines.Add(new ReturnableLineDto
             {
                 SaleItemId = item.Id,
                 ProductId = item.ProductId,
@@ -104,7 +88,7 @@ public class SaleReturnService : ISaleReturnService
             });
         }
 
-        return Result<List<ReturnableLineDto>>.Ok(returnableLines);
+        return Result<List<ReturnableLineDto>>.Ok(lines);
     }
 
     public async Task<Result<SaleReturnDetailDto>> CreateSaleReturnAsync(CreateSaleReturnDto dto, CancellationToken cancellationToken = default)
@@ -120,49 +104,37 @@ public class SaleReturnService : ISaleReturnService
         return await _transactionRunner.RunInTransactionAsync(async () =>
         {
             Sale? originalSale = null;
-            int? effectiveCustomerId = dto.CustomerId;
 
-            if (dto.SaleId.HasValue)
+            if (dto.SaleId.HasValue && dto.SaleId.Value > 0)
             {
                 originalSale = await _saleRepository.GetByIdWithDetailsAsync(dto.SaleId.Value, cancellationToken);
                 if (originalSale == null)
                 {
-                    return Result<SaleReturnDetailDto>.Failure($"Referenced sale ID {dto.SaleId.Value} was not found.");
+                    return Result<SaleReturnDetailDto>.Failure($"Original sale with ID {dto.SaleId.Value} was not found.");
                 }
 
                 if (originalSale.Status != SaleStatus.Completed)
                 {
-                    return Result<SaleReturnDetailDto>.Failure($"Cannot process a return against a sale with status {originalSale.Status}.");
+                    return Result<SaleReturnDetailDto>.Failure($"Cannot return against sale '{originalSale.SaleNumber}' with status {originalSale.Status}.");
                 }
 
-                // Check SaleReturnWindowDays
                 if (settings.SaleReturnWindowDays.HasValue && settings.SaleReturnWindowDays.Value > 0)
                 {
                     var daysSinceSale = (DateTime.Now - originalSale.SaleDate).TotalDays;
                     if (daysSinceSale > settings.SaleReturnWindowDays.Value)
                     {
                         return Result<SaleReturnDetailDto>.Failure(
-                            $"The allowable return window of {settings.SaleReturnWindowDays.Value} days for sale '{originalSale.SaleNumber}' has expired ({Math.Floor(daysSinceSale)} days since sale).");
+                            $"The return window of {settings.SaleReturnWindowDays.Value} day(s) has expired for sale '{originalSale.SaleNumber}' (completed {daysSinceSale:0.#} days ago, allowable return window of {settings.SaleReturnWindowDays.Value} days).");
                     }
                 }
-
-                effectiveCustomerId = originalSale.CustomerId;
             }
             else
             {
-                // Return without receipt
                 if (!settings.AllowReturnWithoutReceipt)
                 {
-                    return Result<SaleReturnDetailDto>.Failure("Returns without original receipt are not allowed in store settings.");
+                    return Result<SaleReturnDetailDto>.Failure(
+                        "Returns without an original receipt/sale reference are not allowed in store settings (store policy).");
                 }
-            }
-
-            // Resolve shift for cash refund accounting
-            int? shiftId = dto.ShiftId;
-            if (!shiftId.HasValue)
-            {
-                var openShift = await _shiftRepository.GetOpenShiftAsync(cancellationToken);
-                shiftId = openShift?.Id;
             }
 
             var returnLines = new List<SaleReturnItem>();
@@ -170,150 +142,75 @@ public class SaleReturnService : ISaleReturnService
             decimal totalTax = 0m;
             decimal totalRefundAmount = 0m;
 
-            var pastReturns = originalSale != null
-                ? await _returnRepository.GetReturnsForSaleAsync(originalSale.Id, cancellationToken)
-                : new List<SaleReturn>();
-
-            var alreadyReturnedMap = pastReturns
-                .Where(r => r.Status == SaleReturnStatus.Posted)
-                .SelectMany(r => r.Items)
-                .Where(i => i.SaleItemId.HasValue)
-                .GroupBy(i => i.SaleItemId!.Value)
-                .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
-
-            foreach (var input in dto.Items)
+            foreach (var itemDto in dto.Items)
             {
-                SaleItem? originalLine = null;
-                Product? product = null;
+                if (itemDto.Quantity <= 0m) continue;
 
-                if (originalSale != null)
+                Product? product = await _productRepository.GetWithDetailsAsync(itemDto.ProductId, cancellationToken);
+                if (product == null)
                 {
-                    if (input.SaleItemId.HasValue)
-                    {
-                        originalLine = originalSale.Items.FirstOrDefault(i => i.Id == input.SaleItemId.Value);
-                    }
-                    else
-                    {
-                        originalLine = originalSale.Items.FirstOrDefault(i => i.ProductId == input.ProductId);
-                    }
+                    return Result<SaleReturnDetailDto>.Failure($"Product with ID {itemDto.ProductId} was not found.");
+                }
 
-                    if (originalLine == null)
-                    {
-                        return Result<SaleReturnDetailDto>.Failure($"Item with ProductId {input.ProductId} is not part of sale '{originalSale.SaleNumber}'.");
-                    }
+                decimal unitPrice;
+                decimal taxPercent = 0m;
+                decimal costPrice = product.CostPrice;
 
-                    product = await _productRepository.GetWithDetailsAsync(originalLine.ProductId, cancellationToken);
-                    if (product == null)
+                if (originalSale != null && itemDto.SaleItemId.HasValue)
+                {
+                    var originalItem = originalSale.Items.FirstOrDefault(i => i.Id == itemDto.SaleItemId.Value);
+                    if (originalItem == null)
                     {
-                        return Result<SaleReturnDetailDto>.Failure($"Product ID {originalLine.ProductId} does not exist.");
+                        return Result<SaleReturnDetailDto>.Failure($"Sale item ID {itemDto.SaleItemId.Value} does not belong to sale '{originalSale.SaleNumber}'.");
                     }
 
-                    decimal alreadyReturned = alreadyReturnedMap.TryGetValue(originalLine.Id, out var prev) ? prev : 0m;
-                    decimal returnable = originalLine.Quantity - alreadyReturned;
+                    decimal alreadyReturned = await _returnRepository.GetTotalReturnedQuantityForSaleItemAsync(originalItem.Id, cancellationToken);
+                    decimal availableToReturn = originalItem.Quantity - alreadyReturned;
 
-                    if (input.Quantity > returnable)
+                    if (itemDto.Quantity > availableToReturn)
                     {
                         return Result<SaleReturnDetailDto>.Failure(
-                            $"Cannot return {input.Quantity} of '{originalLine.ProductName}'. Maximum returnable quantity is {returnable}.");
+                            $"Requested return quantity of {itemDto.Quantity} exceeds available returnable quantity ({availableToReturn}) for '{originalItem.ProductName}'. Maximum returnable quantity is {availableToReturn}.");
                     }
 
-                    // Calculate line refund using original pricing
-                    var calcLine = _calculator.CalculateReturnLine(
-                        quantity: input.Quantity,
-                        originalUnitPrice: originalLine.UnitPrice,
-                        originalDiscountPercent: originalLine.DiscountPercent,
-                        originalDiscountAmount: originalLine.DiscountAmount,
-                        originalSoldQuantity: originalLine.Quantity,
-                        taxPercent: originalLine.TaxPercent,
-                        pricesIncludeTax: settings.PricesIncludeTax);
-
-                    totalSubTotal += calcLine.GrossAmount;
-                    totalTax += calcLine.TaxAmount;
-                    totalRefundAmount += calcLine.LineTotal;
-
-                    returnLines.Add(new SaleReturnItem
-                    {
-                        SaleItemId = originalLine.Id,
-                        ProductId = originalLine.ProductId,
-                        ProductName = originalLine.ProductName,
-                        Sku = originalLine.Sku,
-                        Barcode = originalLine.Barcode,
-                        Quantity = input.Quantity,
-                        UnitPrice = originalLine.UnitPrice,
-                        CostPriceSnapshot = originalLine.CostPriceSnapshot,
-                        TaxPercent = originalLine.TaxPercent,
-                        LineTotal = calcLine.LineTotal,
-                        ReturnToStock = input.ReturnToStock,
-                        CreatedByUserId = _currentUserProvider.UserId
-                    });
+                    unitPrice = originalItem.UnitPrice;
+                    taxPercent = originalItem.TaxPercent;
+                    costPrice = originalItem.CostPriceSnapshot;
                 }
                 else
                 {
-                    // Return without receipt
-                    product = await _productRepository.GetWithDetailsAsync(input.ProductId, cancellationToken);
-                    if (product == null || !product.IsActive)
-                    {
-                        return Result<SaleReturnDetailDto>.Failure($"Product with ID {input.ProductId} was not found or is inactive.");
-                    }
-
-                    decimal unitPrice = input.UnitPrice ?? product.SalePrice;
-                    decimal gross = _calculator.Round(input.Quantity * unitPrice);
-                    decimal taxRate = Math.Max(0m, product.TaxPercent) / 100m;
-                    decimal taxAmount;
-                    decimal lineTotal;
-
-                    if (settings.PricesIncludeTax)
-                    {
-                        decimal netOfTax = taxRate > 0m ? _calculator.Round(gross / (1m + taxRate)) : gross;
-                        taxAmount = gross - netOfTax;
-                        lineTotal = gross;
-                    }
-                    else
-                    {
-                        taxAmount = taxRate > 0m ? _calculator.Round(gross * taxRate) : 0m;
-                        lineTotal = gross + taxAmount;
-                    }
-
-                    totalSubTotal += gross;
-                    totalTax += taxAmount;
-                    totalRefundAmount += lineTotal;
-
-                    returnLines.Add(new SaleReturnItem
-                    {
-                        SaleItemId = null,
-                        ProductId = product.Id,
-                        ProductName = product.Name,
-                        Sku = product.Sku,
-                        Barcode = product.Barcode,
-                        Quantity = input.Quantity,
-                        UnitPrice = unitPrice,
-                        CostPriceSnapshot = product.CostPrice,
-                        TaxPercent = product.TaxPercent,
-                        LineTotal = lineTotal,
-                        ReturnToStock = input.ReturnToStock,
-                        CreatedByUserId = _currentUserProvider.UserId
-                    });
+                    unitPrice = itemDto.UnitPrice ?? product.SalePrice;
+                    taxPercent = product.TaxPercent;
                 }
+
+                decimal lineGross = _calculator.Round(itemDto.Quantity * unitPrice);
+                decimal lineTax = taxPercent > 0m ? _calculator.Round(lineGross * (taxPercent / 100m)) : 0m;
+                decimal lineTotal = lineGross + lineTax;
+
+                totalSubTotal += lineGross;
+                totalTax += lineTax;
+                totalRefundAmount += lineTotal;
+
+                returnLines.Add(new SaleReturnItem
+                {
+                    SaleItemId = itemDto.SaleItemId,
+                    ProductId = itemDto.ProductId,
+                    ProductName = product.Name,
+                    Sku = product.Sku,
+                    Barcode = product.Barcode,
+                    Quantity = itemDto.Quantity,
+                    UnitPrice = unitPrice,
+                    CostPriceSnapshot = costPrice,
+                    TaxPercent = taxPercent,
+                    LineTotal = lineTotal,
+                    ReturnToStock = itemDto.ReturnToStock,
+                    CreatedByUserId = _currentUserProvider.UserId
+                });
             }
 
-            // Refund method validation
-            var effectiveRefundMethod = dto.RefundMethod;
-            if (effectiveRefundMethod == PaymentMethod.StoreCredit)
+            if (returnLines.Count == 0)
             {
-                if (!effectiveCustomerId.HasValue)
-                {
-                    // StoreCredit requires a customer; otherwise convert to cash
-                    effectiveRefundMethod = PaymentMethod.Cash;
-                }
-                else
-                {
-                    decimal currentBalance = await _customerBalanceQuery.GetCustomerBalanceAsync(effectiveCustomerId.Value, cancellationToken);
-                    if (currentBalance <= 0m)
-                    {
-                        // Customer owes nothing; convert to cash refund
-                        effectiveRefundMethod = PaymentMethod.Cash;
-                    }
-                }
+                return Result<SaleReturnDetailDto>.Failure("No valid return items were specified.");
             }
 
             var returnNumber = await _numberSequenceService.GetNextNumberAsync("SRET", cancellationToken);
@@ -323,13 +220,11 @@ public class SaleReturnService : ISaleReturnService
                 ReturnNumber = returnNumber,
                 ReturnDate = DateTime.Now,
                 SaleId = dto.SaleId,
-                CustomerId = effectiveCustomerId,
-                ShiftId = shiftId,
                 Status = SaleReturnStatus.Posted,
                 SubTotal = _calculator.Round(totalSubTotal),
                 TaxAmount = _calculator.Round(totalTax),
                 TotalAmount = _calculator.Round(totalRefundAmount),
-                RefundMethod = effectiveRefundMethod,
+                RefundMethod = dto.RefundMethod,
                 RefundedAmount = _calculator.Round(totalRefundAmount),
                 Reason = dto.Reason,
                 CreatedByUserId = _currentUserProvider.UserId,
@@ -369,7 +264,7 @@ public class SaleReturnService : ISaleReturnService
                 action: "CreateSaleReturn",
                 entityName: nameof(SaleReturn),
                 entityId: saleReturn.Id,
-                details: $"Return {returnNumber} posted for {_calculator.Round(totalRefundAmount):F2} via {effectiveRefundMethod}.");
+                details: $"Return {returnNumber} posted for {_calculator.Round(totalRefundAmount):F2} via {dto.RefundMethod}.");
 
             var resultDto = new SaleReturnDetailDto
             {
@@ -378,9 +273,6 @@ public class SaleReturnService : ISaleReturnService
                 ReturnDate = saleReturn.ReturnDate,
                 SaleId = saleReturn.SaleId,
                 SaleNumber = originalSale?.SaleNumber,
-                CustomerId = saleReturn.CustomerId,
-                CustomerName = originalSale?.Customer?.Name,
-                ShiftId = saleReturn.ShiftId,
                 Status = saleReturn.Status,
                 SubTotal = saleReturn.SubTotal,
                 TaxAmount = saleReturn.TaxAmount,
@@ -419,53 +311,50 @@ public class SaleReturnService : ISaleReturnService
         var saleReturn = await _returnRepository.GetByIdWithDetailsAsync(returnId, cancellationToken);
         if (saleReturn == null)
         {
-            return Result<bool>.Failure($"Sale return with ID {returnId} does not exist.");
+            return Result<bool>.Failure($"Sale return with ID {returnId} was not found.");
         }
 
-        if (saleReturn.Status == SaleReturnStatus.Cancelled)
+        if (saleReturn.Status != SaleReturnStatus.Posted)
         {
-            return Result<bool>.Failure($"Sale return '{saleReturn.ReturnNumber}' is already cancelled.");
+            return Result<bool>.Failure($"Only posted sale returns can be cancelled. Status is {saleReturn.Status}.");
         }
-
-        var settings = await _settingService.GetSettingsAsync();
 
         return await _transactionRunner.RunInTransactionAsync(async () =>
         {
-            // If any item was restocked, check if taking that stock back away would cause negative stock
-            foreach (var item in saleReturn.Items.Where(i => i.ReturnToStock))
+            var settings = await _settingService.GetSettingsAsync();
+
+            // Reverse any restock movements that were created
+            foreach (var item in saleReturn.Items)
             {
-                var product = await _productRepository.GetByIdAsync(item.ProductId, cancellationToken);
-                if (product != null && product.TrackStock && !settings.AllowNegativeStock)
+                if (item.ReturnToStock)
                 {
-                    var currentStock = await _stockLedgerQuery.GetCurrentStockAsync(item.ProductId, cancellationToken);
-                    if (currentStock - item.Quantity < 0m)
+                    var product = await _productRepository.GetByIdAsync(item.ProductId, cancellationToken);
+                    if (product != null && product.TrackStock)
                     {
-                        return Result<bool>.Failure(
-                            $"Cannot cancel return '{saleReturn.ReturnNumber}' because reversing restock for '{item.ProductName}' would make stock negative. Current stock: {currentStock}, Required: {item.Quantity}.");
+                        if (!settings.AllowNegativeStock)
+                        {
+                            var curStock = await _stockLedgerQuery.GetCurrentStockAsync(item.ProductId, cancellationToken);
+                            if (curStock - item.Quantity < 0m)
+                            {
+                                return Result<bool>.Failure($"Cancelling return {saleReturn.ReturnNumber} would make stock negative for product '{product.Name}'. Current stock is {curStock}, reversing quantity is {item.Quantity}.");
+                            }
+                        }
+
+                        var reversingMovement = new StockMovement
+                        {
+                            ProductId = item.ProductId,
+                            MovementType = StockMovementType.Sale,
+                            Quantity = -item.Quantity,
+                            UnitCost = item.CostPriceSnapshot,
+                            ReferenceType = "SaleReturnCancel",
+                            ReferenceId = saleReturn.Id,
+                            Note = $"Cancellation of return {saleReturn.ReturnNumber}: {reason.Trim()}",
+                            MovementDate = DateTime.Now,
+                            CreatedByUserId = _currentUserProvider.UserId
+                        };
+
+                        await _movementRepository.AddAsync(reversingMovement, cancellationToken);
                     }
-                }
-            }
-
-            // Write reversing movements
-            foreach (var item in saleReturn.Items.Where(i => i.ReturnToStock))
-            {
-                var product = await _productRepository.GetByIdAsync(item.ProductId, cancellationToken);
-                if (product != null && product.TrackStock)
-                {
-                    var reversingMovement = new StockMovement
-                    {
-                        ProductId = item.ProductId,
-                        MovementType = StockMovementType.SaleReturnCancel,
-                        Quantity = -item.Quantity,
-                        UnitCost = item.CostPriceSnapshot,
-                        ReferenceType = "SaleReturn",
-                        ReferenceId = saleReturn.Id,
-                        Note = $"Cancellation of return {saleReturn.ReturnNumber}: {reason.Trim()}",
-                        MovementDate = DateTime.Now,
-                        CreatedByUserId = _currentUserProvider.UserId
-                    };
-
-                    await _movementRepository.AddAsync(reversingMovement, cancellationToken);
                 }
             }
 
@@ -480,7 +369,7 @@ public class SaleReturnService : ISaleReturnService
                 action: "CancelSaleReturn",
                 entityName: nameof(SaleReturn),
                 entityId: saleReturn.Id,
-                details: $"Sale return {saleReturn.ReturnNumber} cancelled. Reason: {reason.Trim()}.");
+                details: $"Return {saleReturn.ReturnNumber} cancelled. Reason: {reason.Trim()}.");
 
             return Result<bool>.Ok(true);
         }, cancellationToken);
@@ -501,10 +390,6 @@ public class SaleReturnService : ISaleReturnService
             ReturnDate = r.ReturnDate,
             SaleId = r.SaleId,
             SaleNumber = r.Sale?.SaleNumber,
-            CustomerId = r.CustomerId,
-            CustomerName = r.Customer?.Name,
-            ShiftId = r.ShiftId,
-            ShiftNumber = r.Shift?.ShiftNumber,
             Status = r.Status,
             SubTotal = r.SubTotal,
             TaxAmount = r.TaxAmount,
@@ -537,4 +422,38 @@ public class SaleReturnService : ISaleReturnService
     {
         return await _returnRepository.SearchSaleReturnsAsync(criteria, cancellationToken);
     }
+
+    public async Task<BulkOperationResult> BulkCancelSaleReturnsAsync(IEnumerable<int> ids, string reason, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var r = await _returnRepository.GetByIdAsync(id, cancellationToken);
+            if (r == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Sale return not found." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            var cancelRes = await CancelSaleReturnAsync(id, reason, cancellationToken);
+            if (cancelRes.Success)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = r.ReturnNumber, Success = true });
+                result.SuccessCount++;
+            }
+            else
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = r.ReturnNumber, Success = false, Message = cancelRes.ErrorMessage ?? "Cannot cancel sale return." });
+                result.SkippedCount++;
+            }
+        }
+        return result;
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredSaleReturnIdsAsync(SaleReturnSearchDto criteria, CancellationToken cancellationToken = default)
+    {
+        return await _returnRepository.GetFilteredIdsAsync(criteria, cancellationToken);
+    }
+
 }

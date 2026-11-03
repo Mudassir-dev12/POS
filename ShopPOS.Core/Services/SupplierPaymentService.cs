@@ -15,7 +15,6 @@ public class SupplierPaymentService : ISupplierPaymentService
     private readonly IPurchaseRepository _purchaseRepo;
     private readonly INumberSequenceService _sequenceService;
     private readonly IAuditLogService _auditLogService;
-    private readonly IPermissionService _permissionService;
     private readonly IValidator<CreateSupplierPaymentDto> _validator;
 
     public SupplierPaymentService(
@@ -25,7 +24,6 @@ public class SupplierPaymentService : ISupplierPaymentService
         IPurchaseRepository purchaseRepo,
         INumberSequenceService sequenceService,
         IAuditLogService auditLogService,
-        IPermissionService permissionService,
         IValidator<CreateSupplierPaymentDto> validator)
     {
         _transactionRunner = transactionRunner;
@@ -34,16 +32,12 @@ public class SupplierPaymentService : ISupplierPaymentService
         _purchaseRepo = purchaseRepo;
         _sequenceService = sequenceService;
         _auditLogService = auditLogService;
-        _permissionService = permissionService;
         _validator = validator;
     }
 
     public async Task<Result<PagedResult<SupplierPaymentDto>>> GetPaymentsAsync(int? supplierId, int pageNumber, int pageSize, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<PagedResult<SupplierPaymentDto>>("Permission denied. You do not have access to Supplier Payments.");
-        }
+        // single-user: no permission check needed
 
         var result = await _paymentRepo.GetPaymentsAsync(supplierId, pageNumber, pageSize, cancellationToken);
         return Result.Ok(result);
@@ -51,10 +45,7 @@ public class SupplierPaymentService : ISupplierPaymentService
 
     public async Task<Result<SupplierPaymentDto>> RecordPaymentAsync(CreateSupplierPaymentDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<SupplierPaymentDto>("Permission denied. Only Admins and Managers can record payments.");
-        }
+        // single-user: no permission check needed
 
         var val = await _validator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -150,10 +141,7 @@ public class SupplierPaymentService : ISupplierPaymentService
 
     public async Task<Result<bool>> CancelPaymentAsync(int paymentId, string reason, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<bool>("Permission denied. Only Admins and Managers can cancel payments.");
-        }
+        // single-user: no permission check needed
 
         if (string.IsNullOrWhiteSpace(reason))
         {
@@ -191,4 +179,38 @@ public class SupplierPaymentService : ISupplierPaymentService
             return Result.Ok(true);
         }, cancellationToken);
     }
+
+    public async Task<BulkOperationResult> BulkCancelPaymentsAsync(IEnumerable<int> ids, string reason, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var p = await _paymentRepo.GetPaymentByIdAsync(id, cancellationToken);
+            if (p == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Payment not found." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            var cancelRes = await CancelPaymentAsync(id, reason, userId, null, cancellationToken);
+            if (cancelRes.Success)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = p.PaymentNumber, Success = true });
+                result.SuccessCount++;
+            }
+            else
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = p.PaymentNumber, Success = false, Message = cancelRes.ErrorMessage ?? "Cannot cancel payment." });
+                result.SkippedCount++;
+            }
+        }
+        return result;
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredPaymentIdsAsync(int? supplierId, CancellationToken cancellationToken = default)
+    {
+        return await _paymentRepo.GetFilteredIdsAsync(supplierId, cancellationToken);
+    }
+
 }

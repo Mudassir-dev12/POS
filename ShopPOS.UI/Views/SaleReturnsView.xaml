@@ -6,13 +6,20 @@
              xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Sales"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:SaleReturnsViewModel}"
-             Background="#F8FAFC"
-             FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+             Background="{DynamicResource PageBackgroundBrush}"
+             FontFamily="{StaticResource AppFontFamily}">
+
+    <UserControl.InputBindings>
+        <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllOnPageCommand}" />
+    </UserControl.InputBindings>
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <!-- Header Bar -->
             <RowDefinition Height="Auto" />
+            <!-- Filter Bar -->
             <RowDefinition Height="Auto" />
+            <!-- Returns Grid -->
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -23,22 +30,22 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="Customer Returns" FontSize="20" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Process customer refunds, restock undamaged items, track return reasons." FontSize="12" Foreground="#64748B" Margin="0,2,0,0" />
+                <TextBlock Text="Customer Returns" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Process customer refunds, restock undamaged items, track return reasons." Style="{StaticResource SubTitleStyle}" />
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="+ New Return" Command="{Binding NewReturnCommand}" Height="34" Margin="0,0,8,0" Background="#DC2626" Foreground="White" FontWeight="SemiBold" BorderThickness="0" />
-                <Button Content="Cancel Selected Return" Command="{Binding CancelReturnCommand}" Height="34" Background="#FFF1F2" Foreground="#E11D48" BorderBrush="#FECDD3" />
+                <Button Content="+ New Return" Command="{Binding NewReturnCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+                <Button Content="Cancel Selected Return" Command="{Binding CancelReturnCommand}" Style="{StaticResource DangerButtonStyle}" />
             </StackPanel>
         </Grid>
 
         <!-- FILTER BAR -->
-        <Border Grid.Row="1" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,12">
+        <Border Grid.Row="1" Style="{StaticResource FilterBarStyle}">
             <WrapPanel VerticalAlignment="Center">
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="Search:" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,3" />
-                    <TextBox Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="180" Height="30" VerticalContentAlignment="Center" Padding="6,2">
+                    <TextBlock Text="Search:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
+                    <TextBox Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="180" Style="{StaticResource InputTextBoxStyle}">
                         <TextBox.InputBindings>
                             <KeyBinding Key="Return" Command="{Binding LoadReturnsCommand}" />
                         </TextBox.InputBindings>
@@ -46,36 +53,104 @@
                 </StackPanel>
 
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="From Date:" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,3" />
+                    <TextBlock Text="From Date:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
                     <DatePicker SelectedDate="{Binding DateFrom, Mode=TwoWay}" Width="120" Height="30" />
                 </StackPanel>
 
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="To Date:" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,3" />
+                    <TextBlock Text="To Date:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
                     <DatePicker SelectedDate="{Binding DateTo, Mode=TwoWay}" Width="120" Height="30" />
                 </StackPanel>
 
-                <Button Content="Filter / Refresh (F5)" Command="{Binding LoadReturnsCommand}" Width="130" Height="30" Margin="0,16,0,0"
-                        Background="#2563EB" Foreground="White" FontWeight="SemiBold" BorderThickness="0" />
+                <Button Content="Filter / Refresh (F5)" Command="{Binding LoadReturnsCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,16,0,0" />
             </WrapPanel>
         </Border>
 
         <!-- RETURNS GRID -->
-        <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8">
-            <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                      GridLinesVisibility="Horizontal" HeadersVisibility="Column" Background="Transparent" BorderThickness="0">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Return #" Binding="{Binding ReturnNumber}" Width="130" FontWeight="SemiBold" />
-                    <DataGridTextColumn Header="Date" Binding="{Binding ReturnDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="140" />
-                    <DataGridTextColumn Header="Orig Sale #" Binding="{Binding SaleNumber}" Width="130" />
-                    <DataGridTextColumn Header="Customer" Binding="{Binding CustomerName, TargetNullValue='Walk-in'}" Width="*" />
-                    <DataGridTextColumn Header="Refund Total" Binding="{Binding TotalRefundAmount, StringFormat='${0:N2}'}" Width="110" FontWeight="Bold" Foreground="#DC2626" />
-                    <DataGridTextColumn Header="Refund Method" Binding="{Binding RefundMethod}" Width="120" />
-                    <DataGridTextColumn Header="Reason" Binding="{Binding Reason}" Width="180" />
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Bulk Selection Banner & Toolbar -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SurfaceCardSubtleBrush}"
+                    BorderBrush="{DynamicResource TableSelectedBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SelectionStatusText}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        <Button Content="Clear selection" Command="{Binding ClearSelectionCommand}"
+                                Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Delete Selected" Command="{Binding DeleteSelectedCommand}"
+                                Visibility="{Binding CanShowDeleteSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0" />
+                        <Button Content="Cancel Selected" Command="{Binding CancelSelectedCommand}"
+                                Visibility="{Binding CanShowCancelSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- Select All Filtered Results Banner -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource WarningBackgroundBrush}"
+                    BorderBrush="{DynamicResource WarningBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding ShowSelectAllResultsBanner, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding SelectAllResultsBannerText}" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Medium" VerticalAlignment="Center" />
+                    <Button Content="Click here to select all matching results" Command="{Binding SelectAllFilteredResultsCommand}"
+                            Style="{StaticResource GhostButtonStyle}" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Bold" Margin="8,0,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2" Style="{StaticResource TableContainerBorderStyle}">
+                <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                          Style="{StaticResource AppDataGridStyle}">
+                    <DataGrid.Columns>
+                        <!-- Selection Checkbox Column -->
+                        <DataGridTemplateColumn Width="40" CanUserResize="False">
+                            <DataGridTemplateColumn.Header>
+                                <CheckBox IsChecked="{Binding DataContext.IsAllOnPageSelected, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
+                                          Command="{Binding DataContext.ToggleSelectAllOnPageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                              Command="{Binding DataContext.ItemSelectionChangedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                              CommandParameter="{Binding}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="Return #" Binding="{Binding ReturnNumber}" Width="150"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" />
+                        <DataGridTextColumn Header="Date" Binding="{Binding ReturnDate, Converter={StaticResource DateDisplayConverter}}" Width="140" />
+                        <DataGridTextColumn Header="Orig Sale #" Binding="{Binding SaleNumber}" Width="140"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" />
+                        <DataGridTextColumn Header="Customer" Binding="{Binding CustomerName, TargetNullValue='Walk-in'}" Width="*" />
+                        <DataGridTextColumn Header="Refund Total" Binding="{Binding TotalRefundAmount, Converter={StaticResource MoneyConverter}}" Width="130"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" Foreground="{DynamicResource DangerBrush}" />
+                        <DataGridTextColumn Header="Refund Method" Binding="{Binding RefundMethod}" Width="130" />
+                        <DataGridTextColumn Header="Reason" Binding="{Binding Reason}" Width="180" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
+        </Grid>
     </Grid>
 </UserControl>
-

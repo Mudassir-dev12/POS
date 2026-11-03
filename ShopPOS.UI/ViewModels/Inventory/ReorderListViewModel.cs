@@ -11,8 +11,7 @@ public partial class ReorderListViewModel : ObservableObject
 {
     private readonly IInventoryService _inventoryService;
     private readonly ISupplierService _supplierService;
-    private readonly IAuthService _authService;
-    private readonly IDialogService _dialogService;
+        private readonly IDialogService _dialogService;
 
     [ObservableProperty]
     private bool _isLoading;
@@ -35,12 +34,10 @@ public partial class ReorderListViewModel : ObservableObject
     public ReorderListViewModel(
         IInventoryService inventoryService,
         ISupplierService supplierService,
-        IAuthService authService,
         IDialogService dialogService)
     {
         _inventoryService = inventoryService;
         _supplierService = supplierService;
-        _authService = authService;
         _dialogService = dialogService;
     }
 
@@ -56,7 +53,7 @@ public partial class ReorderListViewModel : ObservableObject
     {
         try
         {
-            var userRole = _authService.CurrentUser?.Role?.Name;
+            var userRole = "Owner";
             var res = await _supplierService.GetFlatListAsync(false, userRole);
             if (res.Success && res.Data != null)
             {
@@ -84,7 +81,7 @@ public partial class ReorderListViewModel : ObservableObject
         ErrorMessage = null;
         try
         {
-            var userRole = _authService.CurrentUser?.Role?.Name;
+            var userRole = "Owner";
             var result = await _inventoryService.GetReorderListAsync(userRole);
             if (result.Success && result.Data != null)
             {
@@ -143,7 +140,7 @@ public partial class ReorderListViewModel : ObservableObject
         }
 
         bool confirm = _dialogService.ShowConfirmation(
-            $"Create a draft purchase order for {selected.Count} items totaling ${SelectedTotalCost:N2}?",
+            $"Create a draft purchase order for {selected.Count} items totaling {ShopPOS.Core.Services.MoneyFormatter.Instance.Format(SelectedTotalCost)}?",
             "Confirm Purchase Draft");
 
         if (!confirm) return;
@@ -162,8 +159,8 @@ public partial class ReorderListViewModel : ObservableObject
                 }).ToList()
             };
 
-            var userId = _authService.CurrentUser?.Id;
-            var userRole = _authService.CurrentUser?.Role?.Name;
+            var userId = 1;
+            var userRole = "Owner";
 
             var result = await _inventoryService.CreatePurchaseDraftFromReorderAsync(dto, userId, userRole);
             if (result.Success && result.Data != null)

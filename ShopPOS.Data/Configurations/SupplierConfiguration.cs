@@ -40,6 +40,7 @@ public class SupplierConfiguration : IEntityTypeConfiguration<Supplier>
             .HasDefaultValue(true);
 
         builder.HasIndex(s => new { s.Name, s.Phone })
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("IsDeleted = 0");
     }
 }

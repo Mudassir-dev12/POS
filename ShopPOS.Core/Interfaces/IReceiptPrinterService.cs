@@ -25,11 +25,6 @@ public interface IReceiptPrinterService
     Task<ReceiptPrintResult> PrintReturnReceiptAsync(SaleReturnDetailDto returnDetail, ShopSetting settings, bool isDuplicate = false, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Builds and prints a shift reading or closing report (X or Z report).
-    /// </summary>
-    Task<ReceiptPrintResult> PrintShiftReportAsync(ShiftSummaryDto shift, ShopSetting settings, bool isZReport, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Prints a test receipt to verify printer connectivity, alignment, and paper cut.
     /// </summary>
     Task<ReceiptPrintResult> PrintTestReceiptAsync(ShopSetting settings, CancellationToken cancellationToken = default);
@@ -48,14 +43,4 @@ public interface IReceiptPrinterService
     /// Triggers the electronic cash drawer kick pulse via raw printer interface.
     /// </summary>
     Task<ReceiptPrintResult> OpenCashDrawerAsync(string? printerName = null);
-
-    /// <summary>
-    /// Legacy compatibility overload.
-    /// </summary>
-    Task<bool> PrintReceiptAsync(SaleDetailDto sale, ShopSettingDto settings, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Legacy compatibility overload.
-    /// </summary>
-    Task<bool> PrintReceiptAsync(int saleId, ShopSetting settings, CancellationToken cancellationToken = default);
 }

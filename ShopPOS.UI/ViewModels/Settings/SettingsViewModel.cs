@@ -10,10 +10,32 @@ namespace ShopPOS.UI.ViewModels.Settings;
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly IShopSettingService _shopSettingService;
-    private readonly IAuthService _authService;
-    private readonly IPermissionService _permissionService;
     private readonly IReceiptPrinterService? _receiptPrinterService;
+    private readonly Services.IThemeService? _themeService;
     private ShopSetting _currentSetting = null!;
+
+    [ObservableProperty]
+    private string _selectedTheme = "Light";
+
+    public ObservableCollection<string> AvailableThemes { get; } = new() { "Light", "Dark" };
+
+    partial void OnSelectedThemeChanged(string value)
+    {
+        if (_themeService != null && _themeService.CurrentTheme != value)
+        {
+            _themeService.SetTheme(value);
+        }
+    }
+
+    [RelayCommand]
+    public void ToggleTheme()
+    {
+        if (_themeService != null)
+        {
+            _themeService.ToggleTheme();
+            SelectedTheme = _themeService.CurrentTheme;
+        }
+    }
 
     [ObservableProperty]
     private string _shopName = "Shop POS";
@@ -28,7 +50,17 @@ public partial class SettingsViewModel : ObservableObject
     private string? _taxNumber;
 
     [ObservableProperty]
-    private string _currencySymbol = "$";
+    private string _currencySymbol = "Rs";
+
+    [ObservableProperty]
+    private int _currencyDecimals = 2;
+
+    public ObservableCollection<int> AllowedDecimals { get; } = new() { 0, 1, 2, 3 };
+
+    public string CurrencyPreview => new ShopPOS.Core.Services.MoneyFormatter(CurrencySymbol, CurrencyDecimals).Format(1234.50m);
+
+    partial void OnCurrencySymbolChanged(string value) => OnPropertyChanged(nameof(CurrencyPreview));
+    partial void OnCurrencyDecimalsChanged(int value) => OnPropertyChanged(nameof(CurrencyPreview));
 
     [ObservableProperty]
     private string? _receiptFooter;
@@ -48,13 +80,7 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _allowNegativeStock;
 
-    // Phase 5 Sales & POS Settings
-    [ObservableProperty]
-    private bool _requireOpenShiftForSales = true;
-
-    [ObservableProperty]
-    private bool _allowCreditSales = true;
-
+    // Sales & POS Settings
     [ObservableProperty]
     private bool _allowSellingBelowMinPrice;
 
@@ -83,7 +109,7 @@ public partial class SettingsViewModel : ObservableObject
     private int? _saleReturnWindowDays;
 
     [ObservableProperty]
-    private bool _isAdmin;
+    private bool _isAdmin = true;
 
     [ObservableProperty]
     private string? _errorMessage;
@@ -101,20 +127,18 @@ public partial class SettingsViewModel : ObservableObject
 
     public SettingsViewModel(
         IShopSettingService shopSettingService,
-        IAuthService authService,
-        IPermissionService permissionService,
-        IReceiptPrinterService? receiptPrinterService = null)
+        IReceiptPrinterService? receiptPrinterService = null,
+        Services.IThemeService? themeService = null)
     {
         _shopSettingService = shopSettingService;
-        _authService = authService;
-        _permissionService = permissionService;
         _receiptPrinterService = receiptPrinterService;
+        _themeService = themeService;
+        _selectedTheme = _themeService?.CurrentTheme ?? "Light";
     }
 
     public async Task InitializeAsync()
     {
         IsAdmin = true;
-
         IsLoading = true;
         try
         {
@@ -125,6 +149,7 @@ public partial class SettingsViewModel : ObservableObject
             Phone = _currentSetting.Phone;
             TaxNumber = _currentSetting.TaxNumber;
             CurrencySymbol = _currentSetting.CurrencySymbol;
+            CurrencyDecimals = _currentSetting.CurrencyDecimals;
             ReceiptFooter = _currentSetting.ReceiptFooter;
             ReceiptWidthMm = _currentSetting.ReceiptWidthMm > 0 ? _currentSetting.ReceiptWidthMm : 80;
             PrinterMode = _currentSetting.PrinterMode;
@@ -132,9 +157,6 @@ public partial class SettingsViewModel : ObservableObject
             CostingMethod = _currentSetting.CostingMethod;
             AllowNegativeStock = _currentSetting.AllowNegativeStock;
 
-            // Phase 5
-            RequireOpenShiftForSales = _currentSetting.RequireOpenShiftForSales;
-            AllowCreditSales = _currentSetting.AllowCreditSales;
             AllowSellingBelowMinPrice = _currentSetting.AllowSellingBelowMinPrice;
             PricesIncludeTax = _currentSetting.PricesIncludeTax;
             CashRoundingStep = _currentSetting.CashRoundingStep;
@@ -178,7 +200,7 @@ public partial class SettingsViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Could not load printer list: {ex.Message}";
+            ErrorMessage = $"Could not query printers: {ex.Message}";
         }
     }
 
@@ -190,38 +212,45 @@ public partial class SettingsViewModel : ObservableObject
 
         if (_receiptPrinterService == null) return;
 
-        var testSetting = new ShopSetting
-        {
-            ShopName = ShopName,
-            Address = Address,
-            Phone = Phone,
-            TaxNumber = TaxNumber,
-            CurrencySymbol = CurrencySymbol,
-            ReceiptFooter = ReceiptFooter,
-            ReceiptWidthMm = ReceiptWidthMm,
-            PrinterMode = PrinterMode,
-            ReceiptPrinterName = ReceiptPrinterName?.Trim(),
-            AutoPrintReceipt = AutoPrintReceipt,
-            OpenCashDrawerOnCashSale = OpenCashDrawerOnCashSale,
-            ReceiptCopies = 1
-        };
-
         IsLoading = true;
         try
         {
-            var result = await _receiptPrinterService.PrintTestReceiptAsync(testSetting);
-            if (result.Success)
+            var testDoc = new Core.Models.ReceiptDocument
             {
-                SuccessMessage = result.NoticeMessage ?? "Test print sent successfully.";
+                DocumentType = Core.Models.ReceiptDocumentType.TestSlip,
+                DocumentTitle = "TEST PRINTER SLIP",
+                ShopName = ShopName,
+                ShopAddress = Address,
+                ShopPhone = Phone,
+                ShopTaxNumber = TaxNumber,
+                ReceiptNumber = "TEST-001",
+                IssuedAt = DateTime.Now,
+                CashierName = "Owner",
+                PaperWidthMm = ReceiptWidthMm,
+                Lines = new List<Core.Models.ReceiptLineItem>
+                {
+                    new() { LineNo = 1, ProductName = "Sample Test Product", Quantity = 1, UnitPrice = 10.00m, LineTotal = 10.00m }
+                },
+                SubTotal = 10.00m,
+                GrandTotal = 10.00m,
+                PaidAmount = 10.00m,
+                FooterMessage = "ShopPOS test print verified successfully!"
+            };
+
+            var currentSettings = await _shopSettingService.GetSettingsAsync();
+            var printResult = await _receiptPrinterService.PrintReceiptAsync(testDoc, currentSettings);
+            if (printResult.Success)
+            {
+                SuccessMessage = printResult.NoticeMessage ?? "Test print command completed successfully.";
             }
             else
             {
-                ErrorMessage = result.ErrorMessage ?? "Test print failed. Please check printer connection.";
+                ErrorMessage = printResult.ErrorMessage ?? "Test print failed.";
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"Printer error: {ex.Message}";
+            ErrorMessage = $"Print error: {ex.Message}";
         }
         finally
         {
@@ -279,7 +308,8 @@ public partial class SettingsViewModel : ObservableObject
             _currentSetting.Address = Address?.Trim();
             _currentSetting.Phone = Phone?.Trim();
             _currentSetting.TaxNumber = TaxNumber?.Trim();
-            _currentSetting.CurrencySymbol = string.IsNullOrWhiteSpace(CurrencySymbol) ? "$" : CurrencySymbol.Trim();
+            _currentSetting.CurrencySymbol = string.IsNullOrWhiteSpace(CurrencySymbol) ? "Rs" : CurrencySymbol.Trim();
+            _currentSetting.CurrencyDecimals = Math.Clamp(CurrencyDecimals, 0, 3);
             ReceiptFooter = ReceiptFooter?.Trim();
             _currentSetting.ReceiptFooter = ReceiptFooter;
             _currentSetting.ReceiptWidthMm = ReceiptWidthMm;
@@ -288,9 +318,6 @@ public partial class SettingsViewModel : ObservableObject
             _currentSetting.CostingMethod = CostingMethod;
             _currentSetting.AllowNegativeStock = AllowNegativeStock;
 
-            // Phase 5
-            _currentSetting.RequireOpenShiftForSales = RequireOpenShiftForSales;
-            _currentSetting.AllowCreditSales = AllowCreditSales;
             _currentSetting.AllowSellingBelowMinPrice = AllowSellingBelowMinPrice;
             _currentSetting.PricesIncludeTax = PricesIncludeTax;
             _currentSetting.CashRoundingStep = CashRoundingStep;
@@ -302,6 +329,7 @@ public partial class SettingsViewModel : ObservableObject
             _currentSetting.SaleReturnWindowDays = SaleReturnWindowDays;
 
             await _shopSettingService.UpdateSettingsAsync(_currentSetting);
+            ShopPOS.Core.Services.MoneyFormatter.Instance.UpdateSettings(_currentSetting.CurrencySymbol, _currentSetting.CurrencyDecimals);
             SuccessMessage = "Settings saved successfully.";
         }
         catch (Exception ex)

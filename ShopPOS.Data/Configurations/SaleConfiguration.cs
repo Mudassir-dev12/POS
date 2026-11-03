@@ -25,8 +25,6 @@ public class SaleConfiguration : IEntityTypeConfiguration<Sale>
         builder.HasIndex(s => s.HoldNumber);
 
         builder.HasIndex(s => new { s.Status, s.SaleDate });
-        builder.HasIndex(s => s.CustomerId);
-        builder.HasIndex(s => s.ShiftId);
 
         builder.Property(s => s.SubTotal).HasConversion<MoneyConverter>();
         builder.Property(s => s.LineDiscountTotal).HasConversion<MoneyConverter>();
@@ -42,19 +40,9 @@ public class SaleConfiguration : IEntityTypeConfiguration<Sale>
         builder.Property(s => s.Notes).HasMaxLength(1000);
         builder.Property(s => s.CancelReason).HasMaxLength(500);
 
-        builder.HasOne(s => s.Customer)
-            .WithMany(c => c.Sales)
-            .HasForeignKey(s => s.CustomerId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasOne(s => s.PriceLevel)
             .WithMany()
             .HasForeignKey(s => s.PriceLevelId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(s => s.Shift)
-            .WithMany(sh => sh.Sales)
-            .HasForeignKey(s => s.ShiftId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(s => s.Items)
@@ -73,4 +61,3 @@ public class SaleConfiguration : IEntityTypeConfiguration<Sale>
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
-

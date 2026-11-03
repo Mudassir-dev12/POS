@@ -26,7 +26,6 @@ public class AppDbContext : DbContext
     public DbSet<PriceLevel> PriceLevels => Set<PriceLevel>();
     public DbSet<ProductPrice> ProductPrices => Set<ProductPrice>();
     public DbSet<Supplier> Suppliers => Set<Supplier>();
-    public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<Purchase> Purchases => Set<Purchase>();
@@ -37,8 +36,6 @@ public class AppDbContext : DbContext
     public DbSet<NumberSequence> NumberSequences => Set<NumberSequence>();
     public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
     public DbSet<StockAdjustmentItem> StockAdjustmentItems => Set<StockAdjustmentItem>();
-    public DbSet<Shift> Shifts => Set<Shift>();
-    public DbSet<CashMovement> CashMovements => Set<CashMovement>();
     public DbSet<Sale> Sales => Set<Sale>();
     public DbSet<SaleItem> SaleItems => Set<SaleItem>();
     public DbSet<SalePayment> SalePayments => Set<SalePayment>();
@@ -87,15 +84,20 @@ public class AppDbContext : DbContext
         {
             if (entry.State == EntityState.Added)
             {
-                if (entry.Entity.CreatedAt == default)
-                {
-                    entry.Entity.CreatedAt = now;
-                }
+                entry.Entity.CreatedAt = now;
                 entry.Entity.UpdatedAt = now;
             }
             else if (entry.State == EntityState.Modified)
             {
                 entry.Entity.UpdatedAt = now;
+            }
+        }
+
+        foreach (var productEntry in ChangeTracker.Entries<Product>())
+        {
+            if (productEntry.State == EntityState.Added || productEntry.State == EntityState.Modified)
+            {
+                productEntry.Entity.SearchText = productEntry.Entity.ComputeSearchText();
             }
         }
     }

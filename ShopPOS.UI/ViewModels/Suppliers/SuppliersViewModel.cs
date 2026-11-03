@@ -15,13 +15,11 @@ public partial class SuppliersViewModel : BaseCrudViewModel<SupplierDto>
 
     public SuppliersViewModel(
         ISupplierService supplierService,
-        IAuthService authService,
-        IPermissionService permissionService,
         IShopSettingService shopSettingService,
         IDialogService dialogService,
         ISupplierLedgerService? ledgerService = null,
         INavigationService? navigationService = null)
-        : base(authService, permissionService, shopSettingService)
+        : base(shopSettingService, dialogService)
     {
         _supplierService = supplierService;
         _dialogService = dialogService;
@@ -31,27 +29,14 @@ public partial class SuppliersViewModel : BaseCrudViewModel<SupplierDto>
 
     protected override void ApplyPermissions()
     {
-        string? role = GetCurrentRole();
-        bool canAccess = PermissionService.CanAccessSuppliers(role);
-
-        CanAdd = canAccess;
-        CanEdit = canAccess;
-        CanDelete = canAccess;
-        CanDeactivate = canAccess;
-
-        if (!canAccess)
-        {
-            ErrorMessage = "Access Denied: Cashiers do not have permission to view or manage Suppliers.";
-        }
+        CanAdd = true;
+        CanEdit = true;
+        CanDelete = true;
+        CanDeactivate = true;
     }
 
     public override async Task LoadDataAsync(CancellationToken cancellationToken = default)
     {
-        if (!PermissionService.CanAccessSuppliers(GetCurrentRole()))
-        {
-            ErrorMessage = "Access Denied: Cashiers do not have permission to access Suppliers.";
-            return;
-        }
 
         IsLoading = true;
         ErrorMessage = null;
@@ -175,4 +160,20 @@ public partial class SuppliersViewModel : BaseCrudViewModel<SupplierDto>
             _navigationService.NavigateTo("SupplierLedger", target.Id);
         }
     }
+
+    protected override async Task<IReadOnlyList<int>> FetchAllFilteredIdsAsync()
+    {
+        return await _supplierService.GetFilteredSupplierIdsAsync(SearchTerm, ShowInactive);
+    }
+
+    protected override async Task<BulkOperationResult> ExecuteBulkDeleteAsync(IReadOnlyList<int> ids)
+    {
+        return await _supplierService.BulkDeleteAsync(ids, GetCurrentUserId());
+    }
+
+    protected override async Task<BulkOperationResult> ExecuteBulkDeactivateAsync(IReadOnlyList<int> ids)
+    {
+        return await _supplierService.BulkDeactivateAsync(ids, GetCurrentUserId());
+    }
+
 }

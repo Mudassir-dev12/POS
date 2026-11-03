@@ -8,10 +8,8 @@
         Title="{Binding Title}"
         Height="280"
         Width="480"
-        WindowStartupLocation="CenterOwner"
+        Style="{StaticResource DialogWindowStyle}"
         ResizeMode="NoResize"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
         Loaded="Window_Loaded">
 
     <Grid Margin="22">
@@ -24,8 +22,8 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="18" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,6" />
-        <TextBlock Grid.Row="1" Text="{Binding Message}" FontSize="13" Foreground="#475569" TextWrapping="Wrap" Margin="0,0,0,12" />
+        <TextBlock Grid.Row="0" Text="{Binding Title}" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,6" />
+        <TextBlock Grid.Row="1" Text="{Binding Message}" Style="{StaticResource SubTitleStyle}" TextWrapping="Wrap" Margin="0,0,0,12" />
 
         <!-- Input Box -->
         <TextBox x:Name="ReasonInput"
@@ -34,20 +32,17 @@
                  AcceptsReturn="True"
                  TextWrapping="Wrap"
                  VerticalScrollBarVisibility="Auto"
-                 FontSize="13"
+                 Style="{StaticResource InputTextBoxStyle}"
                  Padding="8"
-                 BorderBrush="#CBD5E1"
-                 BorderThickness="1"
                  Margin="0,0,0,8" />
 
         <!-- Error message -->
-        <TextBlock Grid.Row="3" Text="{Binding ErrorMessage}" Foreground="#DC2626" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,12" />
+        <TextBlock Grid.Row="3" Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerBrush}" FontSize="12" FontWeight="SemiBold" Margin="0,0,0,12" />
 
         <!-- Action Buttons -->
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Cancel" Click="Cancel_Click" Background="White" Foreground="#475569" BorderBrush="#CBD5E1" BorderThickness="1" Padding="16,7" Margin="0,0,8,0" Cursor="Hand" />
-            <Button Content="Confirm" Click="Confirm_Click" Background="#DC2626" Foreground="White" FontWeight="Bold" Padding="18,7" BorderThickness="0" Cursor="Hand" />
+            <Button Content="Cancel" Click="Cancel_Click" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
+            <Button Content="Confirm" Click="Confirm_Click" Style="{StaticResource DangerButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>
-

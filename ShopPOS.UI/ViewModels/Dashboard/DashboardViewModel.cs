@@ -1,8 +1,14 @@
+using System;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using ShopPOS.Core.DTOs;
 using ShopPOS.Core.Enums;
 using ShopPOS.Core.Interfaces;
+using ShopPOS.UI.Services;
 
 namespace ShopPOS.UI.ViewModels.Dashboard;
 
@@ -10,11 +16,9 @@ public partial class DashboardViewModel : ObservableObject
 {
     private readonly IInventoryService _inventoryService;
     private readonly ISaleService _saleService;
-    private readonly IShiftService _shiftService;
-    private readonly ICustomerService _customerService;
-    private readonly ICustomerBalanceQuery _customerBalanceQuery;
-    private readonly IAuthService _authService;
-    private readonly Services.INavigationService _navigationService;
+    private readonly ISupplierService _supplierService;
+    private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly INavigationService _navigationService;
 
     [ObservableProperty]
     private bool _isLoading;
@@ -25,7 +29,11 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private DashboardStatsDto? _stats;
 
-    // Phase 5 Sales & Cash Metrics
+    // Temporal Header
+    [ObservableProperty]
+    private string _todayDateFormatted = DateTime.Today.ToString("dddd, d MMMM yyyy", CultureInfo.InvariantCulture).ToUpperInvariant();
+
+    // Sales & POS Metrics
     [ObservableProperty]
     private int _todaySalesCount;
 
@@ -36,48 +44,48 @@ public partial class DashboardViewModel : ObservableObject
     private decimal _todayProfit;
 
     [ObservableProperty]
-    private decimal _cashInDrawerExpected;
+    private string _salesVsYesterdayText = string.Empty;
+
+    [ObservableProperty]
+    private string _profitVsYesterdayText = string.Empty;
+
+    [ObservableProperty]
+    private string _salesCountVsYesterdayText = string.Empty;
 
     [ObservableProperty]
     private int _heldBillsCount;
 
     [ObservableProperty]
-    private decimal _customersOwingTotal;
+    private decimal _supplierPayables;
+
+    // Daily Checklist
+    [ObservableProperty]
+    private bool _checklistSaleMade;
 
     [ObservableProperty]
-    private bool _isCashier;
+    private bool _checklistLowStockChecked;
 
     [ObservableProperty]
-    private string _welcomeMessage = "Welcome to ShopPOS";
+    private bool _checklistBackupCurrent;
 
     public DashboardViewModel(
         IInventoryService inventoryService,
         ISaleService saleService,
-        IShiftService shiftService,
-        ICustomerService customerService,
-        ICustomerBalanceQuery customerBalanceQuery,
-        IAuthService authService,
-        Services.INavigationService navigationService)
+        ISupplierService supplierService,
+        ICurrentUserProvider currentUserProvider,
+        INavigationService navigationService)
     {
         _inventoryService = inventoryService;
         _saleService = saleService;
-        _shiftService = shiftService;
-        _customerService = customerService;
-        _customerBalanceQuery = customerBalanceQuery;
-        _authService = authService;
+        _supplierService = supplierService;
+        _currentUserProvider = currentUserProvider;
         _navigationService = navigationService;
-
-        IsCashier = false;
-        if (_authService.CurrentUser != null)
-        {
-            WelcomeMessage = $"Welcome back, {_authService.CurrentUser.FullName}";
-        }
     }
 
     [RelayCommand]
-    public void QuickStartPos()
+    public void StartSelling()
     {
-        _navigationService.NavigateTo("POS");
+        _navigationService.NavigateTo("Sales");
     }
 
     [RelayCommand]
@@ -93,7 +101,13 @@ public partial class DashboardViewModel : ObservableObject
     }
 
     [RelayCommand]
-    public void OpenSales()
+    public void OpenProducts()
+    {
+        _navigationService.NavigateTo("Products");
+    }
+
+    [RelayCommand]
+    public void OpenSalesList()
     {
         _navigationService.NavigateTo("SalesList");
     }
@@ -101,19 +115,13 @@ public partial class DashboardViewModel : ObservableObject
     [RelayCommand]
     public void OpenHeldBills()
     {
-        _navigationService.NavigateTo("POS");
+        _navigationService.NavigateTo("Sales");
     }
 
     [RelayCommand]
-    public void OpenCustomersOwing()
+    public void OpenSupplierPayables()
     {
-        _navigationService.NavigateTo("Customers");
-    }
-
-    [RelayCommand]
-    public void OpenShifts()
-    {
-        _navigationService.NavigateTo("Shifts");
+        _navigationService.NavigateTo("SupplierLedger");
     }
 
     [RelayCommand]
@@ -127,24 +135,26 @@ public partial class DashboardViewModel : ObservableObject
     {
         IsLoading = true;
         ErrorMessage = null;
+        TodayDateFormatted = DateTime.Today.ToString("dddd, d MMMM yyyy", CultureInfo.InvariantCulture).ToUpperInvariant();
+
         try
         {
-            var userRole = _authService.CurrentUser?.Role?.Name;
-            var result = await _inventoryService.GetDashboardStatsAsync(userRole);
-            if (result.Success)
+            // 1. Inventory & Stock Stats
+            var result = await _inventoryService.GetDashboardStatsAsync("Owner");
+            if (result.Success && result.Data != null)
             {
                 Stats = result.Data;
             }
             else
             {
-                ErrorMessage = result.ErrorMessage ?? "Failed to load dashboard metrics.";
+                ErrorMessage = result.ErrorMessage;
             }
 
-            // Load Phase 5 Sales & POS Stats
+            // 2. Today's Sales
             var todayStart = DateTime.Today;
             var todayEnd = DateTime.Today.AddDays(1).AddTicks(-1);
 
-            var salesResult = await _saleService.SearchSalesAsync(new SaleSearchDto
+            var todaySalesResult = await _saleService.SearchSalesAsync(new SaleSearchDto
             {
                 DateFrom = todayStart,
                 DateTo = todayEnd,
@@ -152,38 +162,71 @@ public partial class DashboardViewModel : ObservableObject
                 PageSize = 1000
             });
 
-            TodaySalesCount = salesResult.TotalCount;
-            TodaySalesTotal = salesResult.Items.Sum(s => s.GrandTotal);
-            TodayProfit = salesResult.Items.Sum(s => s.Profit);
+            TodaySalesCount = todaySalesResult.TotalCount;
+            TodaySalesTotal = todaySalesResult.Items.Sum(s => s.GrandTotal);
+            TodayProfit = todaySalesResult.Items.Sum(s => s.Profit);
 
-            // Held bills count
+            // 3. Yesterday's Sales for genuine comparison
+            var yesterdayStart = DateTime.Today.AddDays(-1);
+            var yesterdayEnd = DateTime.Today.AddTicks(-1);
+
+            var yesterdayResult = await _saleService.SearchSalesAsync(new SaleSearchDto
+            {
+                DateFrom = yesterdayStart,
+                DateTo = yesterdayEnd,
+                Status = SaleStatus.Completed,
+                PageSize = 1000
+            });
+
+            decimal yesterdaySalesTotal = yesterdayResult.Items.Sum(s => s.GrandTotal);
+            decimal yesterdayProfit = yesterdayResult.Items.Sum(s => s.Profit);
+            int yesterdayCount = yesterdayResult.TotalCount;
+
+            if (yesterdaySalesTotal > 0)
+            {
+                decimal salesDiff = ((TodaySalesTotal - yesterdaySalesTotal) / yesterdaySalesTotal) * 100m;
+                SalesVsYesterdayText = $"{(salesDiff >= 0 ? "+" : "")}{salesDiff:N1}% vs yesterday";
+            }
+            else
+            {
+                SalesVsYesterdayText = string.Empty;
+            }
+
+            if (yesterdayProfit > 0)
+            {
+                decimal profitDiff = ((TodayProfit - yesterdayProfit) / yesterdayProfit) * 100m;
+                ProfitVsYesterdayText = $"{(profitDiff >= 0 ? "+" : "")}{profitDiff:N1}% vs yesterday";
+            }
+            else
+            {
+                ProfitVsYesterdayText = string.Empty;
+            }
+
+            if (yesterdayCount > 0)
+            {
+                int countDiff = TodaySalesCount - yesterdayCount;
+                SalesCountVsYesterdayText = $"{(countDiff >= 0 ? "+" : "")}{countDiff} vs yesterday";
+            }
+            else
+            {
+                SalesCountVsYesterdayText = string.Empty;
+            }
+
+            // 4. Held Bills
             var heldResult = await _saleService.ListHeldBillsAsync();
             HeldBillsCount = heldResult.Success && heldResult.Data != null ? heldResult.Data.Count : 0;
 
-            // Shift expected cash
-            var shiftResult = await _shiftService.GetCurrentOpenShiftAsync();
-            if (shiftResult.Success && shiftResult.Data != null)
+            // 5. Supplier Payables
+            var suppliersRes = await _supplierService.GetFlatListAsync();
+            if (suppliersRes.Success && suppliersRes.Data != null)
             {
-                var shiftSummary = await _shiftService.GetShiftSummaryAsync(shiftResult.Data.Id);
-                CashInDrawerExpected = shiftSummary.Success && shiftSummary.Data != null ? shiftSummary.Data.ExpectedCash : 0m;
-            }
-            else
-            {
-                CashInDrawerExpected = 0m;
+                SupplierPayables = suppliersRes.Data.Sum(s => Math.Max(0m, s.CurrentBalance));
             }
 
-            // Customers owing total
-            var customersRes = await _customerService.GetFlatListAsync(false);
-            if (customersRes.Success && customersRes.Data != null && customersRes.Data.Count > 0)
-            {
-                var customerIds = customersRes.Data.Select(c => c.Id).ToList();
-                var balances = await _customerBalanceQuery.GetCustomerBalancesBatchAsync(customerIds);
-                CustomersOwingTotal = balances.Values.Where(b => b > 0m).Sum();
-            }
-            else
-            {
-                CustomersOwingTotal = 0m;
-            }
+            // 6. Checklist Status (derived from real data)
+            ChecklistSaleMade = TodaySalesCount > 0;
+            ChecklistLowStockChecked = Stats != null && Stats.LowStockCount == 0;
+            ChecklistBackupCurrent = CheckIfBackupExists();
         }
         catch (Exception ex)
         {
@@ -193,5 +236,23 @@ public partial class DashboardViewModel : ObservableObject
         {
             IsLoading = false;
         }
+    }
+
+    private bool CheckIfBackupExists()
+    {
+        try
+        {
+            string backupDir = @"C:\ShopData\Backups";
+            if (Directory.Exists(backupDir))
+            {
+                var files = Directory.GetFiles(backupDir, "*.db");
+                return files.Length > 0;
+            }
+        }
+        catch
+        {
+            // Ignore access errors
+        }
+        return false;
     }
 }

@@ -29,7 +29,7 @@ public class ReceiptPrintingTests
             Address = "742 Evergreen Terrace",
             Phone = "555-0199",
             TaxNumber = "VAT-98765432",
-            CurrencySymbol = "$",
+            CurrencySymbol = "Rs",
             ReceiptFooter = "Thank you for shopping local!",
             ReceiptWidthMm = 80,
             PrinterMode = PrinterMode.PdfPreview,
@@ -47,8 +47,6 @@ public class ReceiptPrintingTests
             Id = 42,
             SaleNumber = "INV-2026-000042",
             SaleDate = new DateTime(2026, 11, 1, 14, 30, 0),
-            CustomerId = isCredit || withDue ? 10 : null,
-            CustomerName = isCredit || withDue ? "Homer Simpson" : null,
             SubTotal = 50.00m,
             LineDiscountTotal = 2.00m,
             BillDiscountAmount = 3.00m,
@@ -143,23 +141,7 @@ public class ReceiptPrintingTests
         doc.ReprintCount.Should().Be(2);
     }
 
-    [Fact]
-    public void ReceiptBuilder_SaleWithDueAndCustomerBalance_ShouldIncludeBalances()
-    {
-        // Arrange
-        var sale = CreateSampleSale(withDue: true);
-        decimal prevBalance = 100.00m;
-
-        // Act
-        var doc = _receiptBuilder.BuildFromSale(sale, _defaultSetting, customerPrevBalance: prevBalance);
-
-        // Assert
-        doc.CustomerName.Should().Be("Homer Simpson");
-        doc.DueAmount.Should().Be(19.50m);
-        doc.CustomerPreviousBalance.Should().Be(100.00m);
-        doc.CustomerNewBalance.Should().Be(119.50m);
-    }
-
+    
     [Fact]
     public void EscPosGenerator_WordWrap_ShouldBreakLongNamesCleanly()
     {
@@ -189,17 +171,17 @@ public class ReceiptPrintingTests
     public void EscPosGenerator_Justify_ShouldProduceExactColumnWidth()
     {
         // Act
-        string line32 = EscPosGenerator.Justify("Subtotal:", "$49.50", 32);
-        string line48 = EscPosGenerator.Justify("GRAND TOTAL:", "$49.50", 48);
+        string line32 = EscPosGenerator.Justify("Subtotal:", "Rs 49.50", 32);
+        string line48 = EscPosGenerator.Justify("GRAND TOTAL:", "Rs 49.50", 48);
 
         // Assert
         line32.Length.Should().Be(32);
         line32.Should().StartWith("Subtotal:");
-        line32.Should().EndWith("$49.50");
+        line32.Should().EndWith("Rs 49.50");
 
         line48.Length.Should().Be(48);
         line48.Should().StartWith("GRAND TOTAL:");
-        line48.Should().EndWith("$49.50");
+        line48.Should().EndWith("Rs 49.50");
     }
 
     [Fact]
@@ -353,12 +335,10 @@ public class ReceiptPrintingTests
             mockSaleService.Object,
             new SaleCalculator(),
             new Mock<IProductLookupService>().Object,
-            new Mock<IShiftService>().Object,
-            new Mock<ICustomerService>().Object,
             new Mock<IProductService>().Object,
+            new Mock<IPriceLevelService>().Object,
             new Mock<IStockLedgerQuery>().Object,
             mockShopSettingService.Object,
-            new Mock<ICustomerBalanceQuery>().Object,
             mockDialogService.Object,
             new Mock<INavigationService>().Object,
             mockPrinterService.Object);

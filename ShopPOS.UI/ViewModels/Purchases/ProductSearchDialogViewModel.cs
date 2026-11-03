@@ -34,6 +34,7 @@ public partial class ProductSearchItemViewModel : ObservableObject
 public partial class ProductSearchDialogViewModel : ObservableObject
 {
     private readonly IProductService _productService;
+    private readonly IProductSearchService? _productSearchService;
     private readonly HashSet<int> _existingProductIds = new();
     private CancellationTokenSource? _searchCts;
 
@@ -56,9 +57,10 @@ public partial class ProductSearchDialogViewModel : ObservableObject
 
     public event Action<IReadOnlyList<ProductListItemDto>?>? RequestClose;
 
-    public ProductSearchDialogViewModel(IProductService productService)
+    public ProductSearchDialogViewModel(IProductService productService, IProductSearchService? productSearchService = null)
     {
         _productService = productService;
+        _productSearchService = productSearchService;
     }
 
     public void SetExistingProductIds(IEnumerable<int> ids)
@@ -111,6 +113,35 @@ public partial class ProductSearchDialogViewModel : ObservableObject
         IsLoading = true;
         try
         {
+            if (_productSearchService != null && !string.IsNullOrWhiteSpace(term))
+            {
+                var matches = await _productSearchService.SearchProductsAsync(term, null, 50, cancellationToken);
+                Products.Clear();
+                foreach (var m in matches)
+                {
+                    bool isAlreadyAdded = _existingProductIds.Contains(m.ProductId);
+                    var itemDto = new ProductListItemDto
+                    {
+                        Id = m.ProductId,
+                        Name = m.Name,
+                        Sku = m.Sku,
+                        Barcode = m.Barcode,
+                        SalePrice = m.SalePrice,
+                        CostPrice = 0m,
+                        CurrentStock = m.CurrentStock,
+                        ReorderLevel = m.ReorderLevel,
+                        TrackStock = m.TrackStock,
+                        UnitName = m.UnitName,
+                        UnitShortName = m.UnitShortName,
+                        IsActive = true
+                    };
+                    Products.Add(new ProductSearchItemViewModel(itemDto, isAlreadyAdded));
+                }
+                SelectedItem = Products.FirstOrDefault(p => !p.IsAlreadyInDocument) ?? Products.FirstOrDefault();
+                SelectAll = false;
+                return;
+            }
+
             var query = new ProductSearchQuery
             {
                 SearchTerm = term,

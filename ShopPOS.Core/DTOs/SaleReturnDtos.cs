@@ -1,3 +1,4 @@
+using ShopPOS.Core.Interfaces;
 using ShopPOS.Core.Enums;
 
 namespace ShopPOS.Core.DTOs;
@@ -16,8 +17,6 @@ public class CreateSaleReturnItemDto
 public class CreateSaleReturnDto
 {
     public int? SaleId { get; set; }
-    public int? CustomerId { get; set; }
-    public int? ShiftId { get; set; }
     public PaymentMethod RefundMethod { get; set; } = PaymentMethod.Cash;
     public string? Reason { get; set; }
     public List<CreateSaleReturnItemDto> Items { get; set; } = new();
@@ -61,17 +60,14 @@ public class SaleReturnItemDetailDto
     public bool ReturnToStock { get; set; }
 }
 
-public class SaleReturnDetailDto
+public class SaleReturnDetailDto : ISelectable
 {
+    public bool IsSelected { get; set; }
     public int Id { get; set; }
     public string ReturnNumber { get; set; } = string.Empty;
     public DateTime ReturnDate { get; set; }
     public int? SaleId { get; set; }
     public string? SaleNumber { get; set; }
-    public int? CustomerId { get; set; }
-    public string? CustomerName { get; set; }
-    public int? ShiftId { get; set; }
-    public string? ShiftNumber { get; set; }
     public SaleReturnStatus Status { get; set; }
     public decimal SubTotal { get; set; }
     public decimal TaxAmount { get; set; }
@@ -88,12 +84,9 @@ public class SaleReturnSearchDto
 {
     public string? SearchTerm { get; set; }
     public int? SaleId { get; set; }
-    public int? CustomerId { get; set; }
-    public int? ShiftId { get; set; }
     public SaleReturnStatus? Status { get; set; }
     public DateTime? DateFrom { get; set; }
     public DateTime? DateTo { get; set; }
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 50;
 }
-

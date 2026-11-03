@@ -13,9 +13,7 @@
         Width="1280"
         MinHeight="680"
         MinWidth="1024"
-        WindowStartupLocation="CenterOwner"
-        Background="#F1F5F9"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+        Style="{StaticResource DialogWindowStyle}"
         Loaded="Window_Loaded">
 
     <Window.Resources>
@@ -55,8 +53,8 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Purchase Invoice: " FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="{Binding PurchaseNumber}" FontSize="22" FontWeight="Bold" Foreground="#2563EB" Margin="4,0,12,0" />
+                <TextBlock Text="Purchase Invoice: " Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="{Binding PurchaseNumber}" Style="{StaticResource PageTitleStyle}" Foreground="{DynamicResource PrimaryBrush}" Margin="4,0,12,0" />
 
                 <!-- Status Badge -->
                 <Border CornerRadius="4" Padding="8,3" VerticalAlignment="Center"
@@ -79,20 +77,20 @@
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="Shortcuts: Ctrl+S = Save Draft  •  Ctrl+Enter = Post  •  F2 = Search Product  •  Esc = Close"
-                           FontSize="12" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,16,0" />
+                           Style="{StaticResource MutedLabelStyle}" VerticalAlignment="Center" Margin="0,0,16,0" />
             </StackPanel>
         </Grid>
 
         <!-- ================= BANNERS ================= -->
         <StackPanel Grid.Row="1" Margin="0,0,0,10">
             <!-- Read-Only Posted Banner -->
-            <Border Background="#DCFCE7" BorderBrush="#86EFAC" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,6"
+            <Border Background="{DynamicResource SuccessBackgroundBrush}" BorderBrush="{DynamicResource SuccessBrush}" BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,6"
                     Visibility="{Binding IsReadOnly, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="🔒 LOCKED DOCUMENT: " FontWeight="Bold" Foreground="#15803D" />
+                    <TextBlock Text=" LOCKED DOCUMENT: " FontWeight="Bold" Foreground="{DynamicResource SuccessTextBrush}" />
                     <TextBlock Text="This purchase has been posted/cancelled and is immutable. Inventory movements and balances are locked."
-                               Foreground="#166534" />
-                    <TextBlock Text="{Binding PostedAt, StringFormat=' (Posted: {0:yyyy-MM-dd HH:mm})'}" Foreground="#15803D" FontWeight="SemiBold" />
+                               Foreground="{DynamicResource SuccessTextBrush}" />
+                    <TextBlock Text="{Binding PostedAt, Converter={StaticResource DateDisplayConverter}, StringFormat=' (Posted: {0})'}" Foreground="{DynamicResource SuccessTextBrush}" FontWeight="SemiBold" />
                 </StackPanel>
             </Border>
 
@@ -100,10 +98,10 @@
             <ItemsControl ItemsSource="{Binding Warnings}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="#FEF3C7" BorderBrush="#FCD34D" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,4">
+                        <Border Background="{DynamicResource WarningBackgroundBrush}" BorderBrush="{DynamicResource WarningBrush}" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,4">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="⚠️ Warning: " FontWeight="Bold" Foreground="#B45309" />
-                                <TextBlock Text="{Binding}" Foreground="#92400E" FontWeight="Medium" />
+                                <TextBlock Text=" Warning: " FontWeight="Bold" Foreground="{DynamicResource WarningTextBrush}" />
+                                <TextBlock Text="{Binding}" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Medium" />
                             </StackPanel>
                         </Border>
                     </DataTemplate>
@@ -111,14 +109,14 @@
             </ItemsControl>
 
             <!-- Error Banner -->
-            <Border Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,6"
+            <Border Background="{DynamicResource DangerBackgroundBrush}" BorderBrush="{DynamicResource DangerBrush}" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,6"
                     Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
-                <TextBlock Text="{Binding ErrorMessage}" Foreground="#B91C1C" FontWeight="Bold" />
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerBrush}" FontWeight="Bold" />
             </Border>
         </StackPanel>
 
         <!-- ================= INVOICE HEADER INPUTS ================= -->
-        <Border Grid.Row="2" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="16,12" Margin="0,0,0,12">
+        <Border Grid.Row="2" Style="{StaticResource FilterBarStyle}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -136,18 +134,17 @@
 
                 <!-- Supplier Picker -->
                 <StackPanel Grid.Row="0" Grid.Column="0">
-                    <TextBlock Text="VENDOR / SUPPLIER *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBlock Text="VENDOR / SUPPLIER *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                     <ComboBox ItemsSource="{Binding Suppliers}"
                               SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
                               DisplayMemberPath="Name"
                               IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
-                              Padding="8,6"
-                              FontSize="13" />
+                              Style="{StaticResource InputComboBoxStyle}" />
                 </StackPanel>
 
                 <!-- Purchase Date -->
                 <StackPanel Grid.Row="0" Grid.Column="2">
-                    <TextBlock Text="PURCHASE DATE *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBlock Text="PURCHASE DATE *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                     <DatePicker SelectedDate="{Binding PurchaseDate, Mode=TwoWay}"
                                 IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
                                 Padding="6,4"
@@ -156,7 +153,7 @@
 
                 <!-- Due Date -->
                 <StackPanel Grid.Row="0" Grid.Column="4">
-                    <TextBlock Text="PAYMENT DUE DATE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBlock Text="PAYMENT DUE DATE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                     <DatePicker SelectedDate="{Binding DueDate, Mode=TwoWay}"
                                 IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
                                 Padding="6,4"
@@ -165,20 +162,18 @@
 
                 <!-- Supplier Invoice No -->
                 <StackPanel Grid.Row="0" Grid.Column="6">
-                    <TextBlock Text="SUPPLIER INVOICE #" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBlock Text="SUPPLIER INVOICE #" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                     <TextBox Text="{Binding SupplierInvoiceNo, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                              IsReadOnly="{Binding IsReadOnly}"
-                             Padding="8,5"
-                             FontSize="13" />
+                             Style="{StaticResource InputTextBoxStyle}" />
                 </StackPanel>
 
                 <!-- Notes / Remarks (Row 1 spanning full width) -->
                 <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="7" Margin="0,10,0,0">
-                    <TextBlock Text="NOTES / RECEIVING MEMO" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBlock Text="NOTES / RECEIVING MEMO" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                     <TextBox Text="{Binding Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                              IsReadOnly="{Binding IsReadOnly}"
-                             Padding="8,4"
-                             FontSize="12" />
+                             Style="{StaticResource InputTextBoxStyle}" />
                 </StackPanel>
             </Grid>
         </Border>
@@ -201,7 +196,7 @@
                 </Grid.RowDefinitions>
 
                 <!-- Scan Bar -->
-                <Border Grid.Row="0" Background="#EEF2F6" CornerRadius="6" BorderBrush="#CBD5E1" BorderThickness="1" Padding="10,6" Margin="0,0,0,8"
+                <Border Grid.Row="0" Style="{StaticResource SurfaceCardStyle}" Padding="10,6" Margin="0,0,0,8"
                         Visibility="{Binding IsReadOnly, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -213,54 +208,33 @@
                         <TextBox x:Name="BarcodeScannerBox"
                                  Grid.Column="0"
                                  Text="{Binding BarcodeInput, UpdateSourceTrigger=PropertyChanged}"
-                                 Padding="8,5"
-                                 FontSize="13"
-                                 BorderBrush="#CBD5E1"
+                                 Style="{StaticResource InputTextBoxStyle}"
                                  KeyDown="BarcodeScannerBox_KeyDown">
-                            <TextBox.Style>
-                                <Style TargetType="TextBox">
-                                    <Style.Resources>
-                                        <VisualBrush x:Key="CueBannerBrush" AlignmentX="Left" AlignmentY="Center" Stretch="None">
-                                            <VisualBrush.Visual>
-                                                <TextBlock Text="📷 Scan barcode with USB scanner, or type SKU / Name and press Enter..." Foreground="#94A3B8" FontSize="12" Margin="6,0,0,0" />
-                                            </VisualBrush.Visual>
-                                        </VisualBrush>
-                                    </Style.Resources>
-                                    <Style.Triggers>
-                                        <Trigger Property="Text" Value="">
-                                            <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBox.Style>
+                            <TextBox.Resources>
+                                <VisualBrush x:Key="CueBannerBrush" AlignmentX="Left" AlignmentY="Center" Stretch="None">
+                                    <VisualBrush.Visual>
+                                        <TextBlock Text=" Scan barcode with USB scanner, or type SKU / Name and press Enter..." Foreground="{DynamicResource TextMutedBrush}" FontSize="12" Margin="6,0,0,0" />
+                                    </VisualBrush.Visual>
+                                </VisualBrush>
+                            </TextBox.Resources>
                         </TextBox>
 
                         <Button Grid.Column="1"
                                 Content="Add Item (Enter)"
                                 Command="{Binding AddScannedProductCommand}"
-                                Background="#0284C7"
-                                Foreground="White"
-                                FontWeight="Bold"
-                                Padding="12,5"
-                                Margin="8,0,0,0"
-                                BorderThickness="0"
-                                Cursor="Hand" />
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Margin="8,0,0,0" />
 
                         <Button Grid.Column="2"
-                                Content="🔍 Search Catalog (F2)"
+                                Content="Search Catalog (F2)"
                                 Command="{Binding OpenProductSearchCommand}"
-                                Background="#334155"
-                                Foreground="White"
-                                FontWeight="SemiBold"
-                                Padding="12,5"
-                                Margin="8,0,0,0"
-                                BorderThickness="0"
-                                Cursor="Hand" />
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Margin="8,0,0,0" />
                     </Grid>
                 </Border>
 
                 <!-- Table -->
-                <Border Grid.Row="1" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1">
+                <Border Grid.Row="1" Style="{StaticResource TableContainerBorderStyle}">
                     <DataGrid x:Name="LinesGrid"
                               ItemsSource="{Binding LineItems}"
                               SelectedItem="{Binding SelectedLine, Mode=TwoWay}"
@@ -269,59 +243,56 @@
                               IsReadOnly="{Binding IsReadOnly}"
                               SelectionMode="Single"
                               SelectionUnit="FullRow"
+                              Style="{StaticResource AppDataGridStyle}"
                               RowHeight="36"
-                              Background="White"
-                              BorderThickness="0"
                               PreviewKeyDown="LinesGrid_PreviewKeyDown">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" IsReadOnly="True" Width="100" FontWeight="Bold" />
+                            <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" IsReadOnly="True" Width="100"
+                                                ElementStyle="{StaticResource MonospaceNumericCell}" />
                             <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" IsReadOnly="True" Width="2*" FontWeight="SemiBold" />
 
                             <!-- Editable Quantity -->
                             <DataGridTextColumn Header="Qty"
                                                 Binding="{Binding Quantity, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.###}'}"
-                                                Width="75" FontWeight="Bold" />
+                                                Width="85" ElementStyle="{StaticResource MonospaceNumericCell}" />
 
                             <!-- Editable Unit Cost -->
                             <DataGridTextColumn Header="Unit Cost"
                                                 Binding="{Binding UnitCost, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.00}'}"
-                                                Width="95" FontWeight="Bold" />
+                                                Width="105" ElementStyle="{StaticResource MonospaceNumericCell}" />
 
                             <!-- Editable Discount % -->
                             <DataGridTextColumn Header="Disc %"
                                                 Binding="{Binding DiscountPercent, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.##}'}"
-                                                Width="70" />
+                                                Width="75" ElementStyle="{StaticResource MonospaceNumericCell}" />
 
                             <!-- Editable Tax % -->
                             <DataGridTextColumn Header="Tax %"
                                                 Binding="{Binding TaxPercent, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.##}'}"
-                                                Width="70" />
+                                                Width="75" ElementStyle="{StaticResource MonospaceNumericCell}" />
 
                             <!-- Computed Net Cost -->
                             <DataGridTextColumn Header="Net Cost"
-                                                Binding="{Binding EffectiveNetUnitCost, StringFormat='{}{0:0.00}'}"
+                                                Binding="{Binding EffectiveNetUnitCost, Converter={StaticResource MoneyConverter}}"
                                                 IsReadOnly="True"
-                                                Width="85" />
+                                                Width="100" ElementStyle="{StaticResource MonospaceNumericCell}" />
 
                             <!-- Computed Line Total -->
                             <DataGridTextColumn Header="Line Total"
-                                                Binding="{Binding LineTotal, StringFormat='{}{0:0.00}'}"
+                                                Binding="{Binding LineTotal, Converter={StaticResource MoneyConverter}}"
                                                 IsReadOnly="True"
-                                                Width="105"
-                                                FontWeight="Bold" />
+                                                Width="110" ElementStyle="{StaticResource MonospaceNumericCell}" />
 
                             <!-- Remove Button Column -->
                             <DataGridTemplateColumn Width="45">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
-                                        <Button Content="✕"
+                                        <Button Content="X"
                                                 Click="RemoveLine_Click"
-                                                Foreground="#DC2626"
+                                                Style="{StaticResource GhostButtonStyle}"
+                                                Foreground="{DynamicResource DangerBrush}"
                                                 FontWeight="Bold"
-                                                Background="Transparent"
-                                                BorderThickness="0"
-                                                ToolTip="Remove item (or press Delete)"
-                                                Cursor="Hand" />
+                                                ToolTip="Remove item (or press Delete)" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
@@ -331,41 +302,41 @@
             </Grid>
 
             <!-- Product Sidebar Stats -->
-            <Border Grid.Column="2" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="16">
+            <Border Grid.Column="2" Style="{StaticResource SurfaceCardStyle}" Padding="16">
                 <StackPanel>
-                    <TextBlock Text="Product Inventory Info" FontSize="15" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,12" />
+                    <TextBlock Text="Product Inventory Info" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,12" />
 
                     <!-- Selected Product Card -->
-                    <Border Background="#F8FAFC" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                    <Border Background="{DynamicResource SurfaceCardSubtleBrush}" CornerRadius="6" Padding="12" Margin="0,0,0,12">
                         <StackPanel>
-                            <TextBlock Text="SELECTED PRODUCT" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
+                            <TextBlock Text="SELECTED PRODUCT" Style="{StaticResource MutedLabelStyle}" />
                             <TextBlock Text="{Binding SelectedLine.ProductName, FallbackValue='(No line selected)'}"
-                                       FontSize="14" FontWeight="Bold" Foreground="#0F172A" TextWrapping="Wrap" Margin="0,2,0,6" />
+                                       FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,2,0,6" />
 
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="SKU: " FontSize="11" Foreground="#64748B" />
-                                <TextBlock Text="{Binding SelectedLine.Sku, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold" Foreground="#334155" />
+                                <TextBlock Text="SKU: " FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                <TextBlock Text="{Binding SelectedLine.Sku, FallbackValue='—'}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
 
                     <!-- Current Stock On Hand -->
-                    <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
+                    <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
                         <StackPanel>
-                            <TextBlock Text="CURRENT STOCK ON HAND" FontSize="10" FontWeight="Bold" Foreground="#1E40AF" />
+                            <TextBlock Text="CURRENT STOCK ON HAND" Style="{StaticResource MutedLabelStyle}" />
                             <TextBlock Text="{Binding SelectedProductStock, StringFormat='{}{0:0.###} units', TargetNullValue='—', FallbackValue='—'}"
-                                       FontSize="18" FontWeight="Bold" Foreground="#1D4ED8" Margin="0,4,0,2" />
-                            <TextBlock Text="(Live calculation from ledger)" FontSize="10" Foreground="#3B82F6" />
+                                       FontSize="18" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" Margin="0,4,0,2" />
+                            <TextBlock Text="(Live calculation from ledger)" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" />
                         </StackPanel>
                     </Border>
 
                     <!-- Last Purchase Cost -->
-                    <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="6" Padding="12">
+                    <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
                         <StackPanel>
-                            <TextBlock Text="LAST PURCHASE COST" FontSize="10" FontWeight="Bold" Foreground="#166534" />
-                            <TextBlock Text="{Binding SelectedProductLastCost, StringFormat='{}{0:C}', TargetNullValue='—', FallbackValue='—'}"
-                                       FontSize="18" FontWeight="Bold" Foreground="#15803D" Margin="0,4,0,2" />
-                            <TextBlock Text="(From previous posted invoice)" FontSize="10" Foreground="#16A34A" />
+                            <TextBlock Text="LAST PURCHASE COST" Style="{StaticResource MutedLabelStyle}" />
+                            <TextBlock Text="{Binding SelectedProductLastCost, Converter={StaticResource MoneyConverter}, TargetNullValue='—', FallbackValue='—'}"
+                                       FontSize="18" FontWeight="Bold" Foreground="{DynamicResource SuccessTextBrush}" Margin="0,4,0,2" />
+                            <TextBlock Text="(From previous posted invoice)" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" />
                         </StackPanel>
                     </Border>
                 </StackPanel>
@@ -373,7 +344,7 @@
         </Grid>
 
         <!-- ================= FOOTER ================= -->
-        <Border Grid.Row="4" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="18,14">
+        <Border Grid.Row="4" Style="{StaticResource SurfaceCardStyle}" Padding="18,14">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <!-- Left: Immediate Pay Now -->
@@ -389,7 +360,6 @@
                               IsChecked="{Binding PayNowEnabled, Mode=TwoWay}"
                               IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
                               FontWeight="Bold"
-                              Foreground="#0F172A"
                               Margin="0,0,0,8" />
 
                     <Grid Visibility="{Binding PayNowEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -400,20 +370,18 @@
                         </Grid.ColumnDefinitions>
 
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="AMOUNT TO PAY" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,2" />
+                            <TextBlock Text="AMOUNT TO PAY" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
                             <TextBox Text="{Binding PayNowAmount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}"
                                      IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
-                                     Padding="6,4"
-                                     FontSize="13" />
+                                     Style="{StaticResource InputTextBoxStyle}" />
                         </StackPanel>
 
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="PAYMENT METHOD" FontSize="10" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,2" />
+                            <TextBlock Text="PAYMENT METHOD" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
                             <ComboBox SelectedItem="{Binding PayNowMethod, Mode=TwoWay}"
                                       ItemsSource="{Binding Source={StaticResource PaymentMethods}}"
                                       IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
-                                      Padding="6,4"
-                                      FontSize="13" />
+                                      Style="{StaticResource InputComboBoxStyle}" />
                         </StackPanel>
                     </Grid>
                 </StackPanel>
@@ -437,42 +405,40 @@
 
                         <!-- Subtotal -->
                         <StackPanel Grid.Column="0">
-                            <TextBlock Text="SUBTOTAL" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
-                            <TextBlock Text="{Binding SubTotal, StringFormat='{}{0:C}'}" FontSize="14" FontWeight="Bold" Foreground="#334155" />
+                            <TextBlock Text="SUBTOTAL" Style="{StaticResource MutedLabelStyle}" />
+                            <TextBlock Text="{Binding SubTotal, Converter={StaticResource MoneyConverter}}" Style="{StaticResource KpiValueStyle}" />
                         </StackPanel>
 
                         <!-- Invoice Discount -->
                         <StackPanel Grid.Column="1">
-                            <TextBlock Text="DISCOUNT" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
+                            <TextBlock Text="DISCOUNT" Style="{StaticResource MutedLabelStyle}" />
                             <TextBox Text="{Binding InvoiceDiscount, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.00}'}"
                                      IsReadOnly="{Binding IsReadOnly}"
-                                     Padding="4,2"
-                                     FontSize="12"
+                                     Style="{StaticResource InputTextBoxStyle}"
                                      Width="80"
                                      HorizontalAlignment="Left" />
                         </StackPanel>
 
                         <!-- Tax -->
                         <StackPanel Grid.Column="2">
-                            <TextBlock Text="TAX" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
-                            <TextBlock Text="{Binding TaxAmount, StringFormat='{}{0:C}'}" FontSize="14" FontWeight="Bold" Foreground="#334155" />
+                            <TextBlock Text="TAX" Style="{StaticResource MutedLabelStyle}" />
+                            <TextBlock Text="{Binding TaxAmount, Converter={StaticResource MoneyConverter}}" Style="{StaticResource KpiValueStyle}" />
                         </StackPanel>
 
                         <!-- Freight -->
                         <StackPanel Grid.Column="3">
-                            <TextBlock Text="FREIGHT" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
+                            <TextBlock Text="FREIGHT" Style="{StaticResource MutedLabelStyle}" />
                             <TextBox Text="{Binding FreightAmount, Mode=TwoWay, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.00}'}"
                                      IsReadOnly="{Binding IsReadOnly}"
-                                     Padding="4,2"
-                                     FontSize="12"
+                                     Style="{StaticResource InputTextBoxStyle}"
                                      Width="80"
                                      HorizontalAlignment="Left" />
                         </StackPanel>
 
                         <!-- Grand Total -->
                         <StackPanel Grid.Column="4" HorizontalAlignment="Right">
-                            <TextBlock Text="GRAND TOTAL" FontSize="11" FontWeight="Bold" Foreground="#2563EB" HorizontalAlignment="Right" />
-                            <TextBlock Text="{Binding GrandTotal, StringFormat='{}{0:C}'}" FontSize="20" FontWeight="Bold" Foreground="#1E40AF" HorizontalAlignment="Right" />
+                            <TextBlock Text="GRAND TOTAL" Style="{StaticResource MutedLabelStyle}" HorizontalAlignment="Right" />
+                            <TextBlock Text="{Binding GrandTotal, Converter={StaticResource MoneyConverter}}" FontSize="20" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" HorizontalAlignment="Right" />
                         </StackPanel>
                     </Grid>
 
@@ -480,38 +446,22 @@
                     <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">
                         <Button Content="Close (Esc)"
                                 Command="{Binding CloseCommand}"
-                                Background="White"
-                                Foreground="#475569"
-                                BorderBrush="#CBD5E1"
-                                BorderThickness="1"
-                                Padding="16,8"
-                                Margin="0,0,10,0"
-                                Cursor="Hand" />
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Margin="0,0,10,0" />
 
                         <Button Content="Save Draft (Ctrl+S)"
                                 Command="{Binding SaveDraftCommand}"
                                 IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
-                                Background="#E2E8F0"
-                                Foreground="#0F172A"
-                                FontWeight="Bold"
-                                Padding="16,8"
-                                Margin="0,0,10,0"
-                                BorderThickness="0"
-                                Cursor="Hand" />
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Margin="0,0,10,0" />
 
                         <Button Content="Post Purchase (Ctrl+Enter)"
                                 Command="{Binding PostPurchaseCommand}"
                                 IsEnabled="{Binding IsReadOnly, Converter={StaticResource InverseBooleanConverter}}"
-                                Background="#16A34A"
-                                Foreground="White"
-                                FontWeight="Bold"
-                                Padding="20,8"
-                                BorderThickness="0"
-                                Cursor="Hand" />
+                                Style="{StaticResource PrimaryButtonStyle}" />
                     </StackPanel>
                 </Grid>
             </Grid>
         </Border>
     </Grid>
 </Window>
-

@@ -20,8 +20,6 @@ public class SaleReturnConfiguration : IEntityTypeConfiguration<SaleReturn>
             .IsUnique();
 
         builder.HasIndex(r => r.SaleId);
-        builder.HasIndex(r => r.CustomerId);
-        builder.HasIndex(r => r.ShiftId);
 
         builder.Property(r => r.SubTotal).HasConversion<MoneyConverter>();
         builder.Property(r => r.TaxAmount).HasConversion<MoneyConverter>();
@@ -36,20 +34,9 @@ public class SaleReturnConfiguration : IEntityTypeConfiguration<SaleReturn>
             .HasForeignKey(r => r.SaleId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(r => r.Customer)
-            .WithMany(c => c.SaleReturns)
-            .HasForeignKey(r => r.CustomerId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        builder.HasOne(r => r.Shift)
-            .WithMany()
-            .HasForeignKey(r => r.ShiftId)
-            .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasMany(r => r.Items)
             .WithOne(i => i.SaleReturn)
             .HasForeignKey(i => i.SaleReturnId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
-

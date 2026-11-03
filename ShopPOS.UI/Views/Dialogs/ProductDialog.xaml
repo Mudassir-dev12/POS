@@ -6,9 +6,7 @@
         Width="780"
         MinHeight="550"
         MinWidth="700"
-        WindowStartupLocation="CenterOwner"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
+        Style="{StaticResource DialogWindowStyle}"
         Loaded="Window_Loaded">
 
     <Window.InputBindings>
@@ -27,17 +25,17 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <Border Grid.Row="0" Margin="0,0,0,16" Padding="0,0,0,12" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1">
+        <Border Grid.Row="0" Margin="0,0,0,16" Padding="0,0,0,12" BorderBrush="{DynamicResource SeparatorBorderBrush}" BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
-                    <TextBlock Text="{Binding DialogTitle}" FontSize="18" FontWeight="Bold" Foreground="#0F172A" />
-                    <TextBlock Text="Fill in catalog details across the tabs below. Press Ctrl+S to save." FontSize="12" Foreground="#64748B" Margin="0,2,0,0" />
+                    <TextBlock Text="{Binding DialogTitle}" Style="{StaticResource PageTitleStyle}" />
+                    <TextBlock Text="Fill in catalog details across the tabs below. Press Ctrl+S to save." Style="{StaticResource SubTitleStyle}" />
                 </StackPanel>
-                <TextBlock Grid.Column="1" Text="{Binding BarcodeWarning}" Foreground="#D97706" FontWeight="SemiBold" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="{Binding BarcodeWarning}" Foreground="{DynamicResource WarningTextBrush}" FontWeight="SemiBold" VerticalAlignment="Center" />
             </Grid>
         </Border>
 
@@ -56,14 +54,14 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
                     <StackPanel>
                         <!-- Name -->
-                        <StackPanel>
-                            <TextBlock Text="Product Name *" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
-                            <TextBox x:Name="FirstField" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
-                            <TextBlock Text="{Binding NameError}" Foreground="#DC2626" FontSize="11" Margin="0,2,0,0" Visibility="{Binding NameError, Converter={StaticResource StringToVisibilityConverter}}" />
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="Product Name *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                            <TextBox x:Name="FirstField" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+                            <TextBlock Text="{Binding NameError}" Foreground="{DynamicResource DangerBrush}" FontSize="11" Margin="0,2,0,0" Visibility="{Binding NameError, Converter={StaticResource StringToVisibilityConverter}}" />
                         </StackPanel>
 
                         <!-- SKU & Barcode Grid -->
-                        <Grid>
+                        <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="16" />
@@ -71,23 +69,40 @@
                             </Grid.ColumnDefinitions>
                             <!-- SKU -->
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="SKU (Leave blank to auto-generate)" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding Sku, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
-                                <TextBlock Text="{Binding SkuError}" Foreground="#DC2626" FontSize="11" Margin="0,2,0,0" Visibility="{Binding SkuError, Converter={StaticResource StringToVisibilityConverter}}" />
+                                <TextBlock Text="SKU (Leave blank to auto-generate)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding Sku, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+                                <TextBlock Text="{Binding SkuError}" Foreground="{DynamicResource DangerBrush}" FontSize="11" Margin="0,2,0,0" Visibility="{Binding SkuError, Converter={StaticResource StringToVisibilityConverter}}" />
                             </StackPanel>
                             <!-- Primary Barcode -->
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="Primary Barcode (UPC/EAN)" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
+                                <Grid Margin="0,0,0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="Primary Barcode (UPC/EAN)" Style="{StaticResource MutedLabelStyle}" VerticalAlignment="Center" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button Content="Auto (EAN)" Command="{Binding AutoGenerateEanBarcodeCommand}"
+                                                ToolTip="Generate unique standard EAN-13 barcode"
+                                                Style="{StaticResource GhostButtonStyle}" Padding="6,2" FontSize="11" Margin="0,0,4,0" />
+                                        <Button Content="Auto (Code 128)" Command="{Binding AutoGenerateCode128BarcodeCommand}"
+                                                ToolTip="Generate unique Code 128 barcode"
+                                                Style="{StaticResource GhostButtonStyle}" Padding="6,2" FontSize="11" Margin="0,0,4,0" />
+                                        <Button Content="Print Label" Command="{Binding PrintBarcodeLabelCommand}"
+                                                ToolTip="Print barcode label sheet"
+                                                Style="{StaticResource SecondaryButtonStyle}" Padding="6,2" FontSize="11" />
+                                    </StackPanel>
+                                </Grid>
                                 <TextBox x:Name="BarcodeTextBox"
                                          Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"
-                                         Padding="8,6"
-                                         FontSize="13"
+                                         Style="{StaticResource InputTextBoxStyle}"
                                          PreviewKeyDown="BarcodeTextBox_PreviewKeyDown" />
+                                <TextBlock Text="{Binding BarcodeWarning}" Foreground="{DynamicResource DangerBrush}" FontSize="11" Margin="0,2,0,0" Visibility="{Binding BarcodeWarning, Converter={StaticResource StringToVisibilityConverter}}" />
                             </StackPanel>
                         </Grid>
 
                         <!-- Opening Stock on Create Mode -->
-                        <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,6"
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,12"
                                 Visibility="{Binding IsCreateMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -95,15 +110,15 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock Text="Initial Opening Stock (Quantity on Hand)" FontWeight="SemiBold" Foreground="#1E40AF" />
-                                    <TextBlock Text="Sets starting stock. An Opening movement will be logged atomically in the ledger at cost price." FontSize="11" Foreground="#3B82F6" />
+                                    <TextBlock Text="Initial Opening Stock (Quantity on Hand)" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Sets starting stock. An Opening movement will be logged atomically in the ledger at cost price." FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
                                 </StackPanel>
-                                <TextBox Grid.Column="1" Text="{Binding OpeningQuantity, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" Width="120" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" Text="{Binding OpeningQuantity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" Width="120" HorizontalAlignment="Right" VerticalAlignment="Center" />
                             </Grid>
                         </Border>
 
                         <!-- Stock Info on Edit Mode -->
-                        <Border Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,6"
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,8" Margin="0,0,0,12"
                                 Visibility="{Binding IsEditMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -111,15 +126,15 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock Text="Current Stock on Hand" FontWeight="SemiBold" Foreground="#334155" />
-                                    <TextBlock Text="To adjust stock count on hand, switch to the 'Stock &amp; Ledger' tab." FontSize="11" Foreground="#64748B" />
+                                    <TextBlock Text="Current Stock on Hand" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="To adjust stock count on hand, switch to the 'Stock &amp; Ledger' tab." FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
                                 </StackPanel>
-                                <TextBlock Grid.Column="1" Text="{Binding CurrentStock, StringFormat='{}{0:0.###} in stock'}" FontWeight="Bold" FontSize="13" Foreground="#16A34A" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="{Binding CurrentStock, StringFormat='{}{0:0.###} in stock'}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource SuccessTextBrush}" VerticalAlignment="Center" />
                             </Grid>
                         </Border>
 
                         <!-- Category, Brand, Unit Grid -->
-                        <Grid>
+                        <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="16" />
@@ -130,49 +145,45 @@
 
                             <!-- Category -->
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Category *" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
+                                <TextBlock Text="Category *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                                 <ComboBox ItemsSource="{Binding Categories}"
                                           SelectedValuePath="Id"
                                           DisplayMemberPath="Name"
                                           SelectedValue="{Binding SelectedCategoryId}"
-                                          Padding="8,6"
-                                          FontSize="13" />
-                                <TextBlock Text="{Binding CategoryError}" Foreground="#DC2626" FontSize="11" Margin="0,2,0,0" Visibility="{Binding CategoryError, Converter={StaticResource StringToVisibilityConverter}}" />
+                                          Style="{StaticResource InputComboBoxStyle}" />
+                                <TextBlock Text="{Binding CategoryError}" Foreground="{DynamicResource DangerBrush}" FontSize="11" Margin="0,2,0,0" Visibility="{Binding CategoryError, Converter={StaticResource StringToVisibilityConverter}}" />
                             </StackPanel>
 
                             <!-- Brand -->
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="Brand (Optional)" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
+                                <TextBlock Text="Brand (Optional)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                                 <ComboBox ItemsSource="{Binding Brands}"
                                           SelectedValuePath="Id"
                                           DisplayMemberPath="Name"
                                           SelectedValue="{Binding SelectedBrandId}"
-                                          Padding="8,6"
-                                          FontSize="13" />
+                                          Style="{StaticResource InputComboBoxStyle}" />
                             </StackPanel>
 
                             <!-- Unit -->
                             <StackPanel Grid.Column="4">
-                                <TextBlock Text="Unit of Measure *" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
+                                <TextBlock Text="Unit of Measure *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                                 <ComboBox ItemsSource="{Binding Units}"
                                           SelectedValuePath="Id"
                                           DisplayMemberPath="Name"
                                           SelectedValue="{Binding SelectedUnitId}"
-                                          Padding="8,6"
-                                          FontSize="13" />
-                                <TextBlock Text="{Binding UnitError}" Foreground="#DC2626" FontSize="11" Margin="0,2,0,0" Visibility="{Binding UnitError, Converter={StaticResource StringToVisibilityConverter}}" />
+                                          Style="{StaticResource InputComboBoxStyle}" />
+                                <TextBlock Text="{Binding UnitError}" Foreground="{DynamicResource DangerBrush}" FontSize="11" Margin="0,2,0,0" Visibility="{Binding UnitError, Converter={StaticResource StringToVisibilityConverter}}" />
                             </StackPanel>
                         </Grid>
 
                         <!-- Description -->
-                        <StackPanel>
-                            <TextBlock Text="Product Description" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
+                        <StackPanel Margin="0,0,0,12">
+                            <TextBlock Text="Product Description" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                             <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
                                      AcceptsReturn="True"
                                      TextWrapping="Wrap"
                                      Height="80"
-                                     Padding="8,6"
-                                     FontSize="13" />
+                                     Style="{StaticResource InputTextBoxStyle}" />
                         </StackPanel>
 
                         <!-- Active Toggle -->
@@ -185,7 +196,7 @@
             <TabItem Header="Pricing">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Margin="0,12,0,0">
                     <StackPanel>
-                        <Grid>
+                        <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="16" />
@@ -194,20 +205,20 @@
 
                             <!-- Cost Price -->
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Cost Price *" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding CostPrice, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}" Padding="8,6" FontSize="13" />
-                                <TextBlock Text="{Binding CostPriceError}" Foreground="#DC2626" FontSize="11" Margin="0,2,0,0" Visibility="{Binding CostPriceError, Converter={StaticResource StringToVisibilityConverter}}" />
+                                <TextBlock Text="Cost Price *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding CostPrice, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}" Style="{StaticResource InputTextBoxStyle}" />
+                                <TextBlock Text="{Binding CostPriceError}" Foreground="{DynamicResource DangerBrush}" FontSize="11" Margin="0,2,0,0" Visibility="{Binding CostPriceError, Converter={StaticResource StringToVisibilityConverter}}" />
                             </StackPanel>
 
                             <!-- Sale Price -->
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="Standard Sale Price *" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding SalePrice, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}" Padding="8,6" FontSize="13" />
-                                <TextBlock Text="{Binding SalePriceError}" Foreground="#DC2626" FontSize="11" Margin="0,2,0,0" Visibility="{Binding SalePriceError, Converter={StaticResource StringToVisibilityConverter}}" />
+                                <TextBlock Text="Standard Sale Price *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding SalePrice, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}" Style="{StaticResource InputTextBoxStyle}" />
+                                <TextBlock Text="{Binding SalePriceError}" Foreground="{DynamicResource DangerBrush}" FontSize="11" Margin="0,2,0,0" Visibility="{Binding SalePriceError, Converter={StaticResource StringToVisibilityConverter}}" />
                             </StackPanel>
                         </Grid>
 
-                        <Grid>
+                        <Grid Margin="0,0,0,12">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="16" />
@@ -216,33 +227,34 @@
 
                             <!-- Min Sale Price -->
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="Minimum Floor Sale Price" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding MinSalePrice, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}" Padding="8,6" FontSize="13" />
-                                <TextBlock Text="{Binding MinSalePriceError}" Foreground="#DC2626" FontSize="11" Margin="0,2,0,0" Visibility="{Binding MinSalePriceError, Converter={StaticResource StringToVisibilityConverter}}" />
+                                <TextBlock Text="Minimum Floor Sale Price" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding MinSalePrice, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}" Style="{StaticResource InputTextBoxStyle}" />
+                                <TextBlock Text="{Binding MinSalePriceError}" Foreground="{DynamicResource DangerBrush}" FontSize="11" Margin="0,2,0,0" Visibility="{Binding MinSalePriceError, Converter={StaticResource StringToVisibilityConverter}}" />
                             </StackPanel>
 
                             <!-- Tax Percent -->
                             <StackPanel Grid.Column="2">
-                                <TextBlock Text="Tax Rate (%)" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding TaxPercent, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}" Padding="8,6" FontSize="13" />
+                                <TextBlock Text="Tax Rate (%)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding TaxPercent, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}" Style="{StaticResource InputTextBoxStyle}" />
                             </StackPanel>
                         </Grid>
 
                         <!-- Price Levels Grid -->
-                        <TextBlock Text="Tier Pricing (Optional Level Pricing)" FontWeight="Bold" Foreground="#0F172A" Margin="0,10,0,4" />
-                        <DataGrid ItemsSource="{Binding ProductPrices}"
-                                  AutoGenerateColumns="False"
-                                  CanUserAddRows="False"
-                                  CanUserDeleteRows="False"
-                                  Background="White"
-                                  BorderBrush="#CBD5E1"
-                                  BorderThickness="1"
-                                  RowHeight="36">
-                            <DataGrid.Columns>
-                                <DataGridTextColumn Header="Pricing Level" Binding="{Binding PriceLevelName}" IsReadOnly="True" Width="200" />
-                                <DataGridTextColumn Header="Special Price" Binding="{Binding Price, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}" Width="*" />
-                            </DataGrid.Columns>
-                        </DataGrid>
+                        <TextBlock Text="Tier Pricing (Optional Level Pricing)" Style="{StaticResource SectionHeaderStyle}" Margin="0,10,0,4" />
+                        <Border Style="{StaticResource TableContainerBorderStyle}">
+                            <DataGrid ItemsSource="{Binding ProductPrices}"
+                                      AutoGenerateColumns="False"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      Style="{StaticResource AppDataGridStyle}"
+                                      RowHeight="36">
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Pricing Level" Binding="{Binding PriceLevelName}" IsReadOnly="True" Width="200" />
+                                    <DataGridTextColumn Header="Special Price" Binding="{Binding Price, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.00}'}" Width="*"
+                                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Border>
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -257,15 +269,14 @@
                     </Grid.RowDefinitions>
 
                     <!-- Primary Barcode -->
-                    <Border Grid.Row="0" Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+                    <Border Grid.Row="0" Style="{StaticResource SurfaceCardStyle}" Padding="12" Margin="0,0,0,12">
                         <StackPanel>
-                            <TextBlock Text="Primary Barcode" FontWeight="Bold" Foreground="#0F172A" />
-                            <TextBlock Text="This barcode appears in the products table and is scanned by default." FontSize="11" Foreground="#64748B" Margin="0,2,0,6" />
+                            <TextBlock Text="Primary Barcode" Style="{StaticResource SectionHeaderStyle}" />
+                            <TextBlock Text="This barcode appears in the products table and is scanned by default." Style="{StaticResource SubTitleStyle}" Margin="0,2,0,6" />
                             <TextBox Text="{Binding Barcode, UpdateSourceTrigger=PropertyChanged}"
-                                     Padding="8,6"
-                                     FontSize="13"
+                                     Style="{StaticResource InputTextBoxStyle}"
                                      PreviewKeyDown="BarcodeTextBox_PreviewKeyDown" />
-                            <TextBlock Text="{Binding BarcodeWarning}" Foreground="#D97706" FontSize="11" Margin="0,4,0,0"
+                            <TextBlock Text="{Binding BarcodeWarning}" Foreground="{DynamicResource WarningTextBrush}" FontSize="11" Margin="0,4,0,0"
                                        Visibility="{Binding BarcodeWarning, Converter={StaticResource StringToVisibilityConverter}}" />
                         </StackPanel>
                     </Border>
@@ -280,22 +291,16 @@
                         <TextBox Grid.Column="0"
                                  Text="{Binding NewAdditionalBarcode, UpdateSourceTrigger=PropertyChanged}"
                                  PreviewKeyDown="BarcodeTextBox_PreviewKeyDown"
-                                 Padding="8,6"
-                                 FontSize="13" />
+                                 Style="{StaticResource InputTextBoxStyle}" />
                         <Button Grid.Column="2"
                                 Content="+ Add Barcode"
                                 Command="{Binding AddAdditionalBarcodeCommand}"
-                                Background="#2563EB"
-                                Foreground="White"
-                                Padding="14,6"
-                                FontWeight="SemiBold"
-                                BorderThickness="0"
-                                Cursor="Hand" />
+                                Style="{StaticResource PrimaryButtonStyle}" />
                     </Grid>
 
                     <!-- Alternate Barcodes List -->
-                    <Border Grid.Row="2" Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="6">
-                        <ListBox ItemsSource="{Binding AdditionalBarcodes}" BorderThickness="0">
+                    <Border Grid.Row="2" Style="{StaticResource TableContainerBorderStyle}">
+                        <ListBox ItemsSource="{Binding AdditionalBarcodes}" BorderThickness="0" Background="Transparent">
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <Grid Margin="4,4">
@@ -305,25 +310,18 @@
                                             <ColumnDefinition Width="8" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0" Text="{Binding}" VerticalAlignment="Center" FontWeight="Medium" />
+                                        <TextBlock Grid.Column="0" Text="{Binding}" VerticalAlignment="Center" FontWeight="Medium"
+                                                   FontFamily="{StaticResource AppMonospaceFontFamily}" />
                                         <Button Grid.Column="1"
-                                                Content="★ Set as Primary"
+                                                Content="Set as Primary"
                                                 Command="{Binding DataContext.SetAsPrimaryBarcodeCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                                 CommandParameter="{Binding}"
-                                                Foreground="#2563EB"
-                                                Background="#EFF6FF"
-                                                Padding="8,4"
-                                                BorderThickness="1"
-                                                BorderBrush="#BFDBFE"
-                                                Cursor="Hand" />
+                                                Style="{StaticResource SecondaryButtonStyle}" />
                                         <Button Grid.Column="3"
                                                 Content="Remove"
                                                 Command="{Binding DataContext.RemoveAdditionalBarcodeCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                                 CommandParameter="{Binding}"
-                                                Foreground="#DC2626"
-                                                Background="Transparent"
-                                                BorderThickness="0"
-                                                Cursor="Hand" />
+                                                Style="{StaticResource DangerButtonStyle}" />
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
@@ -336,21 +334,21 @@
             <TabItem Header="Stock &amp; Ledger">
                 <StackPanel Margin="0,12,0,0">
                     <!-- Opening Quantity (Shown ONLY when creating a new product) -->
-                    <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,14"
+                    <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,14"
                             Visibility="{Binding IsCreateMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel>
-                            <TextBlock Text="Initial Opening Stock Quantity" FontSize="14" FontWeight="Bold" Foreground="#1E40AF" />
-                            <TextBlock Text="Enter the initial physical quantity on hand. An initial Opening StockMovement will be created atomically in the ledger at cost price." FontSize="11" Foreground="#3B82F6" Margin="0,2,0,8" />
-                            <TextBox Text="{Binding OpeningQuantity, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="14" Width="200" HorizontalAlignment="Left" />
+                            <TextBlock Text="Initial Opening Stock Quantity" Style="{StaticResource SectionHeaderStyle}" />
+                            <TextBlock Text="Enter the initial physical quantity on hand. An initial Opening StockMovement will be created atomically in the ledger at cost price." Style="{StaticResource SubTitleStyle}" Margin="0,2,0,8" />
+                            <TextBox Text="{Binding OpeningQuantity, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" Width="200" HorizontalAlignment="Left" />
                         </StackPanel>
                     </Border>
 
                     <!-- Stock Adjustment (Shown when EDITING an existing product) -->
-                    <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,14"
+                    <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,14"
                             Visibility="{Binding IsEditMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel>
-                            <TextBlock Text="Inventory Stock Adjustment" FontSize="14" FontWeight="Bold" Foreground="#166534" />
-                            <TextBlock Text="Current recorded stock is shown on the left. To change physical stock on hand, enter the new verified quantity on the right. An Adjustment StockMovement will be recorded in the ledger." FontSize="11" Foreground="#15803D" Margin="0,2,0,10" />
+                            <TextBlock Text="Inventory Stock Adjustment" Style="{StaticResource SectionHeaderStyle}" />
+                            <TextBlock Text="Current recorded stock is shown on the left. To change physical stock on hand, enter the new verified quantity on the right. An Adjustment StockMovement will be recorded in the ledger." Style="{StaticResource SubTitleStyle}" Margin="0,2,0,10" />
 
                             <Grid Margin="0,0,0,10">
                                 <Grid.ColumnDefinitions>
@@ -361,33 +359,33 @@
 
                                 <!-- Current Stock (Read-Only) -->
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Current Stock on Hand" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,4" />
-                                    <TextBox Text="{Binding CurrentStock, StringFormat='{}{0:0.###}', Mode=OneWay}" IsReadOnly="True" Background="#F1F5F9" Padding="8,6" FontSize="13" Width="180" HorizontalAlignment="Left" />
+                                    <TextBlock Text="Current Stock on Hand" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                    <TextBox Text="{Binding CurrentStock, StringFormat='{}{0:0.###}', Mode=OneWay}" IsReadOnly="True" Style="{StaticResource InputTextBoxStyle}" Width="180" HorizontalAlignment="Left" />
                                 </StackPanel>
 
                                 <!-- New Adjusted Stock -->
                                 <StackPanel Grid.Column="2">
-                                    <TextBlock Text="Adjust Stock Quantity To *" FontWeight="SemiBold" Foreground="#166534" Margin="0,0,0,4" />
-                                    <TextBox Text="{Binding AdjustedStock, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="14" FontWeight="Bold" Width="180" HorizontalAlignment="Left" />
+                                    <TextBlock Text="Adjust Stock Quantity To *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                    <TextBox Text="{Binding AdjustedStock, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" FontWeight="Bold" Width="180" HorizontalAlignment="Left" />
                                 </StackPanel>
                             </Grid>
 
                             <!-- Adjustment Note -->
                             <StackPanel>
-                                <TextBlock Text="Adjustment Reason / Note (Required when changing stock) *" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding StockAdjustmentNote, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" />
-                                <TextBlock Text="{Binding StockAdjustmentError}" Foreground="#DC2626" FontSize="11" Margin="0,2,0,0"
+                                <TextBlock Text="Adjustment Reason / Note (Required when changing stock) *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding StockAdjustmentNote, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+                                <TextBlock Text="{Binding StockAdjustmentError}" Foreground="{DynamicResource DangerBrush}" FontSize="11" Margin="0,2,0,0"
                                            Visibility="{Binding StockAdjustmentError, Converter={StaticResource StringToVisibilityConverter}}" />
                             </StackPanel>
                         </StackPanel>
                     </Border>
 
                     <!-- Reorder Level -->
-                    <Border Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14" Margin="0,0,0,14">
+                    <Border Style="{StaticResource SurfaceCardStyle}" Padding="14" Margin="0,0,0,14">
                         <StackPanel>
-                            <TextBlock Text="Low Stock Reorder Alert Level" FontSize="14" FontWeight="Bold" Foreground="#334155" Margin="0,0,0,2" />
-                            <TextBlock Text="When stock on hand drops to or below this level, a warning badge appears in the catalog list." FontSize="11" Foreground="#64748B" Margin="0,0,0,8" />
-                            <TextBox Text="{Binding ReorderLevel, UpdateSourceTrigger=PropertyChanged}" Padding="8,6" FontSize="13" Width="200" HorizontalAlignment="Left" />
+                            <TextBlock Text="Low Stock Reorder Alert Level" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,2" />
+                            <TextBlock Text="When stock on hand drops to or below this level, a warning badge appears in the catalog list." Style="{StaticResource SubTitleStyle}" Margin="0,0,0,8" />
+                            <TextBox Text="{Binding ReorderLevel, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" Width="200" HorizontalAlignment="Left" />
                         </StackPanel>
                     </Border>
 
@@ -409,18 +407,13 @@
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,14">
                         <Button Content="Browse Image..."
                                 Command="{Binding BrowseImageCommand}"
-                                Background="#0284C7"
-                                Foreground="White"
-                                FontWeight="SemiBold"
-                                Padding="14,8"
-                                BorderThickness="0"
-                                Cursor="Hand"
+                                Style="{StaticResource SecondaryButtonStyle}"
                                 Margin="0,0,10,0" />
-                        <TextBlock Text="{Binding ImagePath}" VerticalAlignment="Center" Foreground="#64748B" FontStyle="Italic" />
+                        <TextBlock Text="{Binding ImagePath}" VerticalAlignment="Center" Foreground="{DynamicResource TextMutedBrush}" FontStyle="Italic" />
                     </StackPanel>
 
                     <!-- Preview Frame -->
-                    <Border Grid.Row="1" Background="White" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="8" Padding="10">
+                    <Border Grid.Row="1" Style="{StaticResource SurfaceCardStyle}" Padding="10">
                         <Image Source="{Binding FullImagePreviewPath}" Stretch="Uniform" MaxHeight="300" HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                 </Grid>
@@ -428,39 +421,17 @@
         </TabControl>
 
         <!-- Footer Buttons -->
-        <Border Grid.Row="2" Margin="0,16,0,0" Padding="0,12,0,0" BorderBrush="#E2E8F0" BorderThickness="0,1,0,0">
+        <Border Grid.Row="2" Margin="0,16,0,0" Padding="0,12,0,0" BorderBrush="{DynamicResource SeparatorBorderBrush}" BorderThickness="0,1,0,0">
             <Grid>
-                <TextBlock Text="{Binding GeneralError}" Foreground="#DC2626" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Left" />
+                <TextBlock Text="{Binding GeneralError}" Foreground="{DynamicResource DangerBrush}" FontWeight="SemiBold" VerticalAlignment="Center" HorizontalAlignment="Left" />
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="Save (Ctrl+S)"
                             Command="{Binding SaveCommand}"
-                            Background="#2563EB"
-                            Foreground="White"
-                            FontWeight="Bold"
-                            Padding="20,10"
-                            BorderThickness="0"
-                            Cursor="Hand"
-                            Margin="0,0,10,0">
-                        <Button.Resources>
-                            <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="6" />
-                            </Style>
-                        </Button.Resources>
-                    </Button>
+                            Style="{StaticResource PrimaryButtonStyle}"
+                            Margin="0,0,10,0" />
                     <Button Content="Cancel (Esc)"
                             Command="{Binding CancelCommand}"
-                            Background="#E2E8F0"
-                            Foreground="#334155"
-                            FontWeight="SemiBold"
-                            Padding="20,10"
-                            BorderThickness="0"
-                            Cursor="Hand">
-                        <Button.Resources>
-                            <Style TargetType="Border">
-                                <Setter Property="CornerRadius" Value="6" />
-                            </Style>
-                        </Button.Resources>
-                    </Button>
+                            Style="{StaticResource SecondaryButtonStyle}" />
                 </StackPanel>
             </Grid>
         </Border>

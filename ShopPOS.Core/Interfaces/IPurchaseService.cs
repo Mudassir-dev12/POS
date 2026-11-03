@@ -16,5 +16,8 @@ public interface IPurchaseService
     Task<Result<byte[]>> ExportPurchasePdfAsync(int purchaseId, string? userRole, CancellationToken cancellationToken = default);
     Task<Result<decimal>> GetProductCurrentStockAsync(int productId, CancellationToken cancellationToken = default);
     Task<Result<decimal>> GetProductLastCostAsync(int productId, CancellationToken cancellationToken = default);
+    Task<BulkOperationResult> BulkDeleteDraftsAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default);
+    Task<BulkOperationResult> BulkCancelPurchasesAsync(IEnumerable<int> ids, string reason, int? userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredPurchaseIdsAsync(PurchaseSearchQuery query, CancellationToken cancellationToken = default);
 }
 

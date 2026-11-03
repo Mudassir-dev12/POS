@@ -20,7 +20,7 @@ public partial class ConfirmActionDialog : Window
             DeleteButton.Visibility = Visibility.Collapsed;
             DeactivateButton.Content = "Deactivate";
             DeactivateButton.Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(217, 119, 6)); // amber
-            IconTextBlock.Text = "ℹ️";
+            IconTextBlock.Text = "";
         }
         else
         {

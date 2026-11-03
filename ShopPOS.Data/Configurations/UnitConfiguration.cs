@@ -25,7 +25,8 @@ public class UnitConfiguration : IEntityTypeConfiguration<Unit>
             .HasDefaultValue(true);
 
         builder.HasIndex(u => u.Name)
-            .IsUnique();
+            .IsUnique()
+            .HasFilter("IsDeleted = 0");
     }
 }
 

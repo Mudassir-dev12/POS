@@ -5,84 +5,74 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              mc:Ignorable="d"
              d:DesignHeight="600"
-             d:DesignWidth="800">
+             d:DesignWidth="800"
+             Background="{DynamicResource PageBackgroundBrush}"
+             FontFamily="{StaticResource AppFontFamily}">
 
-    <Grid Background="#F8FAFC" Margin="32">
-        <Border Background="White"
-                BorderBrush="#E2E8F0"
-                BorderThickness="1"
-                CornerRadius="16"
+    <Grid Margin="32">
+        <Border Style="{StaticResource SurfaceCardStyle}"
                 Padding="48"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
                 MaxWidth="620">
-            <Border.Effect>
-                <DropShadowEffect BlurRadius="20"
-                                  ShadowDepth="2"
-                                  Direction="270"
-                                  Color="#0F172A"
-                                  Opacity="0.04" />
-            </Border.Effect>
-
             <StackPanel HorizontalAlignment="Center">
                 <!-- Icon badge -->
-                <Border Width="72"
-                        Height="72"
-                        CornerRadius="20"
-                        Background="#EEF2FF"
-                        BorderBrush="#C7D2FE"
+                <Border Width="64"
+                        Height="64"
+                        CornerRadius="16"
+                        Background="{DynamicResource SurfaceCardSubtleBrush}"
+                        BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
                         BorderThickness="1"
                         HorizontalAlignment="Center"
                         Margin="0,0,0,24">
-                    <TextBlock Text="⚡"
-                               FontSize="36"
+                    <TextBlock Text="POS"
+                               FontFamily="{StaticResource AppMonospaceFontFamily}"
+                               FontWeight="Bold"
+                               FontSize="16"
+                               Foreground="{DynamicResource PrimaryBrush}"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center" />
                 </Border>
 
                 <!-- Section Title -->
                 <TextBlock Text="{Binding Title}"
-                           FontSize="26"
-                           FontWeight="Bold"
-                           Foreground="#0F172A"
+                           Style="{StaticResource PageTitleStyle}"
                            HorizontalAlignment="Center"
                            Margin="0,0,0,8" />
 
                 <!-- Subtitle Badge -->
-                <Border Background="#F1F5F9"
+                <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
                         CornerRadius="20"
                         Padding="14,4"
                         HorizontalAlignment="Center"
                         Margin="0,0,0,16">
                     <TextBlock Text="{Binding Subtitle}"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               Foreground="#475569" />
+                               Style="{StaticResource MutedLabelStyle}"
+                               FontWeight="SemiBold" />
                 </Border>
 
                 <!-- Description -->
                 <TextBlock Text="{Binding Description}"
                            FontSize="14"
-                           Foreground="#64748B"
+                           Foreground="{DynamicResource TextMutedBrush}"
                            TextAlignment="Center"
                            TextWrapping="Wrap"
                            LineHeight="22"
                            MaxWidth="480"
                            Margin="0,0,0,24" />
 
-                <Separator Background="#F1F5F9" Margin="0,0,0,20" />
+                <Separator Background="{DynamicResource SeparatorBorderBrush}" Margin="0,0,0,20" />
 
                 <!-- Phase note -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Border Background="#ECFDF5" CornerRadius="6" Padding="8,4" Margin="0,0,8,0">
-                        <TextBlock Text="Offline-First Core Ready" FontSize="11" Foreground="#047857" FontWeight="SemiBold" />
+                    <Border Background="{DynamicResource SuccessBackgroundBrush}" CornerRadius="6" Padding="8,4" Margin="0,0,8,0">
+                        <TextBlock Text="Offline-First Core Ready" FontSize="11" Foreground="{DynamicResource SuccessTextBrush}" FontWeight="SemiBold" />
                     </Border>
-                    <Border Background="#EFF6FF" CornerRadius="6" Padding="8,4">
-                        <TextBlock Text="Database Ledger Initialized" FontSize="11" Foreground="#1D4ED8" FontWeight="SemiBold" />
+                    <Border Background="{DynamicResource SurfaceCardSubtleBrush}" CornerRadius="6" Padding="8,4">
+                        <TextBlock Text="Database Ledger Initialized" FontSize="11" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold" />
                     </Border>
                 </StackPanel>
             </StackPanel>
         </Border>
     </Grid>
 </UserControl>
-

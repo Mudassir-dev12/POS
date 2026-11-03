@@ -7,9 +7,8 @@
         Title="Process Sale Return"
         Height="620"
         Width="840"
-        WindowStartupLocation="CenterOwner"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+        Style="{DynamicResource DialogWindowStyle}"
+        WindowStartupLocation="CenterOwner">
 
     <Grid Margin="22">
         <Grid.RowDefinitions>
@@ -20,23 +19,23 @@
         </Grid.RowDefinitions>
 
         <!-- Invoice Search Bar -->
-        <Border Grid.Row="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,12">
+        <Border Grid.Row="0" Style="{DynamicResource CardBorderStyle}" Padding="14,10" Margin="0,0,0,12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="Find Sale Invoice:" FontSize="13" FontWeight="SemiBold" Foreground="#334155" VerticalAlignment="Center" Margin="0,0,12,0" />
+                <TextBlock Text="Find Sale Invoice:" Style="{DynamicResource FormLabelStyle}" VerticalAlignment="Center" Margin="0,0,12,0" />
                 <TextBox Grid.Column="1" Text="{Binding SearchInvoiceNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                          FontSize="14" Padding="8,5" VerticalAlignment="Center" Margin="0,0,10,0" />
                 <Button Grid.Column="2" Content="Find Sale" Command="{Binding SearchSaleCommand}"
-                        Width="100" Height="34" Background="#2563EB" Foreground="White" FontWeight="SemiBold" BorderThickness="0" />
+                        Style="{DynamicResource PrimaryButtonStyle}" MinWidth="100" />
             </Grid>
         </Border>
 
         <!-- Loaded Sale Header Info (if any) -->
-        <Border Grid.Row="1" Background="#F1F5F9" BorderBrush="#CBD5E1" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,12"
+        <Border Grid.Row="1" Style="{DynamicResource CardBorderStyle}" Padding="14,10" Margin="0,0,0,12"
                 Visibility="{Binding LoadedSaleNumber, Converter={StaticResource NullToVisibilityConverter}}">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -44,18 +43,18 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="Sale: " FontSize="13" Foreground="#64748B" />
-                    <TextBlock Text="{Binding LoadedSaleNumber}" FontSize="14" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,16,0" />
-                    <TextBlock Text="Date: " FontSize="13" Foreground="#64748B" />
-                    <TextBlock Text="{Binding LoadedSaleDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" FontSize="13" FontWeight="SemiBold" Foreground="#334155" Margin="0,0,16,0" />
-                    <TextBlock Text="Customer: " FontSize="13" Foreground="#64748B" />
-                    <TextBlock Text="{Binding LoadedCustomerName}" FontSize="13" FontWeight="Bold" Foreground="#2563EB" />
+                    <TextBlock Text="Sale: " FontSize="13" Foreground="{DynamicResource TextMutedBrush}" />
+                    <TextBlock Text="{Binding LoadedSaleNumber}" FontSize="14" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,16,0" />
+                    <TextBlock Text="Date: " FontSize="13" Foreground="{DynamicResource TextMutedBrush}" />
+                    <TextBlock Text="{Binding LoadedSaleDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,16,0" />
+                    <TextBlock Text="Customer: " FontSize="13" Foreground="{DynamicResource TextMutedBrush}" />
+                    <TextBlock Text="{Binding LoadedCustomerName}" FontSize="13" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Returnable Items Grid -->
-        <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Margin="0,0,0,12">
+        <Border Grid.Row="2" Style="{DynamicResource CardBorderStyle}" Margin="0,0,0,12">
             <DataGrid ItemsSource="{Binding ReturnLines}" AutoGenerateColumns="False" CanUserAddRows="False"
                       GridLinesVisibility="Horizontal" HeadersVisibility="Column" Background="Transparent" BorderThickness="0">
                 <DataGrid.Columns>
@@ -74,13 +73,13 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                     <DataGridCheckBoxColumn Header="Restock?" Binding="{Binding ReturnToStock, UpdateSourceTrigger=PropertyChanged}" Width="75" />
-                    <DataGridTextColumn Header="Refund Est." Binding="{Binding EstimatedLineRefund, StringFormat='${0:N2}'}" Width="90" IsReadOnly="True" />
+                    <DataGridTextColumn Header="Refund Est." Binding="{Binding EstimatedLineRefund, Converter={StaticResource MoneyConverter}}" Width="90" IsReadOnly="True" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
 
         <!-- Footer Controls & Total -->
-        <Border Grid.Row="3" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14,10">
+        <Border Grid.Row="3" Style="{DynamicResource CardBorderStyle}" Padding="14,10">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -93,31 +92,30 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Refund Method:" FontSize="13" FontWeight="SemiBold" Foreground="#334155" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="Refund Method:" Style="{DynamicResource FormLabelStyle}" VerticalAlignment="Center" Margin="0,0,8,0" />
                         <ComboBox ItemsSource="{Binding Source={StaticResource PaymentMethods}}" SelectedItem="{Binding RefundMethod, Mode=TwoWay}"
                                   Width="130" Height="32" Margin="0,0,16,0" VerticalContentAlignment="Center" />
-                        <TextBlock Text="Return Reason:" FontSize="13" FontWeight="SemiBold" Foreground="#334155" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="Return Reason:" Style="{DynamicResource FormLabelStyle}" VerticalAlignment="Center" Margin="0,0,8,0" />
                         <TextBox Text="{Binding GlobalReason, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                  Width="180" Height="32" Padding="6,2" VerticalContentAlignment="Center" />
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                        <TextBlock Text="Total Refund:" FontSize="14" FontWeight="SemiBold" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,8,0" />
-                        <TextBlock Text="{Binding TotalRefundAmount, StringFormat='${0:N2}'}" FontSize="22" FontWeight="Bold" Foreground="#DC2626" VerticalAlignment="Center" />
+                        <TextBlock Text="Total Refund:" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <TextBlock Text="{Binding TotalRefundAmount, Converter={StaticResource MoneyConverter}}" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource DangerTextBrush}" VerticalAlignment="Center" />
                     </StackPanel>
                 </Grid>
 
                 <Grid Grid.Row="1" Margin="0,10,0,0">
-                    <TextBlock Text="{Binding ErrorMessage}" Foreground="#EF4444" FontSize="12" VerticalAlignment="Center"
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerTextBrush}" FontSize="12" VerticalAlignment="Center"
                                Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}" />
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Cancel" Command="{Binding CancelCommand}" Width="100" Height="36" Margin="0,0,10,0" Background="#F1F5F9" Foreground="#334155" BorderBrush="#CBD5E1" />
-                        <Button Content="Post Return" Command="{Binding PostReturnCommand}" Width="120" Height="36" Background="#DC2626" Foreground="White" FontWeight="SemiBold" BorderThickness="0" />
+                        <Button Content="Cancel" Command="{Binding CancelCommand}" Style="{DynamicResource SecondaryButtonStyle}" MinWidth="100" Margin="0,0,10,0" />
+                        <Button Content="Post Return" Command="{Binding PostReturnCommand}" Style="{DynamicResource DangerButtonStyle}" MinWidth="120" />
                     </StackPanel>
                 </Grid>
             </Grid>
         </Border>
     </Grid>
 </Window>
-

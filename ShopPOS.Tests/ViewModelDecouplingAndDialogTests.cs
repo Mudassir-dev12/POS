@@ -8,7 +8,6 @@ using ShopPOS.Core.Models;
 using ShopPOS.UI.Services;
 using ShopPOS.UI.ViewModels.Brands;
 using ShopPOS.UI.ViewModels.Categories;
-using ShopPOS.UI.ViewModels.Customers;
 using ShopPOS.UI.ViewModels.Products;
 using ShopPOS.UI.ViewModels.Suppliers;
 using ShopPOS.UI.ViewModels.Units;
@@ -81,14 +80,9 @@ public class ViewModelDecouplingAndDialogTests
         var mockUnitService = new Mock<IUnitService>();
         var mockPriceLevelService = new Mock<IPriceLevelService>();
         var mockCsvService = new Mock<ICsvProductService>();
-        var mockAuthService = new Mock<IAuthService>();
-        var mockPermissionService = new Mock<IPermissionService>();
         var mockShopSettingService = new Mock<IShopSettingService>();
         var mockDialogService = new Mock<IDialogService>();
 
-        var user = new User { Id = 1, Username = "admin", Role = new Role { Name = RoleDefaults.Admin } };
-        mockAuthService.Setup(a => a.CurrentUser).Returns(user);
-        mockPermissionService.Setup(p => p.CanManageCatalog(RoleDefaults.Admin)).Returns(true);
         mockCategoryService.Setup(c => c.GetFlatListAsync(false, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<IReadOnlyList<CategoryDto>>.Ok(new List<CategoryDto>()));
         mockBrandService.Setup(b => b.GetFlatListAsync(false, It.IsAny<CancellationToken>()))
@@ -111,8 +105,6 @@ public class ViewModelDecouplingAndDialogTests
             mockUnitService.Object,
             mockPriceLevelService.Object,
             mockCsvService.Object,
-            mockAuthService.Object,
-            mockPermissionService.Object,
             mockShopSettingService.Object,
             mockDialogService.Object);
 
@@ -135,14 +127,9 @@ public class ViewModelDecouplingAndDialogTests
         var mockUnitService = new Mock<IUnitService>();
         var mockPriceLevelService = new Mock<IPriceLevelService>();
         var mockCsvService = new Mock<ICsvProductService>();
-        var mockAuthService = new Mock<IAuthService>();
-        var mockPermissionService = new Mock<IPermissionService>();
         var mockShopSettingService = new Mock<IShopSettingService>();
         var mockDialogService = new Mock<IDialogService>();
 
-        var user = new User { Id = 1, Username = "admin", Role = new Role { Name = RoleDefaults.Admin } };
-        mockAuthService.Setup(a => a.CurrentUser).Returns(user);
-        mockPermissionService.Setup(p => p.CanManageCatalog(RoleDefaults.Admin)).Returns(true);
         mockCategoryService.Setup(c => c.GetFlatListAsync(false, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<IReadOnlyList<CategoryDto>>.Ok(new List<CategoryDto>()));
         mockBrandService.Setup(b => b.GetFlatListAsync(false, It.IsAny<CancellationToken>()))
@@ -165,8 +152,6 @@ public class ViewModelDecouplingAndDialogTests
             mockUnitService.Object,
             mockPriceLevelService.Object,
             mockCsvService.Object,
-            mockAuthService.Object,
-            mockPermissionService.Object,
             mockShopSettingService.Object,
             mockDialogService.Object);
 
@@ -190,14 +175,9 @@ public class ViewModelDecouplingAndDialogTests
         var mockUnitService = new Mock<IUnitService>();
         var mockPriceLevelService = new Mock<IPriceLevelService>();
         var mockCsvService = new Mock<ICsvProductService>();
-        var mockAuthService = new Mock<IAuthService>();
-        var mockPermissionService = new Mock<IPermissionService>();
         var mockShopSettingService = new Mock<IShopSettingService>();
         var mockDialogService = new Mock<IDialogService>();
 
-        var user = new User { Id = 1, Username = "admin", Role = new Role { Name = RoleDefaults.Admin } };
-        mockAuthService.Setup(a => a.CurrentUser).Returns(user);
-        mockPermissionService.Setup(p => p.CanManageCatalog(RoleDefaults.Admin)).Returns(true);
         mockCategoryService.Setup(c => c.GetFlatListAsync(false, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<IReadOnlyList<CategoryDto>>.Ok(new List<CategoryDto>()));
         mockBrandService.Setup(b => b.GetFlatListAsync(false, It.IsAny<CancellationToken>()))
@@ -226,8 +206,6 @@ public class ViewModelDecouplingAndDialogTests
             mockUnitService.Object,
             mockPriceLevelService.Object,
             mockCsvService.Object,
-            mockAuthService.Object,
-            mockPermissionService.Object,
             mockShopSettingService.Object,
             mockDialogService.Object);
 
@@ -252,14 +230,9 @@ public class ViewModelDecouplingAndDialogTests
         var mockUnitService = new Mock<IUnitService>();
         var mockPriceLevelService = new Mock<IPriceLevelService>();
         var mockCsvService = new Mock<ICsvProductService>();
-        var mockAuthService = new Mock<IAuthService>();
-        var mockPermissionService = new Mock<IPermissionService>();
         var mockShopSettingService = new Mock<IShopSettingService>();
         var mockDialogService = new Mock<IDialogService>();
 
-        var user = new User { Id = 1, Username = "admin", Role = new Role { Name = RoleDefaults.Admin } };
-        mockAuthService.Setup(a => a.CurrentUser).Returns(user);
-        mockPermissionService.Setup(p => p.CanManageCatalog(RoleDefaults.Admin)).Returns(true);
         mockCategoryService.Setup(c => c.GetFlatListAsync(false, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<IReadOnlyList<CategoryDto>>.Ok(new List<CategoryDto>()));
         mockBrandService.Setup(b => b.GetFlatListAsync(false, It.IsAny<CancellationToken>()))
@@ -274,8 +247,6 @@ public class ViewModelDecouplingAndDialogTests
             mockUnitService.Object,
             mockPriceLevelService.Object,
             mockCsvService.Object,
-            mockAuthService.Object,
-            mockPermissionService.Object,
             mockShopSettingService.Object,
             mockDialogService.Object);
 
@@ -293,14 +264,9 @@ public class ViewModelDecouplingAndDialogTests
     {
         // Arrange
         var mockBrandService = new Mock<IBrandService>();
-        var mockAuthService = new Mock<IAuthService>();
-        var mockPermissionService = new Mock<IPermissionService>();
         var mockShopSettingService = new Mock<IShopSettingService>();
         var mockDialogService = new Mock<IDialogService>();
 
-        var user = new User { Id = 1, Username = "admin", Role = new Role { Name = RoleDefaults.Admin } };
-        mockAuthService.Setup(a => a.CurrentUser).Returns(user);
-        mockPermissionService.Setup(p => p.CanManageCatalog(RoleDefaults.Admin)).Returns(true);
 
         mockBrandService.Setup(b => b.DeleteBrandAsync(5, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure("REFERENCED_CANNOT_DELETE"));
@@ -316,8 +282,6 @@ public class ViewModelDecouplingAndDialogTests
 
         var vm = new BrandsViewModel(
             mockBrandService.Object,
-            mockAuthService.Object,
-            mockPermissionService.Object,
             mockShopSettingService.Object,
             mockDialogService.Object);
 
@@ -337,14 +301,9 @@ public class ViewModelDecouplingAndDialogTests
     {
         // Arrange
         var mockCategoryService = new Mock<ICategoryService>();
-        var mockAuthService = new Mock<IAuthService>();
-        var mockPermissionService = new Mock<IPermissionService>();
         var mockShopSettingService = new Mock<IShopSettingService>();
         var mockDialogService = new Mock<IDialogService>();
 
-        var user = new User { Id = 1, Username = "admin", Role = new Role { Name = RoleDefaults.Admin } };
-        mockAuthService.Setup(a => a.CurrentUser).Returns(user);
-        mockPermissionService.Setup(p => p.CanManageCatalog(RoleDefaults.Admin)).Returns(true);
 
         mockCategoryService.Setup(c => c.DeleteCategoryAsync(3, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure("REFERENCED_CANNOT_DELETE"));
@@ -360,8 +319,6 @@ public class ViewModelDecouplingAndDialogTests
 
         var vm = new CategoriesViewModel(
             mockCategoryService.Object,
-            mockAuthService.Object,
-            mockPermissionService.Object,
             mockShopSettingService.Object,
             mockDialogService.Object);
 
@@ -381,14 +338,9 @@ public class ViewModelDecouplingAndDialogTests
     {
         // Arrange
         var mockUnitService = new Mock<IUnitService>();
-        var mockAuthService = new Mock<IAuthService>();
-        var mockPermissionService = new Mock<IPermissionService>();
         var mockShopSettingService = new Mock<IShopSettingService>();
         var mockDialogService = new Mock<IDialogService>();
 
-        var user = new User { Id = 1, Username = "admin", Role = new Role { Name = RoleDefaults.Admin } };
-        mockAuthService.Setup(a => a.CurrentUser).Returns(user);
-        mockPermissionService.Setup(p => p.CanManageCatalog(RoleDefaults.Admin)).Returns(true);
 
         mockUnitService.Setup(u => u.DeleteUnitAsync(2, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure("REFERENCED_CANNOT_DELETE"));
@@ -404,8 +356,6 @@ public class ViewModelDecouplingAndDialogTests
 
         var vm = new UnitsViewModel(
             mockUnitService.Object,
-            mockAuthService.Object,
-            mockPermissionService.Object,
             mockShopSettingService.Object,
             mockDialogService.Object);
 
@@ -425,14 +375,9 @@ public class ViewModelDecouplingAndDialogTests
     {
         // Arrange
         var mockSupplierService = new Mock<ISupplierService>();
-        var mockAuthService = new Mock<IAuthService>();
-        var mockPermissionService = new Mock<IPermissionService>();
         var mockShopSettingService = new Mock<IShopSettingService>();
         var mockDialogService = new Mock<IDialogService>();
 
-        var user = new User { Id = 1, Username = "admin", Role = new Role { Name = RoleDefaults.Admin } };
-        mockAuthService.Setup(a => a.CurrentUser).Returns(user);
-        mockPermissionService.Setup(p => p.CanAccessSuppliers(RoleDefaults.Admin)).Returns(true);
 
         mockSupplierService.Setup(s => s.DeleteSupplierAsync(4, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure("REFERENCED_CANNOT_DELETE"));
@@ -448,8 +393,6 @@ public class ViewModelDecouplingAndDialogTests
 
         var vm = new SuppliersViewModel(
             mockSupplierService.Object,
-            mockAuthService.Object,
-            mockPermissionService.Object,
             mockShopSettingService.Object,
             mockDialogService.Object);
 
@@ -464,50 +407,4 @@ public class ViewModelDecouplingAndDialogTests
         mockSupplierService.Verify(s => s.DeactivateSupplierAsync(4, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()), Times.Once);
     }
 
-    [Fact]
-    public async Task CustomersViewModel_DeleteReferencedCustomer_ShouldPromptConfirmDialogAndDeactivate()
-    {
-        // Arrange
-        var mockCustomerService = new Mock<ICustomerService>();
-        var mockPriceLevelService = new Mock<IPriceLevelService>();
-        var mockAuthService = new Mock<IAuthService>();
-        var mockPermissionService = new Mock<IPermissionService>();
-        var mockShopSettingService = new Mock<IShopSettingService>();
-        var mockDialogService = new Mock<IDialogService>();
-
-        var user = new User { Id = 1, Username = "admin", Role = new Role { Name = RoleDefaults.Admin } };
-        mockAuthService.Setup(a => a.CurrentUser).Returns(user);
-        mockPermissionService.Setup(p => p.CanDeleteCustomers(RoleDefaults.Admin)).Returns(true);
-
-        mockCustomerService.Setup(c => c.DeleteCustomerAsync(7, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Failure("REFERENCED_CANNOT_DELETE"));
-
-        mockDialogService.Setup(d => d.ShowConfirmActionDialog(It.IsAny<string>(), It.IsAny<string>(), true))
-            .Returns(ConfirmActionResult.Deactivate);
-
-        mockCustomerService.Setup(c => c.DeactivateCustomerAsync(7, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result.Ok());
-
-        mockCustomerService.Setup(c => c.GetPagedCustomersAsync(It.IsAny<MasterDataSearchQuery>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(Result<PagedResult<CustomerDto>>.Ok(new PagedResult<CustomerDto>(new List<CustomerDto>(), 0, 1, 50)));
-
-        var vm = new CustomersViewModel(
-            mockCustomerService.Object,
-            mockPriceLevelService.Object,
-            mockAuthService.Object,
-            mockPermissionService.Object,
-            mockShopSettingService.Object,
-            mockDialogService.Object);
-
-        await vm.InitializeAsync();
-        vm.SelectedItem = new CustomerDto { Id = 7, Name = "Active Customer" };
-
-        // Act
-        await vm.DeleteOrDeactivateAsync();
-
-        // Assert
-        mockDialogService.Verify(d => d.ShowConfirmActionDialog(It.IsAny<string>(), It.IsAny<string>(), true), Times.Once);
-        mockCustomerService.Verify(c => c.DeactivateCustomerAsync(7, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()), Times.Once);
     }
-}
-

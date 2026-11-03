@@ -28,7 +28,7 @@ public class ReceiptPrinterService : IReceiptPrinterService
     public async Task<ReceiptPrintResult> PrintReceiptAsync(ReceiptDocument document, ShopSetting settings, CancellationToken cancellationToken = default)
     {
         int copies = Math.Max(1, settings.ReceiptCopies);
-        bool kickDrawer = settings.OpenCashDrawerOnCashSale && document.Payments.Any(p => p.Method == PaymentMethod.Cash);
+        bool kickDrawer = settings.OpenCashDrawerOnCashSale && document.Payments.Any(p => p.MethodName.Equals("Cash", StringComparison.OrdinalIgnoreCase));
 
         switch (settings.PrinterMode)
         {
@@ -122,12 +122,6 @@ public class ReceiptPrinterService : IReceiptPrinterService
         return await PrintReceiptAsync(doc, settings, cancellationToken);
     }
 
-    public async Task<ReceiptPrintResult> PrintShiftReportAsync(ShiftSummaryDto shift, ShopSetting settings, bool isZReport, CancellationToken cancellationToken = default)
-    {
-        var doc = _receiptBuilder.BuildFromShift(shift, settings, isZReport);
-        return await PrintReceiptAsync(doc, settings, cancellationToken);
-    }
-
     public async Task<ReceiptPrintResult> PrintTestReceiptAsync(ShopSetting settings, CancellationToken cancellationToken = default)
     {
         var doc = _receiptBuilder.BuildTestReceipt(settings);
@@ -172,33 +166,6 @@ public class ReceiptPrinterService : IReceiptPrinterService
             : ReceiptPrintResult.Fail(error ?? "Failed to send cash drawer kick pulse.");
     }
 
-    public async Task<bool> PrintReceiptAsync(SaleDetailDto sale, ShopSettingDto settings, CancellationToken cancellationToken = default)
-    {
-        var entity = new ShopSetting
-        {
-            ShopName = settings.ShopName,
-            Address = settings.Address,
-            Phone = settings.Phone,
-            TaxNumber = settings.TaxNumber,
-            CurrencySymbol = settings.CurrencySymbol,
-            ReceiptFooter = settings.ReceiptFooterText,
-            ReceiptWidthMm = settings.ReceiptWidthMm,
-            PrinterMode = settings.PrinterMode,
-            ReceiptPrinterName = settings.ReceiptPrinterName,
-            AutoPrintReceipt = settings.AutoPrintReceipt,
-            OpenCashDrawerOnCashSale = settings.OpenCashDrawerOnCashSale,
-            ReceiptCopies = settings.ReceiptCopies
-        };
-
-        var result = await PrintSaleReceiptAsync(sale, entity, isDuplicate: false, reprintCount: 0, cancellationToken);
-        return result.Success;
-    }
-
-    public async Task<bool> PrintReceiptAsync(int saleId, ShopSetting settings, CancellationToken cancellationToken = default)
-    {
-        return true;
-    }
-
     private static string FormatDocumentAsPlainText(ReceiptDocument doc)
     {
         int cols = EscPosGenerator.GetColumnsForWidth(doc.PaperWidthMm);
@@ -217,40 +184,40 @@ public class ReceiptPrinterService : IReceiptPrinterService
         }
 
         sb.AppendLine(new string('-', cols));
-        sb.AppendLine(EscPosGenerator.Justify($"Doc: {doc.InvoiceNumber}", doc.DateTime.ToString("yyyy-MM-dd HH:mm"), cols));
+        sb.AppendLine(EscPosGenerator.Justify($"Doc: {doc.ReceiptNumber}", doc.IssuedAt.ToString("yyyy-MM-dd HH:mm"), cols));
         sb.AppendLine($"Cashier: {doc.CashierName}");
-        if (!string.IsNullOrWhiteSpace(doc.CustomerName)) sb.AppendLine($"Customer: {doc.CustomerName}");
         sb.AppendLine(new string('-', cols));
 
         foreach (var item in doc.Lines)
         {
-            foreach (var nl in EscPosGenerator.WordWrap(item.ItemName, cols))
+            foreach (var nl in EscPosGenerator.WordWrap(item.ProductName, cols))
             {
                 sb.AppendLine(nl);
             }
-            string sub = $"  {item.Quantity:0.##} x {cur}{item.UnitPrice:F2}";
-            if (item.DiscountAmount > 0) sub += $" (-{cur}{item.DiscountAmount:F2})";
-            sb.AppendLine(EscPosGenerator.Justify(sub, $"{cur}{item.LineTotal:F2}", cols));
+            string sub = $"  {item.Quantity:0.##} x {cur} {item.UnitPrice:F2}";
+            if (item.DiscountAmount > 0) sub += $" (-{cur} {item.DiscountAmount:F2})";
+            sb.AppendLine(EscPosGenerator.Justify(sub, $"{cur} {item.LineTotal:F2}", cols));
         }
 
         sb.AppendLine(new string('-', cols));
-        sb.AppendLine(EscPosGenerator.Justify("Subtotal:", $"{cur}{doc.SubTotal:F2}", cols));
-        if (doc.TotalDiscount > 0) sb.AppendLine(EscPosGenerator.Justify("Discount:", $"-{cur}{doc.TotalDiscount:F2}", cols));
-        if (doc.TaxAmount > 0) sb.AppendLine(EscPosGenerator.Justify("Tax:", $"{cur}{doc.TaxAmount:F2}", cols));
-        if (doc.RoundOff != 0) sb.AppendLine(EscPosGenerator.Justify("Round-off:", $"{cur}{doc.RoundOff:F2}", cols));
+        sb.AppendLine(EscPosGenerator.Justify("Subtotal:", $"{cur} {doc.SubTotal:F2}", cols));
+        decimal disc = doc.LineDiscountTotal + doc.BillDiscountAmount;
+        if (disc > 0) sb.AppendLine(EscPosGenerator.Justify("Discount:", $"-{cur} {disc:F2}", cols));
+        if (doc.TaxAmount > 0) sb.AppendLine(EscPosGenerator.Justify("Tax:", $"{cur} {doc.TaxAmount:F2}", cols));
+        if (doc.RoundOff != 0) sb.AppendLine(EscPosGenerator.Justify("Round-off:", $"{cur} {doc.RoundOff:F2}", cols));
         sb.AppendLine(new string('=', cols));
-        sb.AppendLine(EscPosGenerator.Justify("GRAND TOTAL:", $"{cur}{doc.GrandTotal:F2}", cols));
+        sb.AppendLine(EscPosGenerator.Justify("GRAND TOTAL:", $"{cur} {doc.GrandTotal:F2}", cols));
         sb.AppendLine(new string('-', cols));
 
         foreach (var p in doc.Payments)
         {
-            sb.AppendLine(EscPosGenerator.Justify($"Paid ({p.Method}):", $"{cur}{p.Amount:F2}", cols));
+            sb.AppendLine(EscPosGenerator.Justify($"Paid ({p.MethodName}):", $"{cur} {p.Amount:F2}", cols));
         }
-        if (doc.ChangeAmount > 0) sb.AppendLine(EscPosGenerator.Justify("Change Due:", $"{cur}{doc.ChangeAmount:F2}", cols));
-        if (doc.DueAmount > 0) sb.AppendLine(EscPosGenerator.Justify("Balance Due:", $"{cur}{doc.DueAmount:F2}", cols));
+        if (doc.ChangeAmount > 0) sb.AppendLine(EscPosGenerator.Justify("Change Due:", $"{cur} {doc.ChangeAmount:F2}", cols));
+        if (doc.DueAmount > 0) sb.AppendLine(EscPosGenerator.Justify("Balance Due:", $"{cur} {doc.DueAmount:F2}", cols));
 
         sb.AppendLine(new string('-', cols));
-        if (!string.IsNullOrWhiteSpace(doc.FooterText)) sb.AppendLine(Center(doc.FooterText, cols));
+        if (!string.IsNullOrWhiteSpace(doc.FooterMessage)) sb.AppendLine(Center(doc.FooterMessage, cols));
 
         return sb.ToString();
     }

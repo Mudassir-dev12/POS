@@ -10,5 +10,7 @@ public interface ISaleReturnService
     Task<Result<bool>> CancelSaleReturnAsync(int returnId, string reason, CancellationToken cancellationToken = default);
     Task<Result<SaleReturnDetailDto>> GetSaleReturnByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<PagedResult<SaleReturnDetailDto>> SearchSaleReturnsAsync(SaleReturnSearchDto criteria, CancellationToken cancellationToken = default);
+    Task<BulkOperationResult> BulkCancelSaleReturnsAsync(IEnumerable<int> ids, string reason, int? userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredSaleReturnIdsAsync(SaleReturnSearchDto criteria, CancellationToken cancellationToken = default);
 }
 

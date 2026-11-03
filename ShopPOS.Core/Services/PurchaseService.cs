@@ -16,7 +16,6 @@ public class PurchaseService : IPurchaseService
     private readonly IShopSettingRepository _shopSettingRepo;
     private readonly INumberSequenceService _sequenceService;
     private readonly IAuditLogService _auditLogService;
-    private readonly IPermissionService _permissionService;
     private readonly IPdfReportService _pdfReportService;
     private readonly IValidator<CreatePurchaseDto> _createValidator;
     private readonly IValidator<UpdatePurchaseDto> _updateValidator;
@@ -29,7 +28,6 @@ public class PurchaseService : IPurchaseService
         IShopSettingRepository shopSettingRepo,
         INumberSequenceService sequenceService,
         IAuditLogService auditLogService,
-        IPermissionService permissionService,
         IPdfReportService pdfReportService,
         IValidator<CreatePurchaseDto> createValidator,
         IValidator<UpdatePurchaseDto> updateValidator)
@@ -41,7 +39,6 @@ public class PurchaseService : IPurchaseService
         _shopSettingRepo = shopSettingRepo;
         _sequenceService = sequenceService;
         _auditLogService = auditLogService;
-        _permissionService = permissionService;
         _pdfReportService = pdfReportService;
         _createValidator = createValidator;
         _updateValidator = updateValidator;
@@ -49,10 +46,7 @@ public class PurchaseService : IPurchaseService
 
     public async Task<Result<PagedResult<PurchaseListDto>>> GetPurchasesAsync(PurchaseSearchQuery query, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<PagedResult<PurchaseListDto>>("Permission denied. You do not have access to Purchases.");
-        }
+        // single-user: no permission check needed
 
         var result = await _purchaseRepo.GetPurchasesAsync(query, cancellationToken);
         return Result.Ok(result);
@@ -60,10 +54,7 @@ public class PurchaseService : IPurchaseService
 
     public async Task<Result<PurchaseDetailDto>> GetPurchaseByIdAsync(int id, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<PurchaseDetailDto>("Permission denied. You do not have access to Purchases.");
-        }
+        // single-user: no permission check needed
 
         var detail = await _purchaseRepo.GetPurchaseDetailAsync(id, cancellationToken);
         if (detail == null)
@@ -76,10 +67,7 @@ public class PurchaseService : IPurchaseService
 
     public async Task<Result<PurchaseDetailDto>> CreatePurchaseDraftAsync(CreatePurchaseDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<PurchaseDetailDto>("Permission denied. Only Admins and Managers can create purchases.");
-        }
+        // single-user: no permission check needed
 
         var val = await _createValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -171,7 +159,7 @@ public class PurchaseService : IPurchaseService
                 decimal pctDiff = (diff / prod.CostPrice) * 100m;
                 if (pctDiff > 30m)
                 {
-                    warnings.Add($"Unit cost for '{prod.Name}' ({itemDto.UnitCost:C}) differs by {pctDiff:F1}% from current cost ({prod.CostPrice:C}).");
+                    warnings.Add($"Unit cost for '{prod.Name}' ({ShopPOS.Core.Services.MoneyFormatter.Instance.Format(itemDto.UnitCost)}) differs by {pctDiff:F1}% from current cost ({ShopPOS.Core.Services.MoneyFormatter.Instance.Format(prod.CostPrice)}).");
                 }
             }
         }
@@ -186,10 +174,7 @@ public class PurchaseService : IPurchaseService
 
     public async Task<Result<PurchaseDetailDto>> UpdatePurchaseDraftAsync(UpdatePurchaseDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<PurchaseDetailDto>("Permission denied. Only Admins and Managers can edit purchases.");
-        }
+        // single-user: no permission check needed
 
         var val = await _updateValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -286,7 +271,7 @@ public class PurchaseService : IPurchaseService
                 decimal pctDiff = (diff / prod.CostPrice) * 100m;
                 if (pctDiff > 30m)
                 {
-                    warnings.Add($"Unit cost for '{prod.Name}' ({itemDto.UnitCost:C}) differs by {pctDiff:F1}% from current cost ({prod.CostPrice:C}).");
+                    warnings.Add($"Unit cost for '{prod.Name}' ({ShopPOS.Core.Services.MoneyFormatter.Instance.Format(itemDto.UnitCost)}) differs by {pctDiff:F1}% from current cost ({ShopPOS.Core.Services.MoneyFormatter.Instance.Format(prod.CostPrice)}).");
                 }
             }
         }
@@ -301,10 +286,7 @@ public class PurchaseService : IPurchaseService
 
     public async Task<Result<bool>> DeletePurchaseDraftAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<bool>("Permission denied. Only Admins and Managers can delete purchases.");
-        }
+        // single-user: no permission check needed
 
         var purchase = await _purchaseRepo.GetPurchaseByIdAsync(id, false, cancellationToken);
         if (purchase == null)
@@ -331,10 +313,7 @@ public class PurchaseService : IPurchaseService
 
     public async Task<Result<PurchaseDetailDto>> PostPurchaseAsync(int purchaseId, decimal? payNowAmount, PaymentMethod? payNowMethod, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<PurchaseDetailDto>("Permission denied. Only Admins and Managers can post purchases.");
-        }
+        // single-user: no permission check needed
 
         return await _transactionRunner.RunInTransactionAsync(async () =>
         {
@@ -442,7 +421,7 @@ public class PurchaseService : IPurchaseService
                 decimal amountToPay = Math.Round(payNowAmount.Value, 2, MidpointRounding.AwayFromZero);
                 if (amountToPay > purchase.GrandTotal)
                 {
-                    return Result.Failure<PurchaseDetailDto>($"Pay now amount ({amountToPay:C}) cannot exceed grand total ({purchase.GrandTotal:C}).");
+                    return Result.Failure<PurchaseDetailDto>($"Pay now amount ({ShopPOS.Core.Services.MoneyFormatter.Instance.Format(amountToPay)}) cannot exceed grand total ({ShopPOS.Core.Services.MoneyFormatter.Instance.Format(purchase.GrandTotal)}).");
                 }
 
                 string spayNumber = await _sequenceService.GetNextNumberAsync("SPAY", cancellationToken);
@@ -481,10 +460,7 @@ public class PurchaseService : IPurchaseService
 
     public async Task<Result<bool>> CancelPurchaseAsync(int purchaseId, string reason, int? userId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<bool>("Permission denied. Only Admins and Managers can cancel purchases.");
-        }
+        // single-user: no permission check needed
 
         if (string.IsNullOrWhiteSpace(reason))
         {
@@ -568,10 +544,7 @@ public class PurchaseService : IPurchaseService
 
     public async Task<Result<byte[]>> ExportPurchasePdfAsync(int purchaseId, string? userRole, CancellationToken cancellationToken = default)
     {
-        if (!_permissionService.CanManagePurchases(userRole))
-        {
-            return Result.Failure<byte[]>("Permission denied. You do not have access to Purchases.");
-        }
+        // single-user: no permission check needed
 
         var detail = await _purchaseRepo.GetPurchaseDetailAsync(purchaseId, cancellationToken);
         if (detail == null)
@@ -586,7 +559,7 @@ public class PurchaseService : IPurchaseService
             Address = settings?.Address,
             Phone = settings?.Phone,
             TaxNumber = settings?.TaxNumber,
-            CurrencySymbol = settings?.CurrencySymbol ?? "$"
+            CurrencySymbol = settings?.CurrencySymbol ?? "Rs"
         };
 
         var bytes = await _pdfReportService.GeneratePurchaseInvoicePdfAsync(detail, settingsDto, cancellationToken);
@@ -604,4 +577,72 @@ public class PurchaseService : IPurchaseService
         var cost = await _purchaseRepo.GetProductLastCostAsync(productId, cancellationToken);
         return Result.Ok(cost);
     }
+
+    public async Task<BulkOperationResult> BulkDeleteDraftsAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var p = await _purchaseRepo.GetPurchaseByIdAsync(id, includeItems: false, cancellationToken);
+            if (p == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Purchase not found." });
+                result.SkippedCount++;
+                continue;
+            }
+            if (p.Status != PurchaseStatus.Draft)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = p.PurchaseNumber, Success = false, Message = "Cannot delete posted or cancelled purchase. Cancel instead." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            var delRes = await DeletePurchaseDraftAsync(id, userId, null, cancellationToken);
+            if (delRes.Success)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = p.PurchaseNumber, Success = true });
+                result.SuccessCount++;
+            }
+            else
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = p.PurchaseNumber, Success = false, Message = delRes.ErrorMessage ?? "Delete failed." });
+                result.SkippedCount++;
+            }
+        }
+        return result;
+    }
+
+    public async Task<BulkOperationResult> BulkCancelPurchasesAsync(IEnumerable<int> ids, string reason, int? userId, CancellationToken cancellationToken = default)
+    {
+        var result = new BulkOperationResult { TotalRequested = ids.Count() };
+        foreach (var id in ids)
+        {
+            var p = await _purchaseRepo.GetPurchaseByIdAsync(id, includeItems: false, cancellationToken);
+            if (p == null)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = $"ID {id}", Success = false, Message = "Purchase not found." });
+                result.SkippedCount++;
+                continue;
+            }
+
+            var cancelRes = await CancelPurchaseAsync(id, reason, userId, null, cancellationToken);
+            if (cancelRes.Success)
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = p.PurchaseNumber, Success = true });
+                result.SuccessCount++;
+            }
+            else
+            {
+                result.Items.Add(new BulkItemResult { Id = id, Identifier = p.PurchaseNumber, Success = false, Message = cancelRes.ErrorMessage ?? "Cannot cancel purchase." });
+                result.SkippedCount++;
+            }
+        }
+        return result;
+    }
+
+    public async Task<IReadOnlyList<int>> GetFilteredPurchaseIdsAsync(PurchaseSearchQuery query, CancellationToken cancellationToken = default)
+    {
+        return await _purchaseRepo.GetFilteredIdsAsync(query, cancellationToken);
+    }
+
 }

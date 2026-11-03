@@ -1,3 +1,4 @@
+using ShopPOS.Core.DTOs;
 using System.IO;
 using System.Runtime.ExceptionServices;
 using System.Windows;
@@ -13,10 +14,10 @@ using ShopPOS.Core.Models;
 using ShopPOS.Data;
 using ShopPOS.Data.Seeding;
 using ShopPOS.UI;
+using ShopPOS.UI.Services;
 using ShopPOS.UI.ViewModels;
 using ShopPOS.UI.ViewModels.Brands;
 using ShopPOS.UI.ViewModels.Categories;
-using ShopPOS.UI.ViewModels.Customers;
 using ShopPOS.UI.ViewModels.HeldBills;
 using ShopPOS.UI.ViewModels.Inventory;
 using ShopPOS.UI.ViewModels.Products;
@@ -24,7 +25,6 @@ using ShopPOS.UI.ViewModels.PurchaseReturns;
 using ShopPOS.UI.ViewModels.Purchases;
 using ShopPOS.UI.ViewModels.Sales;
 using ShopPOS.UI.ViewModels.Settings;
-using ShopPOS.UI.ViewModels.Shifts;
 using ShopPOS.UI.ViewModels.SupplierLedger;
 using ShopPOS.UI.ViewModels.SupplierPayments;
 using ShopPOS.UI.ViewModels.Suppliers;
@@ -41,6 +41,19 @@ public class UiSmokeTests
 {
     private static void RunOnSta(Action action)
     {
+        if (Application.Current != null && Application.Current.Dispatcher != null)
+        {
+            if (Application.Current.Dispatcher.CheckAccess())
+            {
+                action();
+            }
+            else
+            {
+                Application.Current.Dispatcher.Invoke(action);
+            }
+            return;
+        }
+
         Exception? threadEx = null;
         var thread = new Thread(() =>
         {
@@ -64,7 +77,7 @@ public class UiSmokeTests
     }
 
     [Fact]
-    public void AllViewsAndDialogs_MustLoadXamlAndBindSuccessfully_WithoutExceptionsOrMissingResources()
+    public void AllViewsAndDialogs_MustLoadXamlAndBindSuccessfully_InLightAndDarkThemes()
     {
         RunOnSta(() =>
         {
@@ -98,7 +111,8 @@ public class UiSmokeTests
                     seeder.SeedAsync().GetAwaiter().GetResult();
                 }
 
-                // 4. Test all Windows & Dialogs
+                var themeService = serviceProvider.GetRequiredService<IThemeService>();
+
                 var windowTests = new (Type ViewType, Type ViewModelType)[]
                 {
                     (typeof(MainWindow), typeof(MainWindowViewModel)),
@@ -112,7 +126,6 @@ public class UiSmokeTests
                     (typeof(BrandDialog), typeof(BrandDialogViewModel)),
                     (typeof(UnitDialog), typeof(UnitDialogViewModel)),
                     (typeof(SupplierDialog), typeof(SupplierDialogViewModel)),
-                    (typeof(CustomerDialog), typeof(CustomerDialogViewModel)),
                     (typeof(PriceHistoryDialog), typeof(PriceHistoryDialogViewModel)),
                     (typeof(CsvImportWizardDialog), typeof(CsvImportWizardViewModel)),
                     (typeof(StockAdjustmentDialog), typeof(StockAdjustmentDialogViewModel)),
@@ -121,9 +134,7 @@ public class UiSmokeTests
                     (typeof(SalePaymentDialog), typeof(SalePaymentDialogViewModel)),
                     (typeof(SaleDetailDialog), typeof(SaleDetailDialogViewModel)),
                     (typeof(SaleReturnDialog), typeof(SaleReturnDialogViewModel)),
-                    (typeof(OpenShiftDialog), typeof(OpenShiftDialogViewModel)),
-                    (typeof(CloseShiftDialog), typeof(CloseShiftDialogViewModel)),
-                    (typeof(CashMovementDialog), typeof(CashMovementDialogViewModel)),
+
                     (typeof(HeldBillsDialog), typeof(HeldBillsDialogViewModel)),
                     (typeof(BillDiscountDialog), typeof(BillDiscountDialogViewModel)),
                     (typeof(LineDiscountDialog), typeof(LineDiscountDialogViewModel)),
@@ -133,27 +144,6 @@ public class UiSmokeTests
                     (typeof(ReceiptPreviewDialog), typeof(ReceiptPreviewDialogViewModel)),
                 };
 
-                foreach (var (viewType, vmType) in windowTests)
-                {
-                    Console.WriteLine($"[SMOKE TEST] Testing window {viewType.Name}...");
-                    var vm = serviceProvider.GetRequiredService(vmType);
-                    var window = (Window)serviceProvider.GetRequiredService(viewType);
-                    window.DataContext = vm;
-
-                    // Force XAML load, layout, and rendering
-                    window.Show();
-                    Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
-                    window.Close();
-                }
-
-                // ConfirmActionDialog (non-VM custom dialog)
-                Console.WriteLine("[SMOKE TEST] Testing ConfirmActionDialog...");
-                var confirmDialog = serviceProvider.GetRequiredService<ConfirmActionDialog>();
-                confirmDialog.Show();
-                Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
-                confirmDialog.Close();
-
-                // 5. Test all UserControls (Views) hosted inside a temporary test window
                 var userControlTests = new (Type ViewType, Type ViewModelType)[]
                 {
                     (typeof(ProductsView), typeof(ProductsViewModel)),
@@ -161,7 +151,6 @@ public class UiSmokeTests
                     (typeof(BrandsView), typeof(BrandsViewModel)),
                     (typeof(UnitsView), typeof(UnitsViewModel)),
                     (typeof(SuppliersView), typeof(SuppliersViewModel)),
-                    (typeof(CustomersView), typeof(CustomersViewModel)),
                     (typeof(PurchasesView), typeof(PurchasesViewModel)),
                     (typeof(SupplierPaymentsView), typeof(SupplierPaymentsViewModel)),
                     (typeof(PurchaseReturnsView), typeof(PurchaseReturnsViewModel)),
@@ -179,26 +168,63 @@ public class UiSmokeTests
                     (typeof(PosSaleView), typeof(PosSaleViewModel)),
                     (typeof(SalesView), typeof(SalesViewModel)),
                     (typeof(SaleReturnsView), typeof(SaleReturnsViewModel)),
-                    (typeof(ShiftsView), typeof(ShiftsViewModel)),
                 };
 
-                foreach (var (viewType, vmType) in userControlTests)
+                // Test under both Light and Dark themes
+                foreach (var theme in new[] { "Light", "Dark" })
                 {
-                    Console.WriteLine($"[SMOKE TEST] Testing UserControl {viewType.Name}...");
-                    var vm = serviceProvider.GetRequiredService(vmType);
-                    var view = (FrameworkElement)serviceProvider.GetRequiredService(viewType);
-                    view.DataContext = vm;
+                    Console.WriteLine($"[SMOKE TEST] Testing UI under {theme} theme...");
+                    themeService.SetTheme(theme);
 
-                    var hostWindow = new Window
+                    // 4. Test all Windows & Dialogs
+                    foreach (var (viewType, vmType) in windowTests)
                     {
-                        Content = view,
-                        Width = 900,
-                        Height = 600
-                    };
+                        var vm = serviceProvider.GetRequiredService(vmType);
+                        var window = (Window)serviceProvider.GetRequiredService(viewType);
+                        window.DataContext = vm;
 
-                    hostWindow.Show();
+                        // Force XAML load, layout, and rendering
+                        window.Show();
+                        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
+                        window.Close();
+                    }
+
+                    // ConfirmActionDialog (non-VM custom dialog)
+                    var confirmDialog = serviceProvider.GetRequiredService<ConfirmActionDialog>();
+                    confirmDialog.Show();
                     Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
-                    hostWindow.Close();
+                    confirmDialog.Close();
+
+                    // BulkConfirmDialog
+                    var bulkConfirm = new BulkConfirmDialog("Delete", 10, false);
+                    bulkConfirm.Show();
+                    Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
+                    bulkConfirm.Close();
+
+                    // BulkSummaryDialog
+                    var bulkSummary = new BulkSummaryDialog("Summary", new BulkOperationResult());
+                    bulkSummary.Show();
+                    Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
+                    bulkSummary.Close();
+
+                    // 5. Test all UserControls (Views) hosted inside a temporary test window
+                    foreach (var (viewType, vmType) in userControlTests)
+                    {
+                        var vm = serviceProvider.GetRequiredService(vmType);
+                        var view = (FrameworkElement)serviceProvider.GetRequiredService(viewType);
+                        view.DataContext = vm;
+
+                        var hostWindow = new Window
+                        {
+                            Content = view,
+                            Width = 900,
+                            Height = 600
+                        };
+
+                        hostWindow.Show();
+                        Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
+                        hostWindow.Close();
+                    }
                 }
             }
             finally

@@ -126,6 +126,14 @@ public class SupplierPaymentRepository : ISupplierPaymentRepository
             .SumAsync(p => (decimal?)p.Amount, cancellationToken) ?? 0m;
     }
 
+    public async Task<IReadOnlyList<int>> GetFilteredIdsAsync(int? supplierId, CancellationToken cancellationToken = default)
+    {
+        var query = _context.SupplierPayments.AsNoTracking().Where(p => !p.IsDeleted);
+        if (supplierId.HasValue && supplierId.Value > 0)
+            query = query.Where(p => p.SupplierId == supplierId.Value);
+        return await query.Select(p => p.Id).ToListAsync(cancellationToken);
+    }
+
     public async Task UpdatePurchasePaidAmountAsync(int purchaseId, decimal newPaidAmount, CancellationToken cancellationToken = default)
     {
         var purchase = await _context.Purchases.FirstOrDefaultAsync(p => p.Id == purchaseId, cancellationToken);

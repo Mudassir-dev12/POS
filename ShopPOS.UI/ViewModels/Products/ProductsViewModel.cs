@@ -28,6 +28,9 @@ public partial class ProductsViewModel : BaseCrudViewModel<ProductListItemDto>
     [ObservableProperty]
     private bool _lowStockOnly = false;
 
+    [ObservableProperty]
+    private bool _outOfStockOnly = false;
+
     public ObservableCollection<CategoryDto> FilterCategories { get; } = new();
     public ObservableCollection<BrandDto> FilterBrands { get; } = new();
 
@@ -38,11 +41,9 @@ public partial class ProductsViewModel : BaseCrudViewModel<ProductListItemDto>
         IUnitService unitService,
         IPriceLevelService priceLevelService,
         ICsvProductService csvProductService,
-        IAuthService authService,
-        IPermissionService permissionService,
         IShopSettingService shopSettingService,
         IDialogService dialogService)
-        : base(authService, permissionService, shopSettingService)
+        : base(shopSettingService, dialogService)
     {
         _productService = productService;
         _categoryService = categoryService;
@@ -55,13 +56,10 @@ public partial class ProductsViewModel : BaseCrudViewModel<ProductListItemDto>
 
     protected override void ApplyPermissions()
     {
-        string? role = GetCurrentRole();
-        bool canManage = PermissionService.CanManageCatalog(role);
-
-        CanAdd = canManage;
-        CanEdit = canManage;
-        CanDelete = canManage;
-        CanDeactivate = canManage;
+        CanAdd = true;
+        CanEdit = true;
+        CanDelete = true;
+        CanDeactivate = true;
     }
 
     public override async Task InitializeAsync()
@@ -100,6 +98,14 @@ public partial class ProductsViewModel : BaseCrudViewModel<ProductListItemDto>
 
     partial void OnLowStockOnlyChanged(bool value)
     {
+        if (value) OutOfStockOnly = false;
+        CurrentPage = 1;
+        _ = LoadDataAsync();
+    }
+
+    partial void OnOutOfStockOnlyChanged(bool value)
+    {
+        if (value) LowStockOnly = false;
         CurrentPage = 1;
         _ = LoadDataAsync();
     }
@@ -118,6 +124,7 @@ public partial class ProductsViewModel : BaseCrudViewModel<ProductListItemDto>
                 BrandId = FilterBrandId > 0 ? FilterBrandId : null,
                 IsActive = ShowInactive ? null : true,
                 LowStockOnly = LowStockOnly,
+                OutOfStockOnly = OutOfStockOnly,
                 PageNumber = CurrentPage,
                 PageSize = PageSize
             };
@@ -300,4 +307,29 @@ public partial class ProductsViewModel : BaseCrudViewModel<ProductListItemDto>
             await LoadDataAsync();
         }
     }
+
+    protected override async Task<IReadOnlyList<int>> FetchAllFilteredIdsAsync()
+    {
+        var query = new ProductSearchQuery
+        {
+            SearchTerm = SearchTerm,
+            CategoryId = FilterCategoryId,
+            BrandId = FilterBrandId,
+            IsActive = ShowInactive ? null : true,
+            LowStockOnly = LowStockOnly,
+            OutOfStockOnly = OutOfStockOnly
+        };
+        return await _productService.GetFilteredProductIdsAsync(query);
+    }
+
+    protected override async Task<BulkOperationResult> ExecuteBulkDeleteAsync(IReadOnlyList<int> ids)
+    {
+        return await _productService.BulkDeleteAsync(ids, GetCurrentUserId());
+    }
+
+    protected override async Task<BulkOperationResult> ExecuteBulkDeactivateAsync(IReadOnlyList<int> ids)
+    {
+        return await _productService.BulkDeactivateAsync(ids, GetCurrentUserId());
+    }
+
 }

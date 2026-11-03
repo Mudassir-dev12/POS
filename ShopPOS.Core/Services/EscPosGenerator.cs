@@ -99,317 +99,227 @@ public static class EscPosGenerator
         WriteTextLine(ms, new string('-', cols));
 
         // Invoice Meta
-        WriteTextLine(ms, Justify($"Doc: {doc.InvoiceNumber}", doc.DateTime.ToString("yyyy-MM-dd HH:mm"), cols));
+        WriteTextLine(ms, Justify($"Doc: {doc.ReceiptNumber}", doc.IssuedAt.ToString("yyyy-MM-dd HH:mm"), cols));
         WriteTextLine(ms, $"Cashier: {doc.CashierName}");
-        if (!string.IsNullOrWhiteSpace(doc.CustomerName))
+        WriteTextLine(ms, new string('-', cols));
+
+        // Lines
+        foreach (var item in doc.Lines)
         {
-            WriteTextLine(ms, $"Customer: {doc.CustomerName}");
-            if (!string.IsNullOrWhiteSpace(doc.CustomerPhone))
+            var nameLines = WordWrap(item.ProductName, cols);
+            foreach (var nl in nameLines)
             {
-                WriteTextLine(ms, $"Cust Phone: {doc.CustomerPhone}");
+                WriteTextLine(ms, nl);
             }
-            if (!string.IsNullOrWhiteSpace(doc.CustomerTaxNumber))
+
+            string qtyPrice = $"  {item.Quantity:0.##} x {cur}{item.UnitPrice:F2}";
+            string lineTotal = $"{cur}{item.LineTotal:F2}";
+
+            if (item.DiscountAmount > 0m)
             {
-                WriteTextLine(ms, $"Cust Tax #: {doc.CustomerTaxNumber}");
+                qtyPrice += $" (-{cur}{item.DiscountAmount:F2})";
             }
+
+            WriteTextLine(ms, Justify(qtyPrice, lineTotal, cols));
         }
 
         WriteTextLine(ms, new string('-', cols));
 
-        // 3. Shift Report Data (if shift document)
-        if (doc.ShiftData != null)
+        // Totals
+        WriteTextLine(ms, Justify("Subtotal:", $"{cur}{doc.SubTotal:F2}", cols));
+        decimal totalDisc = doc.LineDiscountTotal + doc.BillDiscountAmount;
+        if (totalDisc > 0m)
         {
-            var s = doc.ShiftData;
-            WriteTextLine(ms, Justify("Shift Number:", s.ShiftNumber, cols));
-            WriteTextLine(ms, Justify("Shift Status:", s.Status.ToString(), cols));
-            WriteTextLine(ms, Justify("Opened At:", s.OpenedAt.ToString("yyyy-MM-dd HH:mm"), cols));
-            if (s.ClosedAt.HasValue)
-            {
-                WriteTextLine(ms, Justify("Closed At:", s.ClosedAt.Value.ToString("yyyy-MM-dd HH:mm"), cols));
-            }
-            WriteTextLine(ms, new string('-', cols));
-
-            WriteTextLine(ms, Justify("Opening Cash:", $"{cur}{s.OpeningCash:F2}", cols));
-            WriteTextLine(ms, Justify("Gross Sales:", $"{cur}{s.GrossSales:F2}", cols));
-            WriteTextLine(ms, Justify("Net Sales:", $"{cur}{s.NetSales:F2}", cols));
-            WriteTextLine(ms, Justify("Transactions:", $"{s.SalesCount}", cols));
-            WriteTextLine(ms, Justify("Returns Count:", $"{s.ReturnsCount}", cols));
-            WriteTextLine(ms, Justify("Total Returns:", $"-{cur}{s.TotalReturns:F2}", cols));
-            WriteTextLine(ms, Justify("Cash In (Float):", $"+{cur}{s.CashIn:F2}", cols));
-            WriteTextLine(ms, Justify("Cash Out (Expense):", $"-{cur}{s.CashOut:F2}", cols));
-
-            WriteTextLine(ms, new string('-', cols));
-            WriteTextLine(ms, "PAYMENTS BREAKDOWN:");
-            foreach (var kvp in s.PaymentsByMethod)
-            {
-                WriteTextLine(ms, Justify($"  {kvp.Key}:", $"{cur}{kvp.Value:F2}", cols));
-            }
-
-            WriteTextLine(ms, new string('=', cols));
-            ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
-            WriteTextLine(ms, Justify("EXPECTED DRAWER CASH:", $"{cur}{s.ExpectedCash:F2}", cols));
-            if (s.CountedCash.HasValue)
-            {
-                WriteTextLine(ms, Justify("ACTUAL COUNTED CASH:", $"{cur}{s.CountedCash.Value:F2}", cols));
-                string diffLabel = (s.Difference ?? 0m) >= 0 ? "OVERAGE:" : "SHORTAGE:";
-                WriteTextLine(ms, Justify(diffLabel, $"{cur}{s.Difference ?? 0m:F2}", cols));
-            }
-            ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
+            WriteTextLine(ms, Justify("Discount:", $"-{cur}{totalDisc:F2}", cols));
         }
-        else
+        if (doc.TaxAmount > 0m)
         {
-            // 4. Sales / Returns Line Items
-            // Columns layout:
-            // Line 1: Item Name (word-wrapped)
-            // Line 2: "  Qty x UnitPrice" [Disc] [LineTotal]
-            foreach (var item in doc.Lines)
-            {
-                var nameLines = WordWrap(item.ItemName, cols);
-                foreach (var nl in nameLines)
-                {
-                    WriteTextLine(ms, nl);
-                }
-
-                string qtyPrice = $"  {item.Quantity:0.##} x {cur}{item.UnitPrice:F2}";
-                string lineTotal = $"{cur}{item.LineTotal:F2}";
-
-                if (item.DiscountAmount > 0m)
-                {
-                    qtyPrice += $" (-{cur}{item.DiscountAmount:F2})";
-                }
-
-                WriteTextLine(ms, Justify(qtyPrice, lineTotal, cols));
-            }
-
-            WriteTextLine(ms, new string('-', cols));
-
-            // 5. Totals
-            WriteTextLine(ms, Justify("Subtotal:", $"{cur}{doc.SubTotal:F2}", cols));
-            if (doc.TotalDiscount > 0m)
-            {
-                WriteTextLine(ms, Justify("Discount:", $"-{cur}{doc.TotalDiscount:F2}", cols));
-            }
-            if (doc.TaxAmount > 0m)
-            {
-                WriteTextLine(ms, Justify("Tax / VAT:", $"{cur}{doc.TaxAmount:F2}", cols));
-            }
-            if (doc.RoundOff != 0m)
-            {
-                WriteTextLine(ms, Justify("Round-off:", $"{cur}{doc.RoundOff:F2}", cols));
-            }
-
-            WriteTextLine(ms, new string('=', cols));
-
-            // Grand Total (Bold)
-            ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
-            WriteTextLine(ms, Justify("GRAND TOTAL:", $"{cur}{doc.GrandTotal:F2}", cols));
-            ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
-
-            WriteTextLine(ms, new string('-', cols));
-
-            // Payments
-            foreach (var p in doc.Payments)
-            {
-                string payDesc = $"Paid ({p.Method}):";
-                if (!string.IsNullOrWhiteSpace(p.Reference))
-                {
-                    payDesc += $" #{p.Reference}";
-                }
-                WriteTextLine(ms, Justify(payDesc, $"{cur}{p.Amount:F2}", cols));
-            }
-
-            if (doc.ChangeAmount > 0m)
-            {
-                ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
-                WriteTextLine(ms, Justify("Change Due:", $"{cur}{doc.ChangeAmount:F2}", cols));
-                ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
-            }
-
-            if (doc.DueAmount > 0m)
-            {
-                ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
-                WriteTextLine(ms, Justify("Balance Due:", $"{cur}{doc.DueAmount:F2}", cols));
-                ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
-
-                if (doc.CustomerPreviousBalance.HasValue)
-                {
-                    WriteTextLine(ms, Justify("Prev Balance:", $"{cur}{doc.CustomerPreviousBalance.Value:F2}", cols));
-                    WriteTextLine(ms, Justify("Total Account Balance:", $"{cur}{(doc.CustomerNewBalance ?? 0m):F2}", cols));
-                }
-            }
+            WriteTextLine(ms, Justify("Tax / VAT:", $"{cur}{doc.TaxAmount:F2}", cols));
+        }
+        if (doc.RoundOff != 0m)
+        {
+            WriteTextLine(ms, Justify("Round-off:", $"{cur}{doc.RoundOff:F2}", cols));
         }
 
-        // 6. Footer Text
+        WriteTextLine(ms, new string('=', cols));
+
+        // Grand Total (Bold)
+        ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
+        WriteTextLine(ms, Justify("GRAND TOTAL:", $"{cur}{doc.GrandTotal:F2}", cols));
+        ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
+
+        WriteTextLine(ms, new string('-', cols));
+
+        // Payments
+        foreach (var p in doc.Payments)
+        {
+            string payDesc = $"Paid ({p.MethodName}):";
+            if (!string.IsNullOrWhiteSpace(p.Reference))
+            {
+                payDesc += $" #{p.Reference}";
+            }
+            WriteTextLine(ms, Justify(payDesc, $"{cur}{p.Amount:F2}", cols));
+        }
+
+        if (doc.ChangeAmount > 0m)
+        {
+            ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
+            WriteTextLine(ms, Justify("Change Due:", $"{cur}{doc.ChangeAmount:F2}", cols));
+            ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
+        }
+
+        if (doc.DueAmount > 0m)
+        {
+            ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
+            WriteTextLine(ms, Justify("Balance Due (old):", $"{cur}{doc.DueAmount:F2}", cols));
+            ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
+        }
+
+        // Footer Text
         WriteTextLine(ms, new string('-', cols));
         ms.Write(CmdAlignCenter, 0, CmdAlignCenter.Length);
-        if (!string.IsNullOrWhiteSpace(doc.FooterText))
+        if (!string.IsNullOrWhiteSpace(doc.FooterMessage))
         {
-            foreach (var line in WordWrap(doc.FooterText, cols))
+            foreach (var line in WordWrap(doc.FooterMessage, cols))
             {
                 WriteTextLine(ms, line);
             }
         }
 
-        // 7. Barcode (Code 128) if invoice number provided
-        if (!string.IsNullOrWhiteSpace(doc.BarcodeOrQrValue) && doc.BarcodeOrQrValue.Length >= 3 && doc.BarcodeOrQrValue.Length <= 30)
+        // Barcode
+        if (!string.IsNullOrWhiteSpace(doc.BarcodeOrQrValue))
         {
             ms.Write(CmdLineFeed, 0, CmdLineFeed.Length);
-            WriteCode128Barcode(ms, doc.BarcodeOrQrValue);
+            GenerateCode128Barcode(ms, doc.BarcodeOrQrValue);
+            ms.Write(CmdLineFeed, 0, CmdLineFeed.Length);
+            WriteTextLine(ms, doc.BarcodeOrQrValue);
         }
 
-        // 8. Cash Drawer Kick Pulse (if requested)
-        if (kickDrawer)
-        {
-            var drawerBytes = GenerateDrawerPulse();
-            ms.Write(drawerBytes, 0, drawerBytes.Length);
-        }
-
-        // 9. Extra feed lines & Cut
+        // Paper Feed & Cut
         ms.Write(CmdLineFeed, 0, CmdLineFeed.Length);
         ms.Write(CmdLineFeed, 0, CmdLineFeed.Length);
         ms.Write(CmdPaperCut, 0, CmdPaperCut.Length);
 
+        // Optional drawer pulse appended at the very end
+        if (kickDrawer)
+        {
+            ms.Write(CmdDrawerPulsePin2, 0, CmdDrawerPulsePin2.Length);
+            ms.Write(CmdDrawerPulsePin5, 0, CmdDrawerPulsePin5.Length);
+        }
+
         return ms.ToArray();
     }
 
-    private static void WriteTextLine(Stream stream, string text)
+    public static void GenerateCode128Barcode(MemoryStream ms, string data)
     {
-        byte[] bytes = Encoding.ASCII.GetBytes(text + "\n");
-        stream.Write(bytes, 0, bytes.Length);
+        if (string.IsNullOrWhiteSpace(data)) return;
+
+        // GS h 60 (Height = 60 dots)
+        ms.Write([0x1D, 0x68, 60], 0, 3);
+        // GS w 2 (Module width = 2)
+        ms.Write([0x1D, 0x77, 2], 0, 3);
+        // GS H 0 (Turn off HRI characters below barcode; we print our own text below)
+        ms.Write([0x1D, 0x48, 0], 0, 3);
+
+        // GS k 73 len {B} data
+        // Code 128 subset B header: {B} is 0x7B, 0x42
+        var rawData = Encoding.ASCII.GetBytes(data);
+        var barcodePayload = new byte[2 + rawData.Length];
+        barcodePayload[0] = 0x7B; // '{'
+        barcodePayload[1] = 0x42; // 'B'
+        Buffer.BlockCopy(rawData, 0, barcodePayload, 2, rawData.Length);
+
+        ms.Write([0x1D, 0x6B, 73, (byte)barcodePayload.Length], 0, 4);
+        ms.Write(barcodePayload, 0, barcodePayload.Length);
     }
 
-    private static void WriteCode128Barcode(Stream stream, string code)
+    public static string NormalizeCurrencySymbol(string symbol)
     {
-        try
+        if (string.IsNullOrWhiteSpace(symbol)) return "Rs";
+        return symbol switch
         {
-            // GS h 64 (height 64 dots)
-            stream.Write([0x1D, 0x68, 0x40], 0, 3);
-            // GS w 2 (width factor 2)
-            stream.Write([0x1D, 0x77, 0x02], 0, 3);
-            // GS H 2 (HRI characters printed below)
-            stream.Write([0x1D, 0x48, 0x02], 0, 3);
-
-            // GS k 73 (Code 128)
-            byte[] codeBytes = Encoding.ASCII.GetBytes(code);
-            byte len = (byte)(codeBytes.Length + 2); // {B + data
-            stream.Write([0x1D, 0x6B, 0x49, len, 0x7B, 0x42], 0, 6);
-            stream.Write(codeBytes, 0, codeBytes.Length);
-            stream.Write(CmdLineFeed, 0, CmdLineFeed.Length);
-        }
-        catch { }
-    }
-
-    public static string NormalizeCurrencySymbol(string? symbol)
-    {
-        if (string.IsNullOrWhiteSpace(symbol)) return "$";
-        symbol = symbol.Trim();
-
-        // Standard ASCII or simple symbols
-        if (symbol == "$" || symbol == "£" || symbol == "€" || symbol == "¥") return symbol;
-
-        // Clean fallbacks for complex or wide multi-byte currencies
-        if (symbol.Contains("₹") || symbol.Equals("INR", StringComparison.OrdinalIgnoreCase)) return "Rs.";
-        if (symbol.Contains("PKR") || symbol.Equals("Rs", StringComparison.OrdinalIgnoreCase)) return "Rs.";
-        if (symbol.Contains("EUR", StringComparison.OrdinalIgnoreCase)) return "EUR ";
-        if (symbol.Contains("GBP", StringComparison.OrdinalIgnoreCase)) return "GBP ";
-        if (symbol.Contains("USD", StringComparison.OrdinalIgnoreCase)) return "$";
-
-        return symbol.Length <= 4 ? symbol : symbol[..3] + " ";
+            "Rs" => "Rs",
+            "$" => "$",
+            "£" => "\x9C", // CP437 pound
+            "¥" => "\x9D", // CP437 yen
+            "€" => "EUR ",
+            "₹" => "Rs.",
+            _ => symbol.Length > 3 ? symbol[..3] : symbol
+        };
     }
 
     public static string Justify(string left, string right, int width)
     {
-        if (left == null) left = string.Empty;
-        if (right == null) right = string.Empty;
+        left ??= string.Empty;
+        right ??= string.Empty;
 
-        int totalLen = left.Length + right.Length;
-        if (totalLen >= width)
+        int space = width - left.Length - right.Length;
+        if (space <= 0)
         {
-            // Truncate left if necessary to fit right
-            int availForLeft = Math.Max(0, width - right.Length - 1);
-            if (left.Length > availForLeft && availForLeft > 0)
-            {
-                left = left[..availForLeft];
-            }
-            totalLen = left.Length + right.Length;
+            return left + " " + right;
         }
 
-        int spaces = Math.Max(1, width - totalLen);
-        return left + new string(' ', spaces) + right;
+        return left + new string(' ', space) + right;
     }
 
     public static List<string> WordWrap(string text, int maxWidth)
     {
-        var result = new List<string>();
-        if (string.IsNullOrEmpty(text))
+        var lines = new List<string>();
+        if (string.IsNullOrEmpty(text)) return lines;
+
+        var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var currentLine = new StringBuilder();
+
+        foreach (var word in words)
         {
-            return result;
-        }
-
-        var lines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-        foreach (var line in lines)
-        {
-            if (line.Length <= maxWidth)
+            if (currentLine.Length == 0)
             {
-                result.Add(line);
-                continue;
-            }
-
-            var words = line.Split(' ');
-            var currentLine = new StringBuilder();
-
-            foreach (var word in words)
-            {
-                if (currentLine.Length == 0)
+                if (word.Length > maxWidth)
                 {
-                    if (word.Length > maxWidth)
+                    // Split long unbroken word
+                    for (int i = 0; i < word.Length; i += maxWidth)
                     {
-                        // Split overly long word
-                        int pos = 0;
-                        while (pos < word.Length)
-                        {
-                            int take = Math.Min(maxWidth, word.Length - pos);
-                            result.Add(word.Substring(pos, take));
-                            pos += take;
-                        }
+                        lines.Add(word.Substring(i, Math.Min(maxWidth, word.Length - i)));
                     }
-                    else
-                    {
-                        currentLine.Append(word);
-                    }
-                }
-                else if (currentLine.Length + 1 + word.Length <= maxWidth)
-                {
-                    currentLine.Append(' ').Append(word);
                 }
                 else
                 {
-                    result.Add(currentLine.ToString());
-                    currentLine.Clear();
-                    if (word.Length > maxWidth)
-                    {
-                        int pos = 0;
-                        while (pos < word.Length)
-                        {
-                            int take = Math.Min(maxWidth, word.Length - pos);
-                            result.Add(word.Substring(pos, take));
-                            pos += take;
-                        }
-                    }
-                    else
-                    {
-                        currentLine.Append(word);
-                    }
+                    currentLine.Append(word);
                 }
             }
-
-            if (currentLine.Length > 0)
+            else if (currentLine.Length + 1 + word.Length <= maxWidth)
             {
-                result.Add(currentLine.ToString());
+                currentLine.Append(' ').Append(word);
+            }
+            else
+            {
+                lines.Add(currentLine.ToString());
+                currentLine.Clear();
+                if (word.Length > maxWidth)
+                {
+                    for (int i = 0; i < word.Length; i += maxWidth)
+                    {
+                        lines.Add(word.Substring(i, Math.Min(maxWidth, word.Length - i)));
+                    }
+                }
+                else
+                {
+                    currentLine.Append(word);
+                }
             }
         }
 
-        return result;
+        if (currentLine.Length > 0)
+        {
+            lines.Add(currentLine.ToString());
+        }
+
+        return lines;
+    }
+
+    private static void WriteTextLine(MemoryStream ms, string text)
+    {
+        var bytes = Encoding.ASCII.GetBytes(text + "\n");
+        ms.Write(bytes, 0, bytes.Length);
     }
 }
-

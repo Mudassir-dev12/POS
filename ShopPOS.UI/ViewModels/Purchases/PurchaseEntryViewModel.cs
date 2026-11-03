@@ -16,9 +16,7 @@ public partial class PurchaseEntryViewModel : ObservableObject
     private readonly IProductService _productService;
     private readonly IPurchaseCalculator _calculator;
     private readonly IDialogService _dialogService;
-    private readonly IAuthService _authService;
-    private readonly IPermissionService _permissionService;
-
+        
     private int? _purchaseId;
     private bool _isInitialized;
     private bool _isDirty;
@@ -135,17 +133,13 @@ public partial class PurchaseEntryViewModel : ObservableObject
         ISupplierService supplierService,
         IProductService productService,
         IPurchaseCalculator calculator,
-        IDialogService dialogService,
-        IAuthService authService,
-        IPermissionService permissionService)
+        IDialogService dialogService)
     {
         _purchaseService = purchaseService;
         _supplierService = supplierService;
         _productService = productService;
         _calculator = calculator;
         _dialogService = dialogService;
-        _authService = authService;
-        _permissionService = permissionService;
     }
 
     public async Task InitializeAsync(int? purchaseId = null)
@@ -157,7 +151,7 @@ public partial class PurchaseEntryViewModel : ObservableObject
         try
         {
             // 1. Load active suppliers
-            var supRes = await _supplierService.GetFlatListAsync(false, _authService.CurrentUser?.Role?.Name);
+            var supRes = await _supplierService.GetFlatListAsync(false, "Owner");
             if (supRes.Success && supRes.Data != null)
             {
                 Suppliers.Clear();
@@ -170,7 +164,7 @@ public partial class PurchaseEntryViewModel : ObservableObject
             // 2. Load existing purchase or initialize empty draft
             if (purchaseId.HasValue)
             {
-                var pRes = await _purchaseService.GetPurchaseByIdAsync(purchaseId.Value, _authService.CurrentUser?.Role?.Name);
+                var pRes = await _purchaseService.GetPurchaseByIdAsync(purchaseId.Value, "Owner");
                 if (pRes.Success && pRes.Data != null)
                 {
                     LoadFromDetail(pRes.Data);
@@ -440,8 +434,8 @@ public partial class PurchaseEntryViewModel : ObservableObject
             return true;
         }
 
-        int? userId = _authService.CurrentUser?.Id;
-        string? userRole = _authService.CurrentUser?.Role?.Name;
+        int? userId = 1;
+        string? userRole = "Owner";
 
         IsLoading = true;
         try
@@ -528,7 +522,7 @@ public partial class PurchaseEntryViewModel : ObservableObject
         bool saved = await SaveDraftAsync();
         if (!saved || !_purchaseId.HasValue) return;
 
-        string promptMsg = $"Post purchase invoice '{PurchaseNumber}' for grand total {GrandTotal:C}?\n\nThis action will immediately update inventory stock levels and recalculate weighted average costs in the stock ledger.";
+        string promptMsg = $"Post purchase invoice '{PurchaseNumber}' for grand total {ShopPOS.Core.Services.MoneyFormatter.Instance.Format(GrandTotal)}?\n\nThis action will immediately update inventory stock levels and recalculate weighted average costs in the stock ledger.";
         var confirm = _dialogService.ShowConfirmActionDialog("Confirm Post Purchase", promptMsg, isReferenced: false);
         if (confirm != ConfirmActionResult.Delete) // Delete represents the primary confirmed affirmative action
         {
@@ -538,8 +532,8 @@ public partial class PurchaseEntryViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            int? userId = _authService.CurrentUser?.Id;
-            string? userRole = _authService.CurrentUser?.Role?.Name;
+            int? userId = 1;
+            string? userRole = "Owner";
 
             decimal? payAmount = PayNowEnabled ? PayNowAmount : null;
             PaymentMethod? payMethod = PayNowEnabled ? PayNowMethod : null;

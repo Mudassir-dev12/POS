@@ -12,5 +12,6 @@ public interface IPurchaseReturnRepository
     Task<decimal> GetTotalReturnedQuantityAsync(int purchaseId, int productId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Product>> GetProductsByIdsAsync(IEnumerable<int> productIds, CancellationToken cancellationToken = default);
     Task AddStockMovementAsync(StockMovement movement, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredIdsAsync(int? supplierId, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -4,7 +4,7 @@ using ShopPOS.UI.Services;
 using ShopPOS.UI.ViewModels;
 using ShopPOS.UI.ViewModels.Brands;
 using ShopPOS.UI.ViewModels.Categories;
-using ShopPOS.UI.ViewModels.Customers;
+using ShopPOS.UI.ViewModels.Dashboard;
 using ShopPOS.UI.ViewModels.HeldBills;
 using ShopPOS.UI.ViewModels.Inventory;
 using ShopPOS.UI.ViewModels.Products;
@@ -12,12 +12,10 @@ using ShopPOS.UI.ViewModels.PurchaseReturns;
 using ShopPOS.UI.ViewModels.Purchases;
 using ShopPOS.UI.ViewModels.Sales;
 using ShopPOS.UI.ViewModels.Settings;
-using ShopPOS.UI.ViewModels.Shifts;
 using ShopPOS.UI.ViewModels.SupplierLedger;
 using ShopPOS.UI.ViewModels.SupplierPayments;
 using ShopPOS.UI.ViewModels.Suppliers;
 using ShopPOS.UI.ViewModels.Units;
-using ShopPOS.UI.ViewModels.Dashboard;
 using ShopPOS.UI.Views;
 using ShopPOS.UI.Views.Dialogs;
 using ShopPOS.UI.Views.Dialogs.Sales;
@@ -31,6 +29,7 @@ public static class UiServiceRegistration
         // UI Navigation & Dialogs
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IDialogService, DialogService>();
+        services.AddSingleton<IThemeService, ThemeService>();
 
         // ViewModels
         services.AddTransient<MainWindowViewModel>();
@@ -42,7 +41,6 @@ public static class UiServiceRegistration
         services.AddTransient<BrandsViewModel>();
         services.AddTransient<UnitsViewModel>();
         services.AddTransient<SuppliersViewModel>();
-        services.AddTransient<CustomersViewModel>();
 
         services.AddTransient<PurchasesViewModel>();
         services.AddTransient<PurchaseEntryViewModel>();
@@ -62,7 +60,12 @@ public static class UiServiceRegistration
         services.AddTransient<StockOverviewViewModel>();
         services.AddTransient<StockMovementHistoryViewModel>();
         services.AddTransient<StockAdjustmentsViewModel>();
-        services.AddTransient<StockAdjustmentDialogViewModel>(sp => new StockAdjustmentDialogViewModel(null, sp.GetRequiredService<IStockAdjustmentService>(), sp.GetRequiredService<IProductService>(), sp.GetRequiredService<IStockLedgerQuery>(), sp.GetRequiredService<IAuthService>(), sp.GetRequiredService<IDialogService>()));
+        services.AddTransient<StockAdjustmentDialogViewModel>(sp => new StockAdjustmentDialogViewModel(
+            null,
+            sp.GetRequiredService<IStockAdjustmentService>(),
+            sp.GetRequiredService<IProductService>(),
+            sp.GetRequiredService<IStockLedgerQuery>(),
+            sp.GetRequiredService<IDialogService>()));
         services.AddTransient<ReorderListViewModel>();
         services.AddTransient<StockValuationViewModel>();
 
@@ -72,16 +75,12 @@ public static class UiServiceRegistration
         services.AddTransient<PosSaleViewModel>();
         services.AddTransient<SalesViewModel>();
         services.AddTransient<SaleReturnsViewModel>();
-        services.AddTransient<ShiftsViewModel>();
         services.AddTransient<HeldBillsDialogViewModel>();
         services.AddTransient<PosHelpDialogViewModel>();
         services.AddTransient<CartExitPromptDialogViewModel>();
         services.AddTransient<BillDiscountDialogViewModel>(sp => new BillDiscountDialogViewModel(0m, 0m));
         services.AddTransient<LineDiscountDialogViewModel>(sp => new LineDiscountDialogViewModel("Item", 10m, 1m, 0m, 0m));
-        services.AddTransient<OpenShiftDialogViewModel>(sp => new OpenShiftDialogViewModel(sp.GetRequiredService<IShiftService>()));
-        services.AddTransient<CloseShiftDialogViewModel>(sp => new CloseShiftDialogViewModel(1, "SHIFT-1", 100m, "$", sp.GetRequiredService<IShiftService>()));
-        services.AddTransient<CashMovementDialogViewModel>(sp => new CashMovementDialogViewModel(1, "$", sp.GetRequiredService<IShiftService>()));
-        services.AddTransient<SalePaymentDialogViewModel>(sp => new SalePaymentDialogViewModel(100m, null, "Walk-in", 0m, 0m, true, "$", sp.GetRequiredService<ISaleCalculator>()));
+        services.AddTransient<SalePaymentDialogViewModel>(sp => new SalePaymentDialogViewModel(100m, null, "Walk-in", 0m, 0m, true, "Rs", sp.GetRequiredService<ISaleCalculator>()));
         services.AddTransient<SaleDetailDialogViewModel>(sp => new SaleDetailDialogViewModel(1, sp.GetRequiredService<ISaleService>(), sp.GetRequiredService<IPdfReportService>(), sp.GetRequiredService<IShopSettingService>()));
         services.AddTransient<SaleReturnDialogViewModel>(sp => new SaleReturnDialogViewModel(null, null, sp.GetRequiredService<ISaleReturnService>(), sp.GetRequiredService<ISaleService>(), sp.GetRequiredService<IShopSettingService>(), sp.GetRequiredService<IDialogService>()));
         services.AddTransient<PrinterSettingsDialogViewModel>(sp => new PrinterSettingsDialogViewModel(sp.GetRequiredService<IShopSettingService>(), sp.GetRequiredService<IReceiptPrinterService>()));
@@ -89,54 +88,43 @@ public static class UiServiceRegistration
 
         services.AddTransient<BrandDialogViewModel>(sp =>
         {
-            var auth = sp.GetRequiredService<IAuthService>();
+            var user = sp.GetRequiredService<ICurrentUserProvider>();
             return new BrandDialogViewModel(
                 sp.GetRequiredService<IBrandService>(),
-                auth.CurrentUser?.Id,
-                auth.CurrentUser?.Role?.Name);
+                user.UserId,
+                "Owner");
         });
 
         services.AddTransient<CategoryDialogViewModel>(sp =>
         {
-            var auth = sp.GetRequiredService<IAuthService>();
+            var user = sp.GetRequiredService<ICurrentUserProvider>();
             return new CategoryDialogViewModel(
                 sp.GetRequiredService<ICategoryService>(),
-                auth.CurrentUser?.Id,
-                auth.CurrentUser?.Role?.Name);
+                user.UserId,
+                "Owner");
         });
 
         services.AddTransient<UnitDialogViewModel>(sp =>
         {
-            var auth = sp.GetRequiredService<IAuthService>();
+            var user = sp.GetRequiredService<ICurrentUserProvider>();
             return new UnitDialogViewModel(
                 sp.GetRequiredService<IUnitService>(),
-                auth.CurrentUser?.Id,
-                auth.CurrentUser?.Role?.Name);
+                user.UserId,
+                "Owner");
         });
 
         services.AddTransient<SupplierDialogViewModel>(sp =>
         {
-            var auth = sp.GetRequiredService<IAuthService>();
+            var user = sp.GetRequiredService<ICurrentUserProvider>();
             return new SupplierDialogViewModel(
                 sp.GetRequiredService<ISupplierService>(),
-                auth.CurrentUser?.Id,
-                auth.CurrentUser?.Role?.Name);
-        });
-
-        services.AddTransient<CustomerDialogViewModel>(sp =>
-        {
-            var auth = sp.GetRequiredService<IAuthService>();
-            return new CustomerDialogViewModel(
-                sp.GetRequiredService<ICustomerService>(),
-                sp.GetRequiredService<IPriceLevelService>(),
-                sp.GetRequiredService<IPermissionService>(),
-                auth.CurrentUser?.Id,
-                auth.CurrentUser?.Role?.Name);
+                user.UserId,
+                "Owner");
         });
 
         services.AddTransient<ProductDialogViewModel>(sp =>
         {
-            var auth = sp.GetRequiredService<IAuthService>();
+            var user = sp.GetRequiredService<ICurrentUserProvider>();
             return new ProductDialogViewModel(
                 sp.GetRequiredService<IProductService>(),
                 sp.GetRequiredService<ICategoryService>(),
@@ -144,18 +132,18 @@ public static class UiServiceRegistration
                 sp.GetRequiredService<IUnitService>(),
                 sp.GetRequiredService<IPriceLevelService>(),
                 sp.GetRequiredService<IDialogService>(),
-                auth.CurrentUser?.Id,
-                auth.CurrentUser?.Role?.Name);
+                user.UserId,
+                "Owner");
         });
 
         services.AddTransient<CsvImportWizardViewModel>(sp =>
         {
-            var auth = sp.GetRequiredService<IAuthService>();
+            var user = sp.GetRequiredService<ICurrentUserProvider>();
             return new CsvImportWizardViewModel(
                 sp.GetRequiredService<ICsvProductService>(),
                 sp.GetRequiredService<IDialogService>(),
-                auth.CurrentUser?.Id,
-                auth.CurrentUser?.Role?.Name);
+                user.UserId,
+                "Owner");
         });
 
         // Windows and Dialogs
@@ -170,7 +158,6 @@ public static class UiServiceRegistration
         services.AddTransient<BrandDialog>();
         services.AddTransient<UnitDialog>();
         services.AddTransient<SupplierDialog>();
-        services.AddTransient<CustomerDialog>();
         services.AddTransient<PriceHistoryDialog>();
         services.AddTransient<CsvImportWizardDialog>();
         services.AddTransient<ConfirmActionDialog>(sp => new ConfirmActionDialog("Confirm", "Are you sure?", false));
@@ -180,9 +167,6 @@ public static class UiServiceRegistration
         services.AddTransient<SalePaymentDialog>();
         services.AddTransient<SaleDetailDialog>();
         services.AddTransient<SaleReturnDialog>();
-        services.AddTransient<OpenShiftDialog>();
-        services.AddTransient<CloseShiftDialog>();
-        services.AddTransient<CashMovementDialog>();
         services.AddTransient<HeldBillsDialog>();
         services.AddTransient<BillDiscountDialog>();
         services.AddTransient<LineDiscountDialog>();
@@ -198,7 +182,6 @@ public static class UiServiceRegistration
         services.AddTransient<BrandsView>();
         services.AddTransient<UnitsView>();
         services.AddTransient<SuppliersView>();
-        services.AddTransient<CustomersView>();
         services.AddTransient<PurchasesView>();
         services.AddTransient<SupplierPaymentsView>();
         services.AddTransient<PurchaseReturnsView>();
@@ -215,7 +198,6 @@ public static class UiServiceRegistration
         services.AddTransient<PosSaleView>();
         services.AddTransient<SalesView>();
         services.AddTransient<SaleReturnsView>();
-        services.AddTransient<ShiftsView>();
 
         return services;
     }

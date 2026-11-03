@@ -13,4 +13,5 @@ public interface ISupplierPaymentRepository
     Task CancelPaymentAsync(int paymentId, string reason, int userId, CancellationToken cancellationToken = default);
     Task<decimal> GetTotalPaidForPurchaseAsync(int purchaseId, CancellationToken cancellationToken = default);
     Task UpdatePurchasePaidAmountAsync(int purchaseId, decimal newPaidAmount, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredIdsAsync(int? supplierId, CancellationToken cancellationToken = default);
 }

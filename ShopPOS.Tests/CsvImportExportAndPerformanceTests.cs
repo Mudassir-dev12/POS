@@ -23,7 +23,6 @@ public class CsvImportExportAndPerformanceTests : IDisposable
     private readonly ProductRepository _productRepo;
     private readonly CsvProductService _csvService;
     private readonly Mock<IAuditLogService> _auditMock;
-    private readonly PermissionService _permissionService;
 
     public CsvImportExportAndPerformanceTests()
     {
@@ -40,9 +39,8 @@ public class CsvImportExportAndPerformanceTests : IDisposable
 
         _productRepo = new ProductRepository(_context);
         _auditMock = new Mock<IAuditLogService>();
-        _permissionService = new PermissionService();
 
-        _csvService = new CsvProductService(_context, _productRepo, _auditMock.Object, _permissionService);
+        _csvService = new CsvProductService(_context, _productRepo, _auditMock.Object);
 
         // Seed initial reference category & unit
         _context.Categories.Add(new Category { Name = "General", IsActive = true });

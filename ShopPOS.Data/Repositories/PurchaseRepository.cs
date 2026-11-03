@@ -288,6 +288,34 @@ public class PurchaseRepository : IPurchaseRepository
         return result;
     }
 
+    public async Task<IReadOnlyList<int>> GetFilteredIdsAsync(PurchaseSearchQuery query, CancellationToken cancellationToken = default)
+    {
+        var dbQuery = _context.Purchases.AsNoTracking().Where(p => !p.IsDeleted);
+
+        if (!string.IsNullOrWhiteSpace(query.SearchTerm))
+        {
+            var term = query.SearchTerm.Trim().ToLower();
+            dbQuery = dbQuery.Where(p =>
+                p.PurchaseNumber.ToLower().Contains(term) ||
+                (p.SupplierInvoiceNo != null && p.SupplierInvoiceNo.ToLower().Contains(term)) ||
+                (p.Supplier != null && p.Supplier.Name.ToLower().Contains(term)));
+        }
+
+        if (query.SupplierId.HasValue && query.SupplierId.Value > 0)
+            dbQuery = dbQuery.Where(p => p.SupplierId == query.SupplierId.Value);
+
+        if (query.Status.HasValue)
+            dbQuery = dbQuery.Where(p => p.Status == query.Status.Value);
+
+        if (query.FromDate.HasValue)
+            dbQuery = dbQuery.Where(p => p.PurchaseDate >= query.FromDate.Value);
+
+        if (query.ToDate.HasValue)
+            dbQuery = dbQuery.Where(p => p.PurchaseDate <= query.ToDate.Value);
+
+        return await dbQuery.Select(p => p.Id).ToListAsync(cancellationToken);
+    }
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await _context.SaveChangesAsync(cancellationToken);

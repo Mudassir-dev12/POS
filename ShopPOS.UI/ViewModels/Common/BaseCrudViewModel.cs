@@ -1,16 +1,22 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using ShopPOS.Core.DTOs;
 using ShopPOS.Core.Interfaces;
+using ShopPOS.UI.Services;
 
 namespace ShopPOS.UI.ViewModels.Common;
 
 public abstract partial class BaseCrudViewModel<TItemDto> : ObservableObject
     where TItemDto : class
 {
-    protected readonly IAuthService AuthService;
-    protected readonly IPermissionService PermissionService;
     protected readonly IShopSettingService ShopSettingService;
+    protected readonly IDialogService? DialogService;
 
     private CancellationTokenSource? _searchDebounceCts;
 
@@ -45,7 +51,7 @@ public abstract partial class BaseCrudViewModel<TItemDto> : ObservableObject
     private string _rowCountText = "Showing 0 items";
 
     [ObservableProperty]
-    private string _currencySymbol = "$";
+    private string _currencySymbol = "Rs";
 
     [ObservableProperty]
     private bool _canAdd = true;
@@ -59,16 +65,38 @@ public abstract partial class BaseCrudViewModel<TItemDto> : ObservableObject
     [ObservableProperty]
     private bool _canDeactivate = true;
 
+    // Bulk selection state
+    [ObservableProperty]
+    private int _selectedCount = 0;
+
+    [ObservableProperty]
+    private bool? _isAllOnPageSelected = false;
+
+    [ObservableProperty]
+    private bool _isAllResultsSelected = false;
+
+    [ObservableProperty]
+    private bool _canShowDeleteSelected = true;
+
+    [ObservableProperty]
+    private bool _canShowCancelSelected = false;
+
+    public HashSet<int> SelectedIds { get; } = new();
+
+    public bool HasSelection => SelectedCount > 0;
+
+    public bool ShowSelectAllResultsBanner => TotalCount > Items.Count && IsAllOnPageSelected == true && !IsAllResultsSelected;
+
+    public string SelectAllResultsBannerText => $"All {Items.Count} items on this page are selected. Select all {TotalCount:N0} items matching this filter?";
+
+    public string SelectionStatusText => IsAllResultsSelected ? $"All {TotalCount:N0} items selected across all pages" : $"{SelectedCount:N0} selected";
+
     public ObservableCollection<TItemDto> Items { get; } = new();
 
-    public BaseCrudViewModel(
-        IAuthService authService,
-        IPermissionService permissionService,
-        IShopSettingService shopSettingService)
+    public BaseCrudViewModel(IShopSettingService shopSettingService, IDialogService? dialogService = null)
     {
-        AuthService = authService;
-        PermissionService = permissionService;
         ShopSettingService = shopSettingService;
+        DialogService = dialogService;
     }
 
     public virtual async Task InitializeAsync()
@@ -80,14 +108,20 @@ public abstract partial class BaseCrudViewModel<TItemDto> : ObservableObject
         }
         catch
         {
-            CurrencySymbol = "$";
+            CurrencySymbol = "Rs";
         }
 
         ApplyPermissions();
         await LoadDataAsync();
     }
 
-    protected abstract void ApplyPermissions();
+    protected virtual void ApplyPermissions()
+    {
+        CanAdd = true;
+        CanEdit = true;
+        CanDelete = true;
+        CanDeactivate = true;
+    }
 
     public abstract Task LoadDataAsync(CancellationToken cancellationToken = default);
 
@@ -154,7 +188,167 @@ public abstract partial class BaseCrudViewModel<TItemDto> : ObservableObject
         int start = totalCount == 0 ? 0 : (pageNumber - 1) * pageSize + 1;
         int end = Math.Min(totalCount, pageNumber * pageSize);
         RowCountText = $"Showing {start}-{end} of {totalCount:N0} records";
+
+        SyncSelectionState();
     }
+
+    protected void SyncSelectionState()
+    {
+        foreach (var item in Items)
+        {
+            if (item is ISelectable sel)
+            {
+                sel.IsSelected = SelectedIds.Contains(sel.Id);
+            }
+        }
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    public void ToggleSelectAllOnPage(bool? isChecked)
+    {
+        bool select = isChecked == true;
+        foreach (var item in Items)
+        {
+            if (item is ISelectable sel)
+            {
+                sel.IsSelected = select;
+                if (select) SelectedIds.Add(sel.Id);
+                else SelectedIds.Remove(sel.Id);
+            }
+        }
+        if (!select) IsAllResultsSelected = false;
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    public void SelectAllOnPage()
+    {
+        ToggleSelectAllOnPage(IsAllOnPageSelected != true);
+    }
+
+    [RelayCommand]
+    public void ItemSelectionChanged(TItemDto item)
+    {
+        if (item is ISelectable sel)
+        {
+            if (sel.IsSelected) SelectedIds.Add(sel.Id);
+            else
+            {
+                SelectedIds.Remove(sel.Id);
+                IsAllResultsSelected = false;
+            }
+        }
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    public async Task SelectAllFilteredResultsAsync()
+    {
+        var allIds = await FetchAllFilteredIdsAsync();
+        foreach (var id in allIds)
+        {
+            SelectedIds.Add(id);
+        }
+        IsAllResultsSelected = true;
+        foreach (var item in Items)
+        {
+            if (item is ISelectable sel)
+            {
+                sel.IsSelected = true;
+            }
+        }
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    public void ClearSelection()
+    {
+        SelectedIds.Clear();
+        IsAllResultsSelected = false;
+        IsAllOnPageSelected = false;
+        foreach (var item in Items)
+        {
+            if (item is ISelectable sel)
+            {
+                sel.IsSelected = false;
+            }
+        }
+        UpdateSelectionState();
+    }
+
+    public void UpdateSelectionState()
+    {
+        SelectedCount = SelectedIds.Count;
+        int onPageCount = Items.Count;
+        int onPageSelected = 0;
+        foreach (var item in Items)
+        {
+            if (item is ISelectable sel && sel.IsSelected)
+                onPageSelected++;
+        }
+
+        if (onPageCount == 0 || onPageSelected == 0)
+            IsAllOnPageSelected = false;
+        else if (onPageSelected == onPageCount)
+            IsAllOnPageSelected = true;
+        else
+            IsAllOnPageSelected = null;
+
+        OnPropertyChanged(nameof(HasSelection));
+        OnPropertyChanged(nameof(ShowSelectAllResultsBanner));
+        OnPropertyChanged(nameof(SelectAllResultsBannerText));
+        OnPropertyChanged(nameof(SelectionStatusText));
+    }
+
+    [RelayCommand]
+    public async Task DeleteSelectedAsync()
+    {
+        if (SelectedCount == 0 || DialogService == null) return;
+
+        bool requireTyped = SelectedCount > 50 || IsAllResultsSelected;
+        if (!DialogService.ShowBulkConfirmDialog("Delete", SelectedCount, requireTyped)) return;
+
+        var ids = SelectedIds.ToList();
+        var result = await ExecuteBulkDeleteAsync(ids);
+        bool deactivateRequested = DialogService.ShowBulkSummaryDialog("Bulk Delete Summary", result);
+        if (deactivateRequested)
+        {
+            var deactCandidates = result.Items.Where(i => !i.Success && i.CanDeactivateInstead).Select(i => i.Id).ToList();
+            if (deactCandidates.Count > 0)
+            {
+                var deactResult = await ExecuteBulkDeactivateAsync(deactCandidates);
+                DialogService.ShowBulkSummaryDialog("Bulk Deactivate Summary", deactResult);
+            }
+        }
+
+        ClearSelection();
+        await LoadDataAsync();
+    }
+
+    [RelayCommand]
+    public async Task CancelSelectedAsync()
+    {
+        if (SelectedCount == 0 || DialogService == null) return;
+
+        string? reason = DialogService.ShowReasonPromptDialog("Cancel Selected", "Enter a shared cancellation reason for all selected items:");
+        if (string.IsNullOrWhiteSpace(reason)) return;
+
+        bool requireTyped = SelectedCount > 50 || IsAllResultsSelected;
+        if (!DialogService.ShowBulkConfirmDialog("Cancel", SelectedCount, requireTyped, $"Are you sure you want to cancel {SelectedCount:N0} selected items with reason: '{reason.Trim()}'?")) return;
+
+        var ids = SelectedIds.ToList();
+        var result = await ExecuteBulkCancelAsync(ids, reason.Trim());
+        DialogService.ShowBulkSummaryDialog("Bulk Cancel Summary", result);
+
+        ClearSelection();
+        await LoadDataAsync();
+    }
+
+    protected virtual Task<IReadOnlyList<int>> FetchAllFilteredIdsAsync() => Task.FromResult<IReadOnlyList<int>>(Array.Empty<int>());
+    protected virtual Task<BulkOperationResult> ExecuteBulkDeleteAsync(IReadOnlyList<int> ids) => Task.FromResult(new BulkOperationResult());
+    protected virtual Task<BulkOperationResult> ExecuteBulkDeactivateAsync(IReadOnlyList<int> ids) => Task.FromResult(new BulkOperationResult());
+    protected virtual Task<BulkOperationResult> ExecuteBulkCancelAsync(IReadOnlyList<int> ids, string reason) => Task.FromResult(new BulkOperationResult());
 
     [RelayCommand]
     public abstract Task AddAsync();
@@ -165,7 +359,6 @@ public abstract partial class BaseCrudViewModel<TItemDto> : ObservableObject
     [RelayCommand]
     public abstract Task DeleteOrDeactivateAsync();
 
-    protected string? GetCurrentRole() => AuthService.CurrentUser?.Role?.Name;
-    protected int? GetCurrentUserId() => AuthService.CurrentUser?.Id;
+    protected string? GetCurrentRole() => ShopPOS.Core.Enums.RoleDefaults.Admin;
+    protected int? GetCurrentUserId() => 1;
 }
-

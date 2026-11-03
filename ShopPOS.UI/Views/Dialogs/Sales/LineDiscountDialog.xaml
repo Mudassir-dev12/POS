@@ -8,10 +8,9 @@
         Title="Apply Line Discount (F7)"
         Height="310"
         Width="400"
+        Style="{DynamicResource DialogWindowStyle}"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+        ResizeMode="NoResize">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -23,38 +22,37 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,10">
-            <TextBlock Text="Line Item Discount" FontSize="16" FontWeight="Bold" Foreground="#0F172A" />
-            <TextBlock Text="{Binding ProductName}" FontSize="13" Foreground="#2563EB" FontWeight="SemiBold" Margin="0,2,0,0" />
+            <TextBlock Text="Line Item Discount" Style="{DynamicResource SectionHeaderStyle}" />
+            <TextBlock Text="{Binding ProductName}" FontSize="13" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold" Margin="0,2,0,0" />
         </StackPanel>
 
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,12">
-            <TextBlock Text="Price: " FontSize="12" Foreground="#64748B" />
-            <TextBlock Text="{Binding UnitPrice, StringFormat='${0:F2}'}" FontSize="12" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,12,0" />
-            <TextBlock Text="Quantity: " FontSize="12" Foreground="#64748B" />
-            <TextBlock Text="{Binding Quantity}" FontSize="12" FontWeight="Bold" Foreground="#0F172A" />
+            <TextBlock Text="Price: " FontSize="12" Foreground="{DynamicResource TextMutedBrush}" />
+            <TextBlock Text="{Binding UnitPrice, Converter={StaticResource MoneyConverter}}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,12,0" />
+            <TextBlock Text="Quantity: " FontSize="12" Foreground="{DynamicResource TextMutedBrush}" />
+            <TextBlock Text="{Binding Quantity}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" />
         </StackPanel>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,14">
-            <RadioButton Content="Percentage (%)" IsChecked="{Binding IsPercentage, Mode=TwoWay}" Margin="0,0,16,0" FontWeight="SemiBold" />
-            <RadioButton Content="Fixed Amount" IsChecked="{Binding IsPercentage, Converter={StaticResource InverseBooleanConverter}, Mode=TwoWay}" FontWeight="SemiBold" />
+            <RadioButton Content="Percentage (%)" IsChecked="{Binding IsPercentage, Mode=TwoWay}" Margin="0,0,16,0" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+            <RadioButton Content="Fixed Amount" IsChecked="{Binding IsPercentage, Converter={StaticResource InverseBooleanConverter}, Mode=TwoWay}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
         </StackPanel>
 
         <StackPanel Grid.Row="3" VerticalAlignment="Center">
             <StackPanel Visibility="{Binding IsPercentage, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <TextBlock Text="Discount Percentage (%):" FontSize="12" Foreground="#475569" Margin="0,0,0,4" />
+                <TextBlock Text="Discount Percentage (%):" Style="{DynamicResource FormLabelStyle}" />
                 <TextBox Text="{Binding DiscountPercent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" FontSize="15" Padding="8,6" />
             </StackPanel>
 
             <StackPanel Visibility="{Binding IsPercentage, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                <TextBlock Text="Discount Fixed Amount:" FontSize="12" Foreground="#475569" Margin="0,0,0,4" />
+                <TextBlock Text="Discount Fixed Amount:" Style="{DynamicResource FormLabelStyle}" />
                 <TextBox Text="{Binding DiscountAmount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" FontSize="15" Padding="8,6" />
             </StackPanel>
         </StackPanel>
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,16,0,0">
-            <Button Content="Apply Discount" Command="{Binding ApplyCommand}" IsDefault="True" Background="#2563EB" Foreground="White" FontWeight="Bold" Padding="14,8" Margin="0,0,8,0" BorderThickness="0" Cursor="Hand" />
-            <Button Content="Cancel" Command="{Binding CancelCommand}" IsCancel="True" Background="#E2E8F0" Foreground="#0F172A" FontWeight="SemiBold" Padding="14,8" BorderThickness="0" Cursor="Hand" />
+            <Button Content="Apply Discount" Command="{Binding ApplyCommand}" IsDefault="True" Style="{DynamicResource PrimaryButtonStyle}" Margin="0,0,8,0" />
+            <Button Content="Cancel" Command="{Binding CancelCommand}" IsCancel="True" Style="{DynamicResource SecondaryButtonStyle}" />
         </StackPanel>
     </Grid>
 </Window>
-

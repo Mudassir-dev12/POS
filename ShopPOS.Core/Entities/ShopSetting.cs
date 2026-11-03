@@ -28,12 +28,17 @@ public class ShopSetting : BaseEntity
     public string? TaxNumber { get; set; }
 
     /// <summary>
-    /// Gets or sets the currency symbol (e.g. $, ₹, £, €).
+    /// Gets or sets the currency symbol (default "Rs").
     /// </summary>
-    public string CurrencySymbol { get; set; } = "$";
+    public string CurrencySymbol { get; set; } = "Rs";
 
     /// <summary>
-    /// Gets or sets the custom text printed at the bottom of customer receipts.
+    /// Gets or sets the currency decimal places (0 to 3, default 2).
+    /// </summary>
+    public int CurrencyDecimals { get; set; } = 2;
+
+    /// <summary>
+    /// Gets or sets the custom text printed at the bottom of receipts.
     /// </summary>
     public string? ReceiptFooter { get; set; } = "Thank you for your business!";
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
@@ -68,16 +73,6 @@ public class ShopSetting : BaseEntity
     /// Gets or sets the default multiplier applied to ReorderLevel when calculating suggested restock quantities. Default is 2.
     /// </summary>
     public decimal DefaultReorderMultiplier { get; set; } = 2.0m;
-
-    /// <summary>
-    /// Gets or sets whether completing a sale requires an active open shift. Default is true.
-    /// </summary>
-    public bool RequireOpenShiftForSales { get; set; } = true;
-
-    /// <summary>
-    /// Gets or sets whether sales on credit (unpaid or partially paid) are permitted. Default is true.
-    /// </summary>
-    public bool AllowCreditSales { get; set; } = true;
 
     /// <summary>
     /// Gets or sets whether selling below the product's MinSalePrice is permitted. Default is false.

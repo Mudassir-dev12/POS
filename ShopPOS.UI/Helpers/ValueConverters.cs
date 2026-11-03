@@ -1,3 +1,4 @@
+using ShopPOS.Core.Services;
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -415,6 +416,99 @@ public class DecimalGreaterThanZeroToVisibilityConverter : IValueConverter
         if (value is double dbl && dbl > 0.0) return Visibility.Visible;
         if (value is int i && i > 0) return Visibility.Visible;
         return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class DecimalNonZeroToVisibilityConverter : IValueConverter
+{
+    public static readonly DecimalNonZeroToVisibilityConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is decimal d && d != 0m) return Visibility.Visible;
+        if (value is double dbl && dbl != 0.0) return Visibility.Visible;
+        if (value is int i && i != 0) return Visibility.Visible;
+        return Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+
+public class MoneyConverter : IValueConverter
+{
+    public static readonly MoneyConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value == null) return "—";
+        if (value is decimal d) return MoneyFormatter.Instance.Format(d);
+        if (value is double dbl) return MoneyFormatter.Instance.Format((decimal)dbl);
+        if (value is int i) return MoneyFormatter.Instance.Format((decimal)i);
+        if (value is long l) return MoneyFormatter.Instance.Format((decimal)l);
+        if (decimal.TryParse(value.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed))
+            return MoneyFormatter.Instance.Format(parsed);
+        return value.ToString() ?? "—";
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class MoneyNoSymbolConverter : IValueConverter
+{
+    public static readonly MoneyNoSymbolConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value == null) return "—";
+        if (value is decimal d) return MoneyFormatter.Instance.FormatNoSymbol(d);
+        if (value is double dbl) return MoneyFormatter.Instance.FormatNoSymbol((decimal)dbl);
+        if (value is int i) return MoneyFormatter.Instance.FormatNoSymbol((decimal)i);
+        if (decimal.TryParse(value.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var parsed))
+            return MoneyFormatter.Instance.FormatNoSymbol(parsed);
+        return value.ToString() ?? "—";
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class DateDisplayConverter : IValueConverter
+{
+    public static readonly DateDisplayConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is DateTime dt) return MoneyFormatter.Instance.FormatDate(dt);
+        return value?.ToString() ?? "—";
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class TimeDisplayConverter : IValueConverter
+{
+    public static readonly TimeDisplayConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is DateTime dt) return MoneyFormatter.Instance.FormatTime(dt);
+        if (value is TimeSpan ts) return DateTime.Today.Add(ts).ToString("hh:mm tt", CultureInfo.InvariantCulture);
+        return value?.ToString() ?? "—";
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class DateTimeDisplayConverter : IValueConverter
+{
+    public static readonly DateTimeDisplayConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is DateTime dt) return MoneyFormatter.Instance.FormatDateTime(dt);
+        return value?.ToString() ?? "—";
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();

@@ -108,6 +108,14 @@ public class PurchaseReturnRepository : IPurchaseReturnRepository
         await _context.StockMovements.AddAsync(movement, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<int>> GetFilteredIdsAsync(int? supplierId, CancellationToken cancellationToken = default)
+    {
+        var query = _context.PurchaseReturns.AsNoTracking().Where(r => !r.IsDeleted);
+        if (supplierId.HasValue && supplierId.Value > 0)
+            query = query.Where(r => r.SupplierId == supplierId.Value);
+        return await query.Select(r => r.Id).ToListAsync(cancellationToken);
+    }
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await _context.SaveChangesAsync(cancellationToken);

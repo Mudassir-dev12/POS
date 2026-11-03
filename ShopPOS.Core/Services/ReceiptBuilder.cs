@@ -12,10 +12,7 @@ public class ReceiptBuilder : IReceiptBuilder
         SaleDetailDto sale,
         ShopSetting settings,
         bool isDuplicate = false,
-        int reprintCount = 0,
-        decimal? customerPrevBalance = null,
-        string? customerPhone = null,
-        string? customerTaxNumber = null)
+        int reprintCount = 0)
     {
         var doc = new ReceiptDocument
         {
@@ -25,12 +22,9 @@ public class ReceiptBuilder : IReceiptBuilder
             ShopAddress = settings.Address,
             ShopPhone = settings.Phone,
             ShopTaxNumber = settings.TaxNumber,
-            InvoiceNumber = sale.SaleNumber ?? $"INV-{sale.Id:D6}",
-            DateTime = sale.SaleDate,
+            ReceiptNumber = sale.SaleNumber ?? $"INV-{sale.Id:D6}",
+            IssuedAt = sale.SaleDate,
             CashierName = "Owner",
-            CustomerName = sale.CustomerName,
-            CustomerPhone = customerPhone,
-            CustomerTaxNumber = customerTaxNumber,
             SubTotal = sale.SubTotal,
             LineDiscountTotal = sale.LineDiscountTotal,
             BillDiscountAmount = sale.BillDiscountAmount,
@@ -40,7 +34,7 @@ public class ReceiptBuilder : IReceiptBuilder
             PaidAmount = sale.PaidAmount,
             ChangeAmount = sale.ChangeAmount,
             DueAmount = sale.DueAmount,
-            FooterText = !string.IsNullOrWhiteSpace(settings.ReceiptFooter) ? settings.ReceiptFooter : "Thank you for shopping with us!",
+            FooterMessage = !string.IsNullOrWhiteSpace(settings.ReceiptFooter) ? settings.ReceiptFooter : "Thank you for your business!",
             CurrencySymbol = settings.CurrencySymbol,
             IsDuplicateCopy = isDuplicate,
             ReprintCount = reprintCount,
@@ -55,11 +49,10 @@ public class ReceiptBuilder : IReceiptBuilder
             doc.Lines.Add(new ReceiptLineItem
             {
                 LineNo = idx++,
-                ItemName = item.ProductName,
+                ProductName = item.ProductName,
                 Sku = item.Sku,
                 Quantity = item.Quantity,
                 UnitPrice = item.UnitPrice,
-                DiscountPercent = item.DiscountPercent,
                 DiscountAmount = item.DiscountAmount,
                 TaxPercent = item.TaxPercent,
                 LineTotal = item.LineTotal
@@ -67,25 +60,15 @@ public class ReceiptBuilder : IReceiptBuilder
         }
 
         // Payments
-        decimal tenderedTotal = 0m;
         foreach (var p in sale.Payments)
         {
-            tenderedTotal += p.TenderedAmount ?? p.Amount;
             doc.Payments.Add(new ReceiptPaymentItem
             {
-                Method = p.Method,
+                MethodName = p.Method.ToString(),
                 Amount = p.Amount,
                 TenderedAmount = p.TenderedAmount,
                 Reference = p.Reference
             });
-        }
-        doc.TenderedAmount = tenderedTotal > 0m ? tenderedTotal : sale.PaidAmount;
-
-        // Customer balances (when there is due or previous balance was provided)
-        if (customerPrevBalance.HasValue)
-        {
-            doc.CustomerPreviousBalance = customerPrevBalance.Value;
-            doc.CustomerNewBalance = customerPrevBalance.Value + sale.DueAmount;
         }
 
         return doc;
@@ -98,21 +81,20 @@ public class ReceiptBuilder : IReceiptBuilder
     {
         var doc = new ReceiptDocument
         {
-            DocumentType = ReceiptDocumentType.SaleReturnSlip,
+            DocumentType = ReceiptDocumentType.SaleReturn,
             DocumentTitle = "SALE RETURN SLIP",
             ShopName = settings.ShopName,
             ShopAddress = settings.Address,
             ShopPhone = settings.Phone,
             ShopTaxNumber = settings.TaxNumber,
-            InvoiceNumber = returnDetail.ReturnNumber,
-            DateTime = returnDetail.ReturnDate,
+            ReceiptNumber = returnDetail.ReturnNumber,
+            IssuedAt = returnDetail.ReturnDate,
             CashierName = "Owner",
-            CustomerName = returnDetail.CustomerName,
             SubTotal = returnDetail.SubTotal,
             TaxAmount = returnDetail.TaxAmount,
             GrandTotal = returnDetail.TotalAmount,
             PaidAmount = returnDetail.RefundedAmount,
-            FooterText = !string.IsNullOrWhiteSpace(settings.ReceiptFooter) ? settings.ReceiptFooter : "Refund processed successfully.",
+            FooterMessage = !string.IsNullOrWhiteSpace(settings.ReceiptFooter) ? settings.ReceiptFooter : "Refund processed successfully.",
             CurrencySymbol = settings.CurrencySymbol,
             IsDuplicateCopy = isDuplicate,
             BarcodeOrQrValue = returnDetail.ReturnNumber,
@@ -125,66 +107,20 @@ public class ReceiptBuilder : IReceiptBuilder
             doc.Lines.Add(new ReceiptLineItem
             {
                 LineNo = idx++,
-                ItemName = item.ProductName,
+                ProductName = item.ProductName,
                 Sku = item.Sku,
                 Quantity = item.Quantity,
                 UnitPrice = item.UnitPrice,
                 TaxPercent = item.TaxPercent,
-                LineTotal = item.LineTotal,
-                IsReturn = true
+                LineTotal = item.LineTotal
             });
         }
 
         doc.Payments.Add(new ReceiptPaymentItem
         {
-            Method = returnDetail.RefundMethod,
+            MethodName = returnDetail.RefundMethod.ToString(),
             Amount = returnDetail.RefundedAmount
         });
-
-        return doc;
-    }
-
-    public ReceiptDocument BuildFromShift(
-        ShiftSummaryDto shift,
-        ShopSetting settings,
-        bool isZReport = false)
-    {
-        var doc = new ReceiptDocument
-        {
-            DocumentType = ReceiptDocumentType.ShiftReport,
-            DocumentTitle = isZReport ? "SHIFT Z REPORT (CLOSING)" : "SHIFT X REPORT (INTERIM)",
-            ShopName = settings.ShopName,
-            ShopAddress = settings.Address,
-            ShopPhone = settings.Phone,
-            ShopTaxNumber = settings.TaxNumber,
-            InvoiceNumber = shift.ShiftNumber,
-            DateTime = DateTime.Now,
-            CashierName = "Owner",
-            GrandTotal = shift.NetSales,
-            FooterText = isZReport ? "Shift closed and reconciled." : "Interim reading - shift still open.",
-            CurrencySymbol = settings.CurrencySymbol,
-            PaperWidthMm = settings.ReceiptWidthMm > 0 ? settings.ReceiptWidthMm : 80,
-            ShiftData = new ShiftSummaryReportData
-            {
-                ShiftNumber = shift.ShiftNumber,
-                Status = shift.Status,
-                OpenedAt = shift.OpenedAt,
-                ClosedAt = shift.ClosedAt,
-                OpeningCash = shift.OpeningCash,
-                ExpectedCash = shift.ExpectedCash,
-                CountedCash = shift.CountedCash,
-                Difference = shift.Difference,
-                SalesCount = shift.SalesCount,
-                GrossSales = shift.GrossSales,
-                NetSales = shift.NetSales,
-                ReturnsCount = shift.ReturnsCount,
-                TotalReturns = shift.TotalReturns,
-                CashIn = shift.CashIn,
-                CashOut = shift.CashOut,
-                PaymentsByMethod = shift.PaymentsByMethod,
-                IsZReport = isZReport
-            }
-        };
 
         return doc;
     }
@@ -193,24 +129,22 @@ public class ReceiptBuilder : IReceiptBuilder
     {
         var doc = new ReceiptDocument
         {
-            DocumentType = ReceiptDocumentType.TestReceipt,
+            DocumentType = ReceiptDocumentType.TestSlip,
             DocumentTitle = "PRINTER TEST SLIP",
             ShopName = settings.ShopName,
             ShopAddress = settings.Address ?? "123 Main Street",
             ShopPhone = settings.Phone ?? "555-0199",
             ShopTaxNumber = settings.TaxNumber ?? "TAX-998877",
-            InvoiceNumber = "TEST-0001",
-            DateTime = DateTime.Now,
+            ReceiptNumber = "TEST-0001",
+            IssuedAt = DateTime.Now,
             CashierName = "Owner",
-            CustomerName = "Valued Customer",
             SubTotal = 12.00m,
             TaxAmount = 1.20m,
             GrandTotal = 13.20m,
             PaidAmount = 20.00m,
-            TenderedAmount = 20.00m,
             ChangeAmount = 6.80m,
             DueAmount = 0m,
-            FooterText = "Test Print OK - Hardware Ready!",
+            FooterMessage = "Test Print OK - Hardware Ready!",
             CurrencySymbol = settings.CurrencySymbol,
             BarcodeOrQrValue = "TEST-0001",
             PaperWidthMm = settings.ReceiptWidthMm > 0 ? settings.ReceiptWidthMm : 80
@@ -219,7 +153,7 @@ public class ReceiptBuilder : IReceiptBuilder
         doc.Lines.Add(new ReceiptLineItem
         {
             LineNo = 1,
-            ItemName = "Hardware Test Item A",
+            ProductName = "Hardware Test Item A",
             Sku = "TEST-A",
             Quantity = 1m,
             UnitPrice = 5.00m,
@@ -229,7 +163,7 @@ public class ReceiptBuilder : IReceiptBuilder
         doc.Lines.Add(new ReceiptLineItem
         {
             LineNo = 2,
-            ItemName = "Hardware Test Item B",
+            ProductName = "Hardware Test Item B",
             Sku = "TEST-B",
             Quantity = 2m,
             UnitPrice = 3.50m,
@@ -238,7 +172,7 @@ public class ReceiptBuilder : IReceiptBuilder
 
         doc.Payments.Add(new ReceiptPaymentItem
         {
-            Method = PaymentMethod.Cash,
+            MethodName = PaymentMethod.Cash.ToString(),
             Amount = 13.20m,
             TenderedAmount = 20.00m
         });
@@ -246,4 +180,3 @@ public class ReceiptBuilder : IReceiptBuilder
         return doc;
     }
 }
-

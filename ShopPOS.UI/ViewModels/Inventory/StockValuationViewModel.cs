@@ -11,8 +11,7 @@ namespace ShopPOS.UI.ViewModels.Inventory;
 public partial class StockValuationViewModel : ObservableObject
 {
     private readonly IInventoryService _inventoryService;
-    private readonly IAuthService _authService;
-    private readonly IDialogService _dialogService;
+        private readonly IDialogService _dialogService;
 
     [ObservableProperty]
     private bool _isLoading;
@@ -31,11 +30,9 @@ public partial class StockValuationViewModel : ObservableObject
 
     public StockValuationViewModel(
         IInventoryService inventoryService,
-        IAuthService authService,
         IDialogService dialogService)
     {
         _inventoryService = inventoryService;
-        _authService = authService;
         _dialogService = dialogService;
     }
 
@@ -52,7 +49,7 @@ public partial class StockValuationViewModel : ObservableObject
         ErrorMessage = null;
         try
         {
-            var userRole = _authService.CurrentUser?.Role?.Name;
+            var userRole = "Owner";
             var result = await _inventoryService.GetCategoryValuationsAsync(userRole);
             if (result.Success && result.Data != null)
             {
@@ -92,7 +89,7 @@ public partial class StockValuationViewModel : ObservableObject
             var filePath = _dialogService.ShowSaveFileDialog("PDF Files (*.pdf)|*.pdf", $"StockValuation_{DateTime.Now:yyyyMMdd_HHmm}.pdf");
             if (string.IsNullOrWhiteSpace(filePath)) return;
 
-            var userRole = _authService.CurrentUser?.Role?.Name;
+            var userRole = "Owner";
             var exportResult = await _inventoryService.ExportValuationPdfAsync(userRole);
             if (exportResult.Success && exportResult.Data != null)
             {
@@ -118,7 +115,7 @@ public partial class StockValuationViewModel : ObservableObject
             var filePath = _dialogService.ShowSaveFileDialog("CSV Files (*.csv)|*.csv", $"StockValuation_{DateTime.Now:yyyyMMdd_HHmm}.csv");
             if (string.IsNullOrWhiteSpace(filePath)) return;
 
-            var userRole = _authService.CurrentUser?.Role?.Name;
+            var userRole = "Owner";
             var exportResult = await _inventoryService.ExportValuationCsvAsync(userRole);
             if (exportResult.Success && exportResult.Data != null)
             {

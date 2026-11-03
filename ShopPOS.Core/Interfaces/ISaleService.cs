@@ -12,6 +12,9 @@ public interface ISaleService
     Task<Result<bool>> CancelSaleAsync(int saleId, string reason, CancellationToken cancellationToken = default);
     Task<Result<SaleDetailDto>> GetSaleByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<PagedResult<SaleSummaryDto>> SearchSalesAsync(SaleSearchDto criteria, CancellationToken cancellationToken = default);
+    Task<Result<FilteredSalesPaymentBreakdownDto>> GetFilteredSalesPaymentBreakdownAsync(SaleSearchDto criteria, CancellationToken cancellationToken = default);
     Task<Result<TodaySalesSummaryDto>> GetTodaySummaryAsync(CancellationToken cancellationToken = default);
+    Task<BulkOperationResult> BulkDeleteHeldBillsAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default);
+    Task<BulkOperationResult> BulkCancelSalesAsync(IEnumerable<int> ids, string reason, int? userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredSaleIdsAsync(SaleSearchDto criteria, CancellationToken cancellationToken = default);
 }
-

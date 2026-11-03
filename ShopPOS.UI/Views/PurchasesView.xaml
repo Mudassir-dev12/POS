@@ -8,29 +8,28 @@
              xmlns:enums="clr-namespace:ShopPOS.Core.Enums;assembly=ShopPOS.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:PurchasesViewModel}"
-             Background="#F1F5F9"
-             FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
              Loaded="UserControl_Loaded">
 
     <UserControl.InputBindings>
+        <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllOnPageCommand}" />
         <KeyBinding Key="N" Modifiers="Ctrl" Command="{Binding NewPurchaseCommand}" />
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
         <KeyBinding Key="Enter" Command="{Binding OpenPurchaseCommand}" />
     </UserControl.InputBindings>
 
-    <Grid Margin="24">
+    <Grid>
         <Grid.RowDefinitions>
             <!-- Header Bar -->
             <RowDefinition Height="Auto" />
             <!-- Search & Filter Controls -->
             <RowDefinition Height="Auto" />
-            <!-- Data Grid -->
+            <!-- Data Grid & Bulk Actions -->
             <RowDefinition Height="*" />
             <!-- Footer Paging -->
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- ================= 1. HEADER ================= -->
+        <!-- 1. Header Bar -->
         <Grid Grid.Row="0" Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -38,239 +37,267 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="Purchases &amp; Receiving" FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Manage supplier purchase invoices, incoming inventory, and payables." FontSize="13" Foreground="#64748B" Margin="0,2,0,0" />
+                <TextBlock Text="Purchases &amp; receiving" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Manage supplier purchase invoices, incoming inventory, and trade payables."
+                           Style="{StaticResource SubTitleStyle}"
+                           Margin="0,4,0,0" />
             </StackPanel>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="+ New Purchase (Ctrl+N)"
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="New purchase Ctrl N"
                         Command="{Binding NewPurchaseCommand}"
-                        IsEnabled="{Binding CanAdd}"
-                        Background="#2563EB"
-                        Foreground="White"
-                        FontWeight="Bold"
-                        Padding="14,8"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Margin="0,0,8,0" />
 
-                <Button Content="Open (Enter)"
+                <Button Content="Open"
                         Command="{Binding OpenPurchaseCommand}"
-                        Background="#E2E8F0"
-                        Foreground="#0F172A"
-                        FontWeight="SemiBold"
-                        Padding="12,8"
-                        Margin="8,0,0,0"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Margin="0,0,8,0" />
 
-                <Button Content="Post"
-                        Command="{Binding PostSelectedPurchaseCommand}"
-                        Background="#16A34A"
-                        Foreground="White"
-                        FontWeight="Bold"
-                        Padding="12,8"
-                        Margin="8,0,0,0"
-                        BorderThickness="0"
-                        Cursor="Hand" />
-
-                <Button Content="Cancel"
-                        Command="{Binding CancelSelectedPurchaseCommand}"
-                        Background="#FEE2E2"
-                        Foreground="#DC2626"
-                        FontWeight="Bold"
-                        Padding="12,8"
-                        Margin="8,0,0,0"
-                        BorderThickness="0"
-                        Cursor="Hand" />
-
-                <Button Content="📄 Export PDF"
+                <Button Content="Export PDF"
                         Command="{Binding ExportPdfCommand}"
-                        Background="#334155"
-                        Foreground="White"
-                        FontWeight="SemiBold"
-                        Padding="12,8"
-                        Margin="8,0,0,0"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Margin="0,0,8,0" />
 
-                <Button Content="🔄 Refresh (F5)"
+                <Button Content="Refresh F5"
                         Command="{Binding RefreshCommand}"
-                        Background="#E2E8F0"
-                        Foreground="#334155"
-                        FontWeight="SemiBold"
-                        Padding="12,8"
-                        Margin="8,0,0,0"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}" />
             </StackPanel>
         </Grid>
 
-        <!-- ================= 2. FILTERS ================= -->
-        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="16,12" Margin="0,0,0,14" BorderBrush="#E2E8F0" BorderThickness="1">
+        <!-- 2. Search & Filters Bar -->
+        <Border Grid.Row="1" Style="{StaticResource FilterBarStyle}">
             <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="280" />
-                    <ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="200" />
-                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="260" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="180" />
+                    <ColumnDefinition Width="12" />
                     <ColumnDefinition Width="140" />
-                    <ColumnDefinition Width="14" />
+                    <ColumnDefinition Width="12" />
                     <ColumnDefinition Width="140" />
-                    <ColumnDefinition Width="14" />
-                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Search Box -->
-                <TextBox Grid.Row="0" Grid.Column="0"
+                <TextBox Grid.Column="0"
                          Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
-                         Padding="8,6"
-                         FontSize="13">
-                    <TextBox.Style>
-                        <Style TargetType="TextBox">
-                            <Style.Resources>
-                                <VisualBrush x:Key="CueBannerBrush" AlignmentX="Left" AlignmentY="Center" Stretch="None">
-                                    <VisualBrush.Visual>
-                                        <TextBlock Text="🔍 Search #, invoice no, supplier..." Foreground="#94A3B8" FontSize="12" Margin="6,0,0,0" />
-                                    </VisualBrush.Visual>
-                                </VisualBrush>
-                            </Style.Resources>
-                            <Style.Triggers>
-                                <Trigger Property="Text" Value="">
-                                    <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBox.Style>
-                </TextBox>
+                         ToolTip="Search PO number or invoice #" />
 
-                <!-- Supplier Filter -->
-                <ComboBox Grid.Row="0" Grid.Column="2"
+                <ComboBox Grid.Column="2"
                           ItemsSource="{Binding Suppliers}"
-                          SelectedValue="{Binding SelectedSupplierId, Mode=TwoWay}"
                           SelectedValuePath="Id"
                           DisplayMemberPath="Name"
-                          Padding="8,6"
-                          FontSize="13" />
+                          SelectedValue="{Binding SelectedSupplierId}"
+                          ToolTip="Filter by Supplier" />
 
-                <!-- Status Filter -->
-                <ComboBox Grid.Row="0" Grid.Column="4"
-                          SelectedItem="{Binding SelectedStatus, Mode=TwoWay}"
-                          Padding="8,6"
-                          FontSize="13">
-                    <ComboBox.Items>
-                        <x:Null />
-                        <x:Static Member="enums:PurchaseStatus.Draft" />
-                        <x:Static Member="enums:PurchaseStatus.Posted" />
-                        <x:Static Member="enums:PurchaseStatus.Cancelled" />
-                    </ComboBox.Items>
-                </ComboBox>
+                <ComboBox Grid.Column="4"
+                          ItemsSource="{Binding PurchaseStatuses}"
+                          SelectedItem="{Binding SelectedStatus}"
+                          ToolTip="Filter by Status" />
 
-                <!-- Payment Status Filter -->
-                <ComboBox Grid.Row="0" Grid.Column="6"
-                          SelectedItem="{Binding SelectedPaymentStatus, Mode=TwoWay}"
-                          Padding="8,6"
-                          FontSize="13">
-                    <ComboBox.Items>
-                        <x:Null />
-                        <x:Static Member="enums:PurchasePaymentStatus.Unpaid" />
-                        <x:Static Member="enums:PurchasePaymentStatus.Partial" />
-                        <x:Static Member="enums:PurchasePaymentStatus.Paid" />
-                        <x:Static Member="enums:PurchasePaymentStatus.Overdue" />
-                    </ComboBox.Items>
-                </ComboBox>
-
-                <!-- Date Range -->
-                <StackPanel Grid.Row="0" Grid.Column="8" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="From:" Foreground="#64748B" FontSize="12" VerticalAlignment="Center" Margin="0,0,4,0" />
-                    <DatePicker SelectedDate="{Binding FromDate, Mode=TwoWay}" Width="110" Padding="4,2" />
-                    <TextBlock Text="To:" Foreground="#64748B" FontSize="12" VerticalAlignment="Center" Margin="8,0,4,0" />
-                    <DatePicker SelectedDate="{Binding ToDate, Mode=TwoWay}" Width="110" Padding="4,2" />
-                </StackPanel>
-
-                <!-- Error Message -->
-                <TextBlock Grid.Row="0" Grid.Column="9"
-                           Text="{Binding ErrorMessage}"
-                           Foreground="#DC2626"
-                           FontWeight="SemiBold"
-                           HorizontalAlignment="Right"
-                           VerticalAlignment="Center" />
+                <ComboBox Grid.Column="6"
+                          ItemsSource="{Binding PaymentStatuses}"
+                          SelectedItem="{Binding SelectedPaymentStatus}"
+                          ToolTip="Filter by Payment Status" />
             </Grid>
         </Border>
 
-        <!-- ================= 3. DATA GRID ================= -->
-        <Border Grid.Row="2" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1">
-            <DataGrid ItemsSource="{Binding Items}"
-                      SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                      AutoGenerateColumns="False"
-                      IsReadOnly="True"
-                      SelectionMode="Single"
-                      Background="White"
-                      BorderThickness="0"
-                      RowHeight="38"
-                      MouseDoubleClick="DataGrid_MouseDoubleClick">
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Doc #" Binding="{Binding PurchaseNumber}" Width="120" FontWeight="Bold" />
-                    <DataGridTextColumn Header="Date" Binding="{Binding PurchaseDate, StringFormat='{}{0:dd MMM yyyy HH:mm}'}" Width="135" />
-                    <DataGridTextColumn Header="Supplier" Binding="{Binding SupplierName}" Width="1.5*" FontWeight="SemiBold" />
-                    <DataGridTextColumn Header="Invoice #" Binding="{Binding SupplierInvoiceNo, TargetNullValue='—'}" Width="110" />
-                    <DataGridTextColumn Header="Total" Binding="{Binding GrandTotal, StringFormat='{}{0:0.00}'}" Width="100" FontWeight="Bold" />
-                    <DataGridTextColumn Header="Paid" Binding="{Binding PaidAmount, StringFormat='{}{0:0.00}'}" Width="90" />
-                    <DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat='{}{0:0.00}'}" Width="95" FontWeight="Bold" />
+        <!-- 3. Table Area & Bulk Actions -->
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-                    <!-- Payment Status Badge -->
-                    <DataGridTemplateColumn Header="Payment" Width="95">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate DataType="{x:Type dto:PurchaseListDto}">
-                                <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left"
-                                        Background="{Binding PaymentStatus, Converter={StaticResource PaymentStatusBadgeBackgroundConverter}}">
-                                    <TextBlock Text="{Binding PaymentStatus}"
-                                               FontSize="11"
-                                               FontWeight="Bold"
-                                               Foreground="{Binding PaymentStatus, Converter={StaticResource PaymentStatusBadgeColorConverter}}" />
-                                </Border>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+            <!-- Bulk Selection Status Banner -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SecondaryBackgroundBrush}"
+                    BorderBrush="{DynamicResource SecondaryBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SelectionStatusText}"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <Button Content="Clear selection"
+                                Command="{Binding ClearSelectionCommand}"
+                                Style="{StaticResource GhostButtonStyle}"
+                                Padding="8,2"
+                                Margin="8,0,0,0" />
+                    </StackPanel>
 
-                    <!-- Status Badge -->
-                    <DataGridTemplateColumn Header="Status" Width="95">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate DataType="{x:Type dto:PurchaseListDto}">
-                                <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left"
-                                        Background="{Binding Status, Converter={StaticResource PurchaseStatusBadgeBackgroundConverter}}">
-                                    <TextBlock Text="{Binding Status}"
-                                               FontSize="11"
-                                               FontWeight="Bold"
-                                               Foreground="{Binding Status, Converter={StaticResource PurchaseStatusBadgeColorConverter}}" />
-                                </Border>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Delete selected"
+                                Command="{Binding DeleteSelectedCommand}"
+                                Style="{StaticResource DangerButtonStyle}"
+                                Visibility="{Binding CanShowDeleteSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Margin="0,0,8,0" />
+                        <Button Content="Cancel selected"
+                                Command="{Binding CancelSelectedCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Visibility="{Binding CanShowCancelSelected, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-        <!-- ================= 4. FOOTER PAGING ================= -->
-        <Border Grid.Row="3" Margin="0,14,0,0">
-            <Grid>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding RowCountText}" FontWeight="SemiBold" Foreground="#334155" FontSize="13" />
-                    <TextBlock Text="  •  Double-click or press Enter to open  •  Paging 50 items/page" FontSize="12" Foreground="#94A3B8" />
+            <!-- Select All Filtered Results Cross-Page Banner -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource WarningBackgroundBrush}"
+                    BorderBrush="{DynamicResource WarningBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding ShowSelectAllResultsBanner, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding SelectAllResultsBannerText}"
+                               Foreground="{DynamicResource WarningTextBrush}"
+                               FontWeight="Medium"
+                               VerticalAlignment="Center" />
+                    <Button Content="Select all matching results across all pages"
+                            Command="{Binding SelectAllFilteredResultsCommand}"
+                            Style="{StaticResource GhostButtonStyle}"
+                            FontWeight="Bold"
+                            Foreground="{DynamicResource WarningTextBrush}"
+                            Margin="8,0,0,0" />
                 </StackPanel>
+            </Border>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="◀ Prev" Command="{Binding PreviousPageCommand}" Padding="12,6" Background="White" BorderBrush="#CBD5E1" BorderThickness="1" Cursor="Hand" />
-                    <TextBlock Text="{Binding CurrentPage, StringFormat='Page {0}'}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="8,0" />
-                    <TextBlock Text="{Binding TotalPages, StringFormat='of {0}'}" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,8,0" />
-                    <Button Content="Next ▶" Command="{Binding NextPageCommand}" Padding="12,6" Background="White" BorderBrush="#CBD5E1" BorderThickness="1" Cursor="Hand" />
+            <!-- DataGrid Container -->
+            <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Padding="0">
+                <Grid>
+                    <!-- Loading Indicator Overlay -->
+                    <Border Background="{DynamicResource OverlayBackgroundBrush}"
+                            Panel.ZIndex="10"
+                            Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Loading purchases..."
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Border>
+
+                    <!-- Empty State Message -->
+                    <Border HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Panel.ZIndex="5"
+                            Visibility="{Binding Items.Count, Converter={StaticResource InverseBooleanConverter}}">
+                        <TextBlock Text="No purchases to show"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   HorizontalAlignment="Center" />
+                    </Border>
+
+                    <!-- DataGrid -->
+                    <DataGrid ItemsSource="{Binding Items}"
+                              SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                              MouseDoubleClick="DataGrid_MouseDoubleClick">
+                        <DataGrid.Columns>
+                            <!-- Selection Checkbox Column -->
+                            <DataGridTemplateColumn Width="38" CanUserResize="False">
+                                <DataGridTemplateColumn.Header>
+                                    <CheckBox IsChecked="{Binding DataContext.IsAllOnPageSelected, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
+                                              Command="{Binding DataContext.ToggleSelectAllOnPageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                                  Command="{Binding DataContext.ItemSelectionChangedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  CommandParameter="{Binding}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+
+                            <DataGridTextColumn Header="PO NUMBER" Binding="{Binding PurchaseNumber}" Width="120" ElementStyle="{StaticResource MonospaceTextStyle}" />
+                            <DataGridTextColumn Header="DATE" Binding="{Binding PurchaseDate, Converter={StaticResource DateDisplayConverter}}" Width="110" ElementStyle="{StaticResource MonospaceTextStyle}" />
+                            <DataGridTextColumn Header="SUPPLIER" Binding="{Binding SupplierName}" Width="2*" FontWeight="Medium" />
+                            <DataGridTextColumn Header="ITEMS" Binding="{Binding ItemCount}" Width="70" ElementStyle="{StaticResource MonospaceNumericCell}" />
+
+                            <!-- Grand Total (Right-aligned, Monospace) -->
+                            <DataGridTextColumn Header="TOTAL"
+                                                Binding="{Binding GrandTotal, Converter={StaticResource MoneyConverter}}"
+                                                Width="110"
+                                                ElementStyle="{StaticResource MonospaceNumericCell}" />
+
+                            <!-- Paid (Right-aligned, Monospace) -->
+                            <DataGridTextColumn Header="PAID"
+                                                Binding="{Binding PaidAmount, Converter={StaticResource MoneyConverter}}"
+                                                Width="105"
+                                                ElementStyle="{StaticResource MonospaceNumericCell}" />
+
+                            <!-- Balance (Right-aligned, Monospace) -->
+                            <DataGridTextColumn Header="BALANCE"
+                                                Binding="{Binding Balance, Converter={StaticResource MoneyConverter}}"
+                                                Width="105"
+                                                ElementStyle="{StaticResource MonospaceNumericCell}" />
+
+                            <!-- Status -->
+                            <DataGridTemplateColumn Header="STATUS" Width="95">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="{x:Type dto:PurchaseListDto}">
+                                        <Border CornerRadius="3" Padding="6,2" HorizontalAlignment="Left">
+                                            <TextBlock Text="{Binding Status}"
+                                                       FontSize="11"
+                                                       FontWeight="Bold"
+                                                       Foreground="{Binding Status, Converter={StaticResource PurchaseStatusBadgeColorConverter}}" />
+                                        </Border>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- 4. Paging Footer -->
+        <Border Grid.Row="3" Style="{StaticResource PaginationBarStyle}">
+            <Grid>
+                <TextBlock Text="{Binding RowCountText}"
+                           FontFamily="{StaticResource AppMonospaceFontFamily}"
+                           FontSize="11"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           VerticalAlignment="Center" />
+
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Content="&lt; Prev"
+                            Command="{Binding PreviousPageCommand}"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            MinWidth="54" />
+
+                    <TextBlock Text="{Binding CurrentPage, StringFormat='Page {0}'}"
+                               FontFamily="{StaticResource AppMonospaceFontFamily}"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               VerticalAlignment="Center"
+                               Margin="8,0" />
+
+                    <TextBlock Text="{Binding TotalPages, StringFormat='of {0}'}"
+                               FontFamily="{StaticResource AppMonospaceFontFamily}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,8,0" />
+
+                    <Button Content="Next &gt;"
+                            Command="{Binding NextPageCommand}"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            MinWidth="54" />
                 </StackPanel>
             </Grid>
         </Border>
     </Grid>
 </UserControl>
-

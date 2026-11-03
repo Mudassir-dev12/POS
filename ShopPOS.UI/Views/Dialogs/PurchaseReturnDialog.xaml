@@ -8,30 +8,33 @@
         Title="{Binding Title}"
         Height="640"
         Width="880"
-        WindowStartupLocation="CenterOwner"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+        Style="{StaticResource DialogWindowStyle}">
 
     <Grid Margin="22">
         <Grid.RowDefinitions>
+            <!-- Header -->
             <RowDefinition Height="Auto" />
+            <!-- Error Banner -->
             <RowDefinition Height="Auto" />
+            <!-- Header Inputs -->
             <RowDefinition Height="Auto" />
+            <!-- Line Items Table -->
             <RowDefinition Height="*" />
+            <!-- Footer -->
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <TextBlock Grid.Row="0" Text="{Binding Title}" FontSize="18" FontWeight="Bold" Foreground="#0F172A" Margin="0,0,0,10" />
+        <TextBlock Grid.Row="0" Text="{Binding Title}" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,10" />
 
         <!-- Error Banner -->
-        <Border Grid.Row="1" Background="#FEE2E2" BorderBrush="#FCA5A5" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
+        <Border Grid.Row="1" Background="{DynamicResource DangerBackgroundBrush}" BorderBrush="{DynamicResource DangerBrush}" BorderThickness="1" CornerRadius="6" Padding="10,6" Margin="0,0,0,10"
                 Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="#B91C1C" FontWeight="Bold" FontSize="12" />
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerBrush}" FontWeight="Bold" FontSize="12" />
         </Border>
 
         <!-- Header Inputs -->
-        <Border Grid.Row="2" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1" Padding="14,10" Margin="0,0,0,12">
+        <Border Grid.Row="2" Style="{StaticResource FilterBarStyle}" Margin="0,0,0,12">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -47,27 +50,25 @@
 
                 <!-- Supplier -->
                 <StackPanel Grid.Row="0" Grid.Column="0">
-                    <TextBlock Text="VENDOR / SUPPLIER *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBlock Text="VENDOR / SUPPLIER *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                     <ComboBox ItemsSource="{Binding Suppliers}"
                               SelectedItem="{Binding SelectedSupplier, Mode=TwoWay}"
                               DisplayMemberPath="Name"
-                              Padding="8,5"
-                              FontSize="13" />
+                              Style="{StaticResource InputComboBoxStyle}" />
                 </StackPanel>
 
                 <!-- Invoice -->
                 <StackPanel Grid.Row="0" Grid.Column="2">
-                    <TextBlock Text="LOAD ITEMS FROM INVOICE" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBlock Text="LOAD ITEMS FROM INVOICE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                     <ComboBox ItemsSource="{Binding Invoices}"
                               SelectedItem="{Binding SelectedInvoice, Mode=TwoWay}"
                               DisplayMemberPath="PurchaseNumber"
-                              Padding="8,5"
-                              FontSize="13" />
+                              Style="{StaticResource InputComboBoxStyle}" />
                 </StackPanel>
 
                 <!-- Return Date -->
                 <StackPanel Grid.Row="0" Grid.Column="4">
-                    <TextBlock Text="RETURN DATE *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBlock Text="RETURN DATE *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                     <DatePicker SelectedDate="{Binding ReturnDate, Mode=TwoWay}"
                                 Padding="6,4"
                                 FontSize="13" />
@@ -75,35 +76,37 @@
 
                 <!-- Reason / Notes -->
                 <StackPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="5" Margin="0,10,0,0">
-                    <TextBlock Text="RETURN REASON / NOTES *" FontSize="11" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,4" />
+                    <TextBlock Text="RETURN REASON / NOTES *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
                     <TextBox Text="{Binding Notes, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                             Padding="8,5"
-                             FontSize="12" />
+                             Style="{StaticResource InputTextBoxStyle}" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Line Items Table -->
-        <Border Grid.Row="3" Background="White" CornerRadius="8" BorderBrush="#CBD5E1" BorderThickness="1">
+        <Border Grid.Row="3" Style="{StaticResource TableContainerBorderStyle}">
             <DataGrid ItemsSource="{Binding LineItems}"
                       AutoGenerateColumns="False"
                       CanUserAddRows="False"
                       SelectionMode="Single"
                       RowHeight="36"
-                      Background="White"
-                      BorderThickness="0">
+                      Style="{StaticResource AppDataGridStyle}">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" IsReadOnly="True" Width="2*" FontWeight="SemiBold" />
-                    <DataGridTextColumn Header="Unit Cost" Binding="{Binding UnitCost, StringFormat='{}{0:0.00}'}" IsReadOnly="True" Width="90" />
-                    <DataGridTextColumn Header="Purchased" Binding="{Binding PurchasedQuantity, StringFormat='{}{0:0.###}'}" IsReadOnly="True" Width="85" />
-                    <DataGridTextColumn Header="Returnable" Binding="{Binding ReturnableQuantity, StringFormat='{}{0:0.###}'}" IsReadOnly="True" Width="85" FontWeight="Bold" />
+                    <DataGridTextColumn Header="Unit Cost" Binding="{Binding UnitCost, Converter={StaticResource MoneyConverter}}" IsReadOnly="True" Width="100"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
+                    <DataGridTextColumn Header="Purchased" Binding="{Binding PurchasedQuantity, StringFormat='{}{0:0.###}'}" IsReadOnly="True" Width="90"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
+                    <DataGridTextColumn Header="Returnable" Binding="{Binding ReturnableQuantity, StringFormat='{}{0:0.###}'}" IsReadOnly="True" Width="90"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
 
                     <!-- Editable Return Quantity -->
                     <DataGridTextColumn Header="Return Qty"
                                         Binding="{Binding ReturnQuantity, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, StringFormat='{}{0:0.###}'}"
-                                        Width="100" FontWeight="Bold" />
+                                        Width="100" ElementStyle="{StaticResource MonospaceNumericCell}" />
 
-                    <DataGridTextColumn Header="Line Total" Binding="{Binding LineTotal, StringFormat='{}{0:0.00}'}" IsReadOnly="True" Width="100" FontWeight="Bold" />
+                    <DataGridTextColumn Header="Line Total" Binding="{Binding LineTotal, Converter={StaticResource MoneyConverter}}" IsReadOnly="True" Width="110"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
                 </DataGrid.Columns>
             </DataGrid>
         </Border>
@@ -112,16 +115,15 @@
         <Border Grid.Row="4" Margin="0,14,0,0">
             <Grid>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="TOTAL RETURN CREDIT: " FontSize="13" FontWeight="Bold" Foreground="#475569" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding TotalAmount, StringFormat='{}{0:C}'}" FontSize="18" FontWeight="Bold" Foreground="#DC2626" VerticalAlignment="Center" />
+                    <TextBlock Text="TOTAL RETURN CREDIT: " Style="{StaticResource MutedLabelStyle}" VerticalAlignment="Center" />
+                    <TextBlock Text="{Binding TotalAmount, Converter={StaticResource MoneyConverter}}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource DangerBrush}" VerticalAlignment="Center" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Cancel" Command="{Binding CancelCommand}" Background="White" Foreground="#475569" BorderBrush="#CBD5E1" BorderThickness="1" Padding="16,8" Margin="0,0,10,0" Cursor="Hand" />
-                    <Button Content="Post Return (Debit Note)" Command="{Binding PostReturnCommand}" Background="#DC2626" Foreground="White" FontWeight="Bold" Padding="20,8" BorderThickness="0" Cursor="Hand" />
+                    <Button Content="Cancel" Command="{Binding CancelCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0" />
+                    <Button Content="Post Return (Debit Note)" Command="{Binding PostReturnCommand}" Style="{StaticResource DangerButtonStyle}" />
                 </StackPanel>
             </Grid>
         </Border>
     </Grid>
 </Window>
-

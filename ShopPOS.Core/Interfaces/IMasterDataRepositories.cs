@@ -11,6 +11,7 @@ public interface ICategoryRepository : IRepository<Category>
     Task<bool> HasProductsOrChildrenAsync(int categoryId, CancellationToken cancellationToken = default);
     Task<bool> WouldCreateCycleAsync(int categoryId, int? newParentId, CancellationToken cancellationToken = default);
     Task<bool> IsNameTakenUnderParentAsync(string name, int? parentId, int? excludeId = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default);
 }
 
 public interface IBrandRepository : IRepository<Brand>
@@ -19,6 +20,7 @@ public interface IBrandRepository : IRepository<Brand>
     Task<IReadOnlyList<Brand>> GetAllFlatAsync(bool includeInactive = false, CancellationToken cancellationToken = default);
     Task<bool> HasProductsAsync(int brandId, CancellationToken cancellationToken = default);
     Task<bool> IsNameTakenAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default);
 }
 
 public interface IUnitRepository : IRepository<Unit>
@@ -27,6 +29,7 @@ public interface IUnitRepository : IRepository<Unit>
     Task<IReadOnlyList<Unit>> GetAllFlatAsync(bool includeInactive = false, CancellationToken cancellationToken = default);
     Task<bool> HasProductsAsync(int unitId, CancellationToken cancellationToken = default);
     Task<bool> IsNameTakenAsync(string name, int? excludeId = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default);
 }
 
 public interface ISupplierRepository : IRepository<Supplier>
@@ -35,18 +38,10 @@ public interface ISupplierRepository : IRepository<Supplier>
     Task<IReadOnlyList<Supplier>> GetAllFlatAsync(bool includeInactive = false, CancellationToken cancellationToken = default);
     Task<bool> HasTransactionsAsync(int supplierId, CancellationToken cancellationToken = default);
     Task<bool> IsNamePhoneTakenAsync(string name, string? phone, int? excludeId = null, CancellationToken cancellationToken = default);
-}
-
-public interface ICustomerRepository : IRepository<Customer>
-{
-    Task<PagedResult<CustomerDto>> GetPagedAsync(MasterDataSearchQuery query, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<Customer>> GetAllFlatAsync(bool includeInactive = false, CancellationToken cancellationToken = default);
-    Task<bool> HasTransactionsAsync(int customerId, CancellationToken cancellationToken = default);
-    Task<bool> IsPhoneTakenAsync(string phone, int? excludeId = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default);
 }
 
 public interface IPriceLevelRepository : IRepository<PriceLevel>
 {
     Task<IReadOnlyList<PriceLevel>> GetAllActiveAsync(CancellationToken cancellationToken = default);
 }
-

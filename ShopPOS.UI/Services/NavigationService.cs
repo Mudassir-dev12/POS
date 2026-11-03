@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using ShopPOS.UI.ViewModels;
 using ShopPOS.UI.ViewModels.Brands;
 using ShopPOS.UI.ViewModels.Categories;
-using ShopPOS.UI.ViewModels.Customers;
 using ShopPOS.UI.ViewModels.Products;
 using ShopPOS.UI.ViewModels.PurchaseReturns;
 using ShopPOS.UI.ViewModels.Purchases;
@@ -15,7 +14,6 @@ using ShopPOS.UI.ViewModels.Units;
 using ShopPOS.UI.ViewModels.Inventory;
 using ShopPOS.UI.ViewModels.Dashboard;
 using ShopPOS.UI.ViewModels.Sales;
-using ShopPOS.UI.ViewModels.Shifts;
 
 namespace ShopPOS.UI.Services;
 
@@ -56,8 +54,6 @@ public class NavigationService : INavigationService
                 return _serviceProvider.GetRequiredService<BrandsViewModel>();
             case "UNITS":
                 return _serviceProvider.GetRequiredService<UnitsViewModel>();
-            case "CUSTOMERS":
-                return _serviceProvider.GetRequiredService<CustomersViewModel>();
             case "SUPPLIERS":
                 return _serviceProvider.GetRequiredService<SuppliersViewModel>();
             case "PURCHASES":
@@ -111,9 +107,6 @@ public class NavigationService : INavigationService
 
             case "SALERETURNS":
                 return _serviceProvider.GetRequiredService<SaleReturnsViewModel>();
-
-            case "SHIFTS":
-                return _serviceProvider.GetRequiredService<ShiftsViewModel>();
 
             case "REPORTS":
                 return new PlaceholderViewModel(

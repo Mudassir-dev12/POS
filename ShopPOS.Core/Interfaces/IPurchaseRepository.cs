@@ -24,5 +24,6 @@ public interface IPurchaseRepository
     Task<bool> HasActivePaymentsForPurchaseAsync(int purchaseId, CancellationToken cancellationToken = default);
     Task<bool> HasActiveReturnsForPurchaseAsync(int purchaseId, CancellationToken cancellationToken = default);
     Task<decimal> GetTotalReturnedForPurchaseAsync(int purchaseId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredIdsAsync(PurchaseSearchQuery query, CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
 }

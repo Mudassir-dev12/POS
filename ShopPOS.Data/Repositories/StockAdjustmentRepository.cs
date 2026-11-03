@@ -152,6 +152,22 @@ public class StockAdjustmentRepository : IStockAdjustmentRepository
         await _context.StockMovements.AddAsync(movement, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<int>> GetFilteredIdsAsync(DateTime? fromDate, DateTime? toDate, StockAdjustmentStatus? status, CancellationToken cancellationToken = default)
+    {
+        var dbQuery = _context.StockAdjustments.AsNoTracking().Where(a => !a.IsDeleted);
+
+        if (status.HasValue)
+            dbQuery = dbQuery.Where(a => a.Status == status.Value);
+
+        if (fromDate.HasValue)
+            dbQuery = dbQuery.Where(a => a.AdjustmentDate >= fromDate.Value);
+
+        if (toDate.HasValue)
+            dbQuery = dbQuery.Where(a => a.AdjustmentDate <= toDate.Value);
+
+        return await dbQuery.Select(a => a.Id).ToListAsync(cancellationToken);
+    }
+
     public async Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         await _context.SaveChangesAsync(cancellationToken);

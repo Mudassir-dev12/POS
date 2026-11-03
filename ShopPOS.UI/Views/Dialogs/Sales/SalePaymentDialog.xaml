@@ -8,10 +8,9 @@
         Title="Tender &amp; Payment"
         Height="540"
         Width="640"
+        Style="{DynamicResource DialogWindowStyle}"
         WindowStartupLocation="CenterOwner"
-        ResizeMode="NoResize"
-        Background="#F8FAFC"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+        ResizeMode="NoResize">
 
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -22,31 +21,30 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Header: Bill Total & Customer Info -->
-        <Border Grid.Row="0" Background="#1E293B" CornerRadius="8" Padding="16,12" Margin="0,0,0,14">
+        <!-- Header: Bill Total & Walk-in Sale -->
+        <Border Grid.Row="0" Style="{DynamicResource CardBorderStyle}" Padding="16,12" Margin="0,0,0,14">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
                 <StackPanel VerticalAlignment="Center">
-                    <TextBlock Text="TOTAL PAYABLE" FontSize="11" FontWeight="Bold" Foreground="#94A3B8" />
+                    <TextBlock Text="TOTAL PAYABLE" Style="{DynamicResource FormLabelStyle}" />
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{Binding CurrencySymbol}" FontSize="24" FontWeight="Bold" Foreground="#38BDF8" VerticalAlignment="Center" Margin="0,0,2,0" />
-                        <TextBlock Text="{Binding GrandTotal, StringFormat='{}{0:N2}'}" FontSize="32" FontWeight="Bold" Foreground="#FFFFFF" />
+                        <TextBlock Text="{Binding CurrencySymbol}" FontSize="24" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                        <TextBlock Text="{Binding GrandTotal, StringFormat='{}{0:N2}'}" FontSize="32" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" />
                     </StackPanel>
                 </StackPanel>
                 <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding CustomerName, TargetNullValue='Walk-in Customer'}" FontSize="14" FontWeight="SemiBold" Foreground="#F1F5F9" HorizontalAlignment="Right" />
-                    <TextBlock Text="{Binding CustomerCurrentBalance, StringFormat='Current Balance: ${0:N2}'}" FontSize="12" Foreground="#CBD5E1" HorizontalAlignment="Right" Visibility="{Binding CustomerId, Converter={StaticResource NullToVisibilityConverter}}" />
-                    <TextBlock Text="{Binding CustomerCreditLimit, StringFormat='Credit Limit: ${0:N2}'}" FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Right" Visibility="{Binding CustomerId, Converter={StaticResource NullToVisibilityConverter}}" />
+                    <TextBlock Text="Counter Sale" FontSize="15" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Right" />
+                    <TextBlock Text="Paid in full" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right" />
                 </StackPanel>
             </Grid>
         </Border>
 
         <!-- Quick Cash Buttons -->
         <StackPanel Grid.Row="1" Margin="0,0,0,14">
-            <TextBlock Text="Quick Cash (Exact / Common Notes):" FontSize="12" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,0,6" />
+            <TextBlock Text="Quick Cash (Exact / Common Notes):" Style="{DynamicResource FormLabelStyle}" />
             <ItemsControl ItemsSource="{Binding QuickCashNotes}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -55,18 +53,18 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Button Content="{Binding StringFormat='${0:N0}'}"
+                        <Button Content="{Binding Converter={StaticResource MoneyConverter}}"
                                 Command="{Binding DataContext.SetCashAmountCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
-                                Height="34" MinWidth="75" Margin="0,0,8,0"
-                                Background="#E2E8F0" Foreground="#0F172A" FontWeight="Bold" BorderThickness="0" />
+                                Style="{DynamicResource SecondaryButtonStyle}"
+                                Height="34" MinWidth="75" Margin="0,0,8,0" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </StackPanel>
 
         <!-- Split Tenders / Payment Lines List -->
-        <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="12" Margin="0,0,0,12">
+        <Border Grid.Row="2" Style="{DynamicResource CardBorderStyle}" Padding="12" Margin="0,0,0,12">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -74,54 +72,59 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0" Margin="4,0,4,6">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="130" />
-                        <ColumnDefinition Width="120" />
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="36" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Text="Method" FontSize="11" FontWeight="Bold" Foreground="#64748B" />
-                    <TextBlock Grid.Column="1" Text="Amount" FontSize="11" FontWeight="Bold" Foreground="#64748B" />
-                    <TextBlock Grid.Column="2" Text="Ref / Note" FontSize="11" FontWeight="Bold" Foreground="#64748B" />
-                </Grid>
+                <TextBlock Text="Payment Lines / Multi-Tender:" Style="{DynamicResource SectionHeaderStyle}" FontSize="13" Margin="0,0,0,8" />
 
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding Payments}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="0,3">
+                                <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="130" />
-                                        <ColumnDefinition Width="120" />
                                         <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="36" />
+                                        <ColumnDefinition Width="40" />
                                     </Grid.ColumnDefinitions>
-                                    <ComboBox ItemsSource="{Binding Source={StaticResource PaymentMethods}}"
-                                              SelectedItem="{Binding Method, Mode=TwoWay}"
-                                              Height="32" Margin="0,0,6,0" VerticalContentAlignment="Center" />
-                                    <TextBox Grid.Column="1" Text="{Binding Amount, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                             Height="32" Margin="0,0,6,0" FontSize="14" FontWeight="SemiBold" VerticalContentAlignment="Center" Padding="6,2" />
-                                    <TextBox Grid.Column="2" Text="{Binding Reference, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                             Height="32" Margin="0,0,6,0" VerticalContentAlignment="Center" Padding="6,2"
-                                             IsEnabled="{Binding IsNonCash}" />
-                                    <Button Grid.Column="3" Content="✕"
+
+                                    <!-- Method Dropdown -->
+                                    <ComboBox Grid.Column="0" SelectedItem="{Binding Method, Mode=TwoWay}"
+                                              Height="34" Margin="0,0,8,0">
+                                        <enums:PaymentMethod>Cash</enums:PaymentMethod>
+                                        <enums:PaymentMethod>Card</enums:PaymentMethod>
+                                        <enums:PaymentMethod>Bank</enums:PaymentMethod>
+                                        <enums:PaymentMethod>MobileWallet</enums:PaymentMethod>
+                                        <enums:PaymentMethod>Other</enums:PaymentMethod>
+                                    </ComboBox>
+
+                                    <!-- Amount -->
+                                    <TextBox Grid.Column="1" Text="{Binding Amount, StringFormat='{}{0:N2}', UpdateSourceTrigger=PropertyChanged}"
+                                             Height="34" Margin="0,0,8,0" FontWeight="Bold" FontSize="14" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" />
+
+                                    <!-- Reference for non-cash -->
+                                    <TextBox Grid.Column="2" Text="{Binding Reference, UpdateSourceTrigger=PropertyChanged}"
+                                             Height="34" Margin="0,0,8,0" VerticalContentAlignment="Center"
+                                             IsEnabled="{Binding IsNonCash}"
+                                             ToolTip="Optional reference or transaction ID for Card/Bank/Mobile" />
+
+                                    <!-- Remove -->
+                                    <Button Grid.Column="3" Content="X"
                                             Command="{Binding DataContext.RemovePaymentLineCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="{Binding}"
-                                            Height="32" Width="30" Foreground="#DC2626" Background="#FEE2E2" BorderThickness="0" FontWeight="Bold" />
+                                            Style="{DynamicResource DangerOutlineButtonStyle}"
+                                            Height="34" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </ScrollViewer>
 
-                <Button Grid.Row="2" Content="+ Add Split Tender"
-                        Command="{Binding AddPaymentLineCommand}"
-                        HorizontalAlignment="Left" Margin="4,8,0,0" Height="28" Padding="10,0" Background="#F1F5F9" Foreground="#2563EB" BorderBrush="#BFDBFE" />
+                <Button Grid.Row="2" Content="+ Add Split Tender Method" Command="{Binding AddPaymentLineCommand}"
+                        Style="{DynamicResource GhostButtonStyle}"
+                        HorizontalAlignment="Left" Height="30" Margin="0,6,0,0" />
             </Grid>
         </Border>
 
-        <!-- Summary & Error Display -->
+        <!-- Summary & Validation Row -->
         <Grid Grid.Row="3" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -129,23 +132,16 @@
             </Grid.ColumnDefinitions>
 
             <!-- Error message or validation warning -->
-            <TextBlock Text="{Binding ErrorMessage}" Foreground="#DC2626" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerTextBrush}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" VerticalAlignment="Center"
                        Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}" />
 
-            <!-- Change / Due summary -->
+            <!-- Change summary -->
             <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-                <Border Background="#DCFCE7" CornerRadius="6" Padding="12,6" Margin="0,0,8,0"
+                <Border Background="{DynamicResource SuccessBackgroundBrush}" BorderBrush="{DynamicResource SuccessBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,6"
                         Visibility="{Binding ChangeAmount, Converter={StaticResource DecimalGreaterThanZeroToVisibilityConverter}}">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Change: " FontSize="13" FontWeight="SemiBold" Foreground="#16A34A" />
-                        <TextBlock Text="{Binding ChangeAmount, StringFormat='${0:N2}'}" FontSize="16" FontWeight="Bold" Foreground="#16A34A" />
-                    </StackPanel>
-                </Border>
-                <Border Background="#FFEDD5" CornerRadius="6" Padding="12,6"
-                        Visibility="{Binding DueAmount, Converter={StaticResource DecimalGreaterThanZeroToVisibilityConverter}}">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Due / Balance: " FontSize="13" FontWeight="SemiBold" Foreground="#C2410C" />
-                        <TextBlock Text="{Binding DueAmount, StringFormat='${0:N2}'}" FontSize="16" FontWeight="Bold" Foreground="#C2410C" />
+                        <TextBlock Text="Change Due: " FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource SuccessTextBrush}" />
+                        <TextBlock Text="{Binding ChangeAmount, Converter={StaticResource MoneyConverter}}" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource SuccessTextBrush}" />
                     </StackPanel>
                 </Border>
             </StackPanel>
@@ -154,9 +150,11 @@
         <!-- Footer Buttons -->
         <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Cancel (Esc)" Command="{Binding CancelCommand}"
-                    Width="110" Height="38" Margin="0,0,10,0" Background="#F1F5F9" Foreground="#334155" BorderBrush="#CBD5E1" />
+                    Style="{DynamicResource SecondaryButtonStyle}"
+                    MinWidth="110" Height="38" Margin="0,0,10,0" />
             <Button Content="Complete Sale (Enter)" Command="{Binding CompleteCommand}" IsEnabled="{Binding IsValid}"
-                    Width="170" Height="38" Background="#16A34A" Foreground="White" FontWeight="Bold" FontSize="14" BorderThickness="0" />
+                    Style="{DynamicResource SuccessButtonStyle}"
+                    MinWidth="170" Height="38" FontSize="14" />
         </StackPanel>
     </Grid>
 </Window>

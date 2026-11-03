@@ -7,8 +7,12 @@
              xmlns:enums="clr-namespace:ShopPOS.Core.Enums;assembly=ShopPOS.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:SalesViewModel}"
-             Background="#F8FAFC"
-             FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+             Background="{DynamicResource PageBackgroundBrush}"
+             FontFamily="{StaticResource AppFontFamily}">
+
+    <UserControl.InputBindings>
+        <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllOnPageCommand}" />
+    </UserControl.InputBindings>
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -25,27 +29,27 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel VerticalAlignment="Center">
-                <TextBlock Text="Sales Invoices &amp; History" FontSize="20" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Search, inspect, reprint receipts, cancel or process returns for sales." FontSize="12" Foreground="#64748B" Margin="0,2,0,0" />
+                <TextBlock Text="Sales Invoices &amp; History" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Search, inspect, reprint receipts, cancel today's sales, or process returns." Style="{StaticResource SubTitleStyle}" />
             </StackPanel>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="View Details (Enter)" Command="{Binding OpenDetailsCommand}" Height="34" Margin="0,0,6,0" Background="#F1F5F9" Foreground="#334155" BorderBrush="#CBD5E1" FontWeight="SemiBold" />
-                <Button Content="Reprint Receipt" Command="{Binding ReprintSaleCommand}" Height="34" Margin="0,0,6,0" Background="#EFF6FF" Foreground="#2563EB" BorderBrush="#BFDBFE" FontWeight="SemiBold" />
-                <Button Content="Process Return" Command="{Binding StartReturnCommand}" Height="34" Margin="0,0,6,0" Background="#FEF2F2" Foreground="#DC2626" BorderBrush="#FECACA" FontWeight="SemiBold" />
-                <Button Content="Cancel Sale" Command="{Binding CancelSaleCommand}" Height="34" Margin="0,0,6,0" Background="#FFF1F2" Foreground="#E11D48" BorderBrush="#FECDD3" />
-                <Button Content="Export CSV" Command="{Binding ExportCsvCommand}" Height="34" Margin="0,0,6,0" Background="#F1F5F9" Foreground="#334155" BorderBrush="#CBD5E1" />
-                <Button Content="Export PDF" Command="{Binding ExportPdfCommand}" Height="34" Background="#F1F5F9" Foreground="#334155" BorderBrush="#CBD5E1" />
+                <Button Content="View Details (Enter)" Command="{Binding OpenDetailsCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,6,0" />
+                <Button Content="Reprint Receipt" Command="{Binding ReprintSaleCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,0,6,0" />
+                <Button Content="Process Return" Command="{Binding StartReturnCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,6,0" />
+                <Button Content="Cancel Sale" Command="{Binding CancelSaleCommand}" Style="{StaticResource DangerButtonStyle}" Margin="0,0,6,0" />
+                <Button Content="Export CSV" Command="{Binding ExportCsvCommand}" Style="{StaticResource ToolbarButtonStyle}" Margin="0,0,6,0" />
+                <Button Content="Export PDF" Command="{Binding ExportPdfCommand}" Style="{StaticResource ToolbarButtonStyle}" />
             </StackPanel>
         </Grid>
 
         <!-- FILTERS PANEL -->
-        <Border Grid.Row="1" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,0,12">
+        <Border Grid.Row="1" Style="{StaticResource FilterBarStyle}">
             <WrapPanel VerticalAlignment="Center">
                 <!-- Search term -->
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="Search:" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,3" />
-                    <TextBox Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="160" Height="30" VerticalContentAlignment="Center" Padding="6,2">
+                    <TextBlock Text="Search:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
+                    <TextBox Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="180" Style="{StaticResource InputTextBoxStyle}">
                         <TextBox.InputBindings>
                             <KeyBinding Key="Return" Command="{Binding LoadSalesCommand}" />
                         </TextBox.InputBindings>
@@ -54,106 +58,222 @@
 
                 <!-- Date Range -->
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="From Date:" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,3" />
-                    <DatePicker SelectedDate="{Binding DateFrom, Mode=TwoWay}" Width="120" Height="30" />
+                    <TextBlock Text="From Date:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
+                    <DatePicker SelectedDate="{Binding DateFrom, Mode=TwoWay}" Width="125" Height="30" />
                 </StackPanel>
 
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="To Date:" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,3" />
-                    <DatePicker SelectedDate="{Binding DateTo, Mode=TwoWay}" Width="120" Height="30" />
+                    <TextBlock Text="To Date:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
+                    <DatePicker SelectedDate="{Binding DateTo, Mode=TwoWay}" Width="125" Height="30" />
                 </StackPanel>
 
-                <!-- Customer -->
+                <!-- Status Filter -->
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="Customer:" FontSize="11" FontWeight="Bold" Foreground="#64748B" Margin="0,0,0,3" />
-                    <ComboBox ItemsSource="{Binding Customers}" SelectedValue="{Binding SelectedCustomerId, Mode=TwoWay}"
-                              SelectedValuePath="Id" DisplayMemberPath="Name" Width="150" Height="30" VerticalContentAlignment="Center" />
+                    <TextBlock Text="Status:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
+                    <ComboBox SelectedItem="{Binding SelectedStatus, Mode=TwoWay}" Width="130" Style="{StaticResource InputComboBoxStyle}">
+                        <ComboBoxItem Content="All Statuses" IsSelected="True" />
+                        <enums:SaleStatus>Completed</enums:SaleStatus>
+                        <enums:SaleStatus>Cancelled</enums:SaleStatus>
+                    </ComboBox>
                 </StackPanel>
 
-                <!-- Due Only -->
+                <!-- Due Only (Historical) -->
                 <StackPanel VerticalAlignment="Bottom" Margin="0,0,14,4">
-                    <CheckBox Content="With Due Only" IsChecked="{Binding WithDueOnly, Mode=TwoWay}" VerticalAlignment="Center" FontSize="12" />
+                    <CheckBox Content="With Due Only (Old)" IsChecked="{Binding WithDueOnly, Mode=TwoWay}" VerticalAlignment="Center" FontSize="12" />
                 </StackPanel>
 
                 <!-- Filter Button -->
-                <Button Content="Filter / Refresh (F5)" Command="{Binding LoadSalesCommand}" Width="130" Height="30" Margin="0,16,0,0"
-                        Background="#2563EB" Foreground="White" FontWeight="SemiBold" BorderThickness="0" />
+                <Button Content="Filter / Refresh (F5)" Command="{Binding LoadSalesCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,16,0,0" />
             </WrapPanel>
         </Border>
 
         <!-- SALES GRID -->
-        <Border Grid.Row="2" Background="White" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="8">
-            <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                      AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True"
-                      GridLinesVisibility="Horizontal" HeadersVisibility="Column" Background="Transparent" BorderThickness="0">
-                <DataGrid.RowStyle>
-                    <Style TargetType="DataGridRow">
-                        <EventSetter Event="MouseDoubleClick" Handler="OnRowDoubleClick" />
-                    </Style>
-                </DataGrid.RowStyle>
-                <DataGrid.Columns>
-                    <DataGridTextColumn Header="Invoice #" Binding="{Binding SaleNumber}" Width="130" FontWeight="SemiBold" />
-                    <DataGridTextColumn Header="Date" Binding="{Binding SaleDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="140" />
-                    <DataGridTextColumn Header="Customer" Binding="{Binding CustomerName, TargetNullValue='Walk-in'}" Width="*" />
-                    <DataGridTextColumn Header="Items" Binding="{Binding ItemCount}" Width="65" />
-                    <DataGridTextColumn Header="Total" Binding="{Binding GrandTotal, StringFormat='${0:N2}'}" Width="100" FontWeight="Bold" />
-                    <DataGridTextColumn Header="Paid" Binding="{Binding PaidAmount, StringFormat='${0:N2}'}" Width="95" Foreground="#16A34A" />
-                    <DataGridTextColumn Header="Due" Binding="{Binding DueAmount, StringFormat='${0:N2}'}" Width="95" Foreground="#EA580C" FontWeight="SemiBold" />
-                    <DataGridTextColumn Header="Payment Methods" Binding="{Binding PaymentMethodsSummary}" Width="140" />
-                    <DataGridTemplateColumn Header="Status" Width="95">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <Border Background="{Binding Status, Converter={StaticResource SaleStatusBadgeBackgroundConverter}}"
-                                        CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Status}" Foreground="{Binding Status, Converter={StaticResource SaleStatusBadgeColorConverter}}"
-                                               FontSize="11" FontWeight="Bold" />
-                                </Border>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
-            </DataGrid>
-        </Border>
+        <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <!-- FOOTER: TOTALS SUMMARY & PAGINATION -->
-        <Grid Grid.Row="3" Margin="0,12,0,0">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-
-            <!-- Summary Totals in Current Filter -->
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Border Background="#EFF6FF" CornerRadius="6" Padding="10,6" Margin="0,0,10,0">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Total Sales: " FontSize="12" Foreground="#1E3A8A" />
-                        <TextBlock Text="{Binding FilteredGrandTotal, StringFormat='${0:N2}'}" FontSize="13" FontWeight="Bold" Foreground="#2563EB" />
+            <!-- Bulk Selection Banner & Toolbar -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SurfaceCardSubtleBrush}"
+                    BorderBrush="{DynamicResource TableSelectedBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SelectionStatusText}" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        <Button Content="Clear selection" Command="{Binding ClearSelectionCommand}"
+                                Style="{StaticResource GhostButtonStyle}" Margin="8,0,0,0" />
                     </StackPanel>
-                </Border>
-                <Border Background="#DCFCE7" CornerRadius="6" Padding="10,6" Margin="0,0,10,0">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Total Collected: " FontSize="12" Foreground="#14532D" />
-                        <TextBlock Text="{Binding FilteredPaidAmount, StringFormat='${0:N2}'}" FontSize="13" FontWeight="Bold" Foreground="#16A34A" />
-                    </StackPanel>
-                </Border>
-                <Border Background="#FFEDD5" CornerRadius="6" Padding="10,6">
-                    <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Total Due: " FontSize="12" Foreground="#7C2D12" />
-                        <TextBlock Text="{Binding FilteredDueAmount, StringFormat='${0:N2}'}" FontSize="13" FontWeight="Bold" Foreground="#EA580C" />
-                    </StackPanel>
-                </Border>
-            </StackPanel>
 
-            <!-- Pagination Buttons -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="{Binding TotalCount, StringFormat='Total Records: {0} | '}" FontSize="12" Foreground="#64748B" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding PageNumber, StringFormat='Page {0}'}" FontSize="12" FontWeight="SemiBold" Foreground="#0F172A" VerticalAlignment="Center" />
-                <TextBlock Text="{Binding TotalPages, StringFormat=' of {0}'}" FontSize="12" Foreground="#64748B" VerticalAlignment="Center" Margin="0,0,10,0" />
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Delete Selected" Command="{Binding DeleteSelectedCommand}"
+                                Visibility="{Binding CanShowDeleteSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource DangerButtonStyle}" Margin="0,0,8,0" />
+                        <Button Content="Cancel Selected" Command="{Binding CancelSelectedCommand}"
+                                Visibility="{Binding CanShowCancelSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Style="{StaticResource SecondaryButtonStyle}" />
+                    </StackPanel>
+                </Grid>
+            </Border>
 
-                <Button Content="‹ Prev" Command="{Binding PreviousPageCommand}" Width="75" Height="30" Margin="0,0,6,0" Background="#F1F5F9" Foreground="#334155" BorderBrush="#CBD5E1" />
-                <Button Content="Next ›" Command="{Binding NextPageCommand}" Width="75" Height="30" Background="#F1F5F9" Foreground="#334155" BorderBrush="#CBD5E1" />
-            </StackPanel>
+            <!-- Select All Filtered Results Banner -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource WarningBackgroundBrush}"
+                    BorderBrush="{DynamicResource WarningBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding ShowSelectAllResultsBanner, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding SelectAllResultsBannerText}" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Medium" VerticalAlignment="Center" />
+                    <Button Content="Click here to select all matching results" Command="{Binding SelectAllFilteredResultsCommand}"
+                            Style="{StaticResource GhostButtonStyle}" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Bold" Margin="8,0,0,0" />
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2" Style="{StaticResource TableContainerBorderStyle}">
+                <DataGrid ItemsSource="{Binding Items}" SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                          Style="{StaticResource AppDataGridStyle}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <EventSetter Event="MouseDoubleClick" Handler="OnRowDoubleClick" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <!-- Selection Checkbox Column -->
+                        <DataGridTemplateColumn Width="40" CanUserResize="False">
+                            <DataGridTemplateColumn.Header>
+                                <CheckBox IsChecked="{Binding DataContext.IsAllOnPageSelected, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
+                                          Command="{Binding DataContext.ToggleSelectAllOnPageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                          HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </DataGridTemplateColumn.Header>
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                              Command="{Binding DataContext.ItemSelectionChangedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                              CommandParameter="{Binding}"
+                                              HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="Invoice #" Binding="{Binding SaleNumber}" Width="150"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" />
+                        <DataGridTextColumn Header="Date" Binding="{Binding SaleDate, Converter={StaticResource DateDisplayConverter}}" Width="140" />
+                        <DataGridTextColumn Header="Items" Binding="{Binding ItemCount}" Width="70"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" />
+                        <DataGridTextColumn Header="Total" Binding="{Binding GrandTotal, Converter={StaticResource MoneyConverter}}" Width="120"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" />
+                        <DataGridTextColumn Header="Paid" Binding="{Binding PaidAmount, Converter={StaticResource MoneyConverter}}" Width="120"
+                                            ElementStyle="{StaticResource MonospaceNumericCell}" />
+                        
+                        <!-- Due column with historical marker -->
+                        <DataGridTemplateColumn Header="Due" Width="120">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding DueAmount, Converter={StaticResource MoneyConverter}}" FontWeight="SemiBold"
+                                                   Foreground="{Binding DueAmount, Converter={StaticResource DueColorConverter}}" />
+                                        <Border Background="{DynamicResource WarningBackgroundBrush}" CornerRadius="3" Padding="4,1" Margin="4,0,0,0"
+                                                Visibility="{Binding HasOldDue, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <TextBlock Text="old" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource WarningTextBrush}" />
+                                        </Border>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+
+                        <DataGridTextColumn Header="Payment Methods" Binding="{Binding PaymentMethodsSummary}" Width="*" />
+                        <DataGridTemplateColumn Header="Status" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Border Background="{Binding Status, Converter={StaticResource SaleStatusBadgeBackgroundConverter}}"
+                                            CornerRadius="4" Padding="6,2" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding Status}" Foreground="{Binding Status, Converter={StaticResource SaleStatusBadgeColorConverter}}"
+                                                   FontSize="11" FontWeight="Bold" />
+                                    </Border>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Border>
         </Grid>
+
+        <!-- FOOTER: FILTERED PAYMENT BREAKDOWN & PAGINATION -->
+        <Border Grid.Row="3" Style="{StaticResource SurfaceCardStyle}" Margin="0,10,0,0" Padding="12,10">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Row 0: Drawer Reconciliation Payment-Method Breakdown -->
+                <WrapPanel Grid.Row="0" VerticalAlignment="Center" Margin="0,0,0,8">
+                    <TextBlock Text="Drawer Reconciliation:" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
+
+                    <!-- Count & Total -->
+                    <Border Background="{DynamicResource SurfaceCardSubtleBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,6,0">
+                        <TextBlock Text="{Binding PaymentBreakdown.SalesCount, StringFormat='Sales: {0}'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+                    <Border Background="{DynamicResource SurfaceCardSubtleBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,6,0">
+                        <TextBlock Text="{Binding PaymentBreakdown.TotalGrandTotal, Converter={StaticResource MoneyConverter}, StringFormat='Total: {0}'}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" />
+                    </Border>
+
+                    <!-- Cash (Net of change) -->
+                    <Border Background="{DynamicResource SuccessBackgroundBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,6,0">
+                        <TextBlock Text="{Binding PaymentBreakdown.TotalCash, Converter={StaticResource MoneyConverter}, StringFormat='Cash: {0}'}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource SuccessTextBrush}" ToolTip="Net cash received minus change returned" />
+                    </Border>
+
+                    <!-- Card -->
+                    <Border Background="{DynamicResource SurfaceCardSubtleBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,6,0">
+                        <TextBlock Text="{Binding PaymentBreakdown.TotalCard, Converter={StaticResource MoneyConverter}, StringFormat='Card: {0}'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource SuccessTextBrush}" />
+                    </Border>
+
+                    <!-- Bank -->
+                    <Border Background="{DynamicResource SurfaceCardSubtleBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,6,0">
+                        <TextBlock Text="{Binding PaymentBreakdown.TotalBank, Converter={StaticResource MoneyConverter}, StringFormat='Bank: {0}'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </Border>
+
+                    <!-- Mobile Wallet -->
+                    <Border Background="{DynamicResource SurfaceCardSubtleBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,6,0">
+                        <TextBlock Text="{Binding PaymentBreakdown.TotalMobileWallet, Converter={StaticResource MoneyConverter}, StringFormat='Wallet: {0}'}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" />
+                    </Border>
+
+                    <!-- Other -->
+                    <Border Background="{DynamicResource SurfaceCardSubtleBrush}" CornerRadius="4" Padding="8,4" Margin="0,0,6,0">
+                        <TextBlock Text="{Binding PaymentBreakdown.TotalOther, Converter={StaticResource MoneyConverter}, StringFormat='Other: {0}'}" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" />
+                    </Border>
+
+                    <!-- Old Due (Historical) -->
+                    <Border Background="{DynamicResource WarningBackgroundBrush}" CornerRadius="4" Padding="8,4"
+                            Visibility="{Binding PaymentBreakdown.TotalDueOld, Converter={StaticResource DecimalGreaterThanZeroToVisibilityConverter}}">
+                        <TextBlock Text="{Binding PaymentBreakdown.TotalDueOld, Converter={StaticResource MoneyConverter}, StringFormat='Unpaid (old): {0}'}" FontSize="12" FontWeight="Bold" Foreground="{DynamicResource WarningTextBrush}" />
+                    </Border>
+                </WrapPanel>
+
+                <Separator Grid.Row="0" Margin="0,32,0,6" Background="{DynamicResource SeparatorBorderBrush}" />
+
+                <!-- Row 1: Pagination -->
+                <Grid Grid.Row="1">
+                    <TextBlock Text="{Binding TotalCount, StringFormat='Total Records: {0}'}" Style="{StaticResource MutedLabelStyle}" VerticalAlignment="Center" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding PageNumber, StringFormat='Page {0}'}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding TotalPages, StringFormat=' of {0}'}" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" Margin="0,0,10,0" />
+
+                        <Button Content="&lt; Prev" Command="{Binding PreviousPageCommand}" Style="{StaticResource PaginationButtonStyle}" Margin="0,0,6,0" />
+                        <Button Content="Next &gt;" Command="{Binding NextPageCommand}" Style="{StaticResource PaginationButtonStyle}" />
+                    </StackPanel>
+                </Grid>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>
-

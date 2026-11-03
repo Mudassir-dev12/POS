@@ -22,4 +22,5 @@ public interface IProductRepository : IRepository<Product>
     Task RecordStockAdjustmentAsync(int productId, decimal quantityDelta, decimal unitCost, string? note, int? userId, CancellationToken cancellationToken = default);
     Task<decimal> GetCurrentStockAsync(int productId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Product>> GetAllForExportAsync(ProductSearchQuery query, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<int>> GetFilteredIdsAsync(ProductSearchQuery query, CancellationToken cancellationToken = default);
 }

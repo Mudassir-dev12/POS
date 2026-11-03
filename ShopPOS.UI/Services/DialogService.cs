@@ -3,14 +3,12 @@ using Microsoft.Win32;
 using ShopPOS.Core.DTOs;
 using ShopPOS.UI.ViewModels.Brands;
 using ShopPOS.UI.ViewModels.Categories;
-using ShopPOS.UI.ViewModels.Customers;
 using ShopPOS.UI.ViewModels.HeldBills;
 using ShopPOS.UI.ViewModels.Inventory;
 using ShopPOS.UI.ViewModels.Products;
 using ShopPOS.UI.ViewModels.PurchaseReturns;
 using ShopPOS.UI.ViewModels.Purchases;
 using ShopPOS.UI.ViewModels.Sales;
-using ShopPOS.UI.ViewModels.Shifts;
 using ShopPOS.UI.ViewModels.SupplierPayments;
 using ShopPOS.UI.ViewModels.Suppliers;
 using ShopPOS.UI.ViewModels.Units;
@@ -123,13 +121,6 @@ public class DialogService : IDialogService
         return dialog.ShowDialog();
     }
 
-    public bool? ShowCustomerDialog(CustomerDialogViewModel viewModel)
-    {
-        var dialog = new CustomerDialog(viewModel);
-        ConfigureDialogOwner(dialog);
-        return dialog.ShowDialog();
-    }
-
     public bool? ShowPurchaseEntryDialog(PurchaseEntryViewModel viewModel)
     {
         var dialog = new PurchaseEntryWindow(viewModel);
@@ -184,6 +175,22 @@ public class DialogService : IDialogService
         return dialog.Result;
     }
 
+    public bool ShowBulkConfirmDialog(string actionName, int count, bool requireTypedConfirmation, string? detail = null)
+    {
+        var dialog = new BulkConfirmDialog(actionName, count, requireTypedConfirmation, detail);
+        ConfigureDialogOwner(dialog);
+        var res = dialog.ShowDialog();
+        return res == true && dialog.Confirmed;
+    }
+
+    public bool ShowBulkSummaryDialog(string title, BulkOperationResult result)
+    {
+        var dialog = new BulkSummaryDialog(title, result);
+        ConfigureDialogOwner(dialog);
+        dialog.ShowDialog();
+        return dialog.DeactivateRequested;
+    }
+
     public bool? ShowStockAdjustmentDialog(StockAdjustmentDialogViewModel viewModel)
     {
         var dialog = new StockAdjustmentDialog(viewModel);
@@ -211,30 +218,6 @@ public class DialogService : IDialogService
     public bool? ShowSaleReturnDialog(SaleReturnDialogViewModel viewModel)
     {
         var dialog = new SaleReturnDialog { DataContext = viewModel };
-        viewModel.RequestClose += () => dialog.DialogResult = viewModel.Confirmed;
-        ConfigureDialogOwner(dialog);
-        return dialog.ShowDialog();
-    }
-
-    public bool? ShowOpenShiftDialog(OpenShiftDialogViewModel viewModel)
-    {
-        var dialog = new OpenShiftDialog { DataContext = viewModel };
-        viewModel.RequestClose += () => dialog.DialogResult = viewModel.Confirmed;
-        ConfigureDialogOwner(dialog);
-        return dialog.ShowDialog();
-    }
-
-    public bool? ShowCloseShiftDialog(CloseShiftDialogViewModel viewModel)
-    {
-        var dialog = new CloseShiftDialog { DataContext = viewModel };
-        viewModel.RequestClose += () => dialog.DialogResult = viewModel.Confirmed;
-        ConfigureDialogOwner(dialog);
-        return dialog.ShowDialog();
-    }
-
-    public bool? ShowCashMovementDialog(CashMovementDialogViewModel viewModel)
-    {
-        var dialog = new CashMovementDialog { DataContext = viewModel };
         viewModel.RequestClose += () => dialog.DialogResult = viewModel.Confirmed;
         ConfigureDialogOwner(dialog);
         return dialog.ShowDialog();

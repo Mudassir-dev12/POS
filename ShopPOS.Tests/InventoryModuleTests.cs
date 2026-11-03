@@ -22,7 +22,6 @@ public class InventoryModuleTests : IDisposable
     private readonly SqliteConnection _connection;
     private readonly AppDbContext _context;
     private readonly Mock<IAuditLogService> _auditMock;
-    private readonly PermissionService _permissionService;
     private readonly TransactionRunner _transactionRunner;
     private readonly NumberSequenceService _sequenceService;
 
@@ -43,7 +42,6 @@ public class InventoryModuleTests : IDisposable
     private readonly PurchaseService _purchaseService;
     private readonly ProductService _productService;
     private readonly ICurrentUserProvider _userProvider;
-    private readonly IAuthService _authService;
 
     private User _ownerUser = null!;
     private Category _category1 = null!;
@@ -69,11 +67,9 @@ public class InventoryModuleTests : IDisposable
         _context.Database.Migrate();
 
         _auditMock = new Mock<IAuditLogService>();
-        _permissionService = new PermissionService();
         _transactionRunner = new TransactionRunner(_context);
         _sequenceService = new NumberSequenceService(_context);
         _userProvider = new CurrentUserProvider();
-        _authService = new AuthService(_userProvider);
 
         _productRepo = new ProductRepository(_context);
         _categoryRepo = new CategoryRepository(_context);
@@ -103,7 +99,6 @@ public class InventoryModuleTests : IDisposable
             _sequenceService,
             _transactionRunner,
             _auditMock.Object,
-            _permissionService,
             new CreateStockAdjustmentValidator(),
             new UpdateStockAdjustmentValidator());
 
@@ -115,7 +110,6 @@ public class InventoryModuleTests : IDisposable
             _settingRepo,
             _sequenceService,
             _auditMock.Object,
-            _permissionService,
             pdfMock.Object,
             new CreatePurchaseValidator(),
             new UpdatePurchaseValidator());
@@ -129,14 +123,12 @@ public class InventoryModuleTests : IDisposable
             _supplierLedgerRepo,
             _inventoryRepo,
             _purchaseService,
-            _permissionService,
             pdfMock.Object);
 
         _productService = new ProductService(
             _productRepo,
             _settingRepo,
             _auditMock.Object,
-            _permissionService,
             _transactionRunner,
             _adjustmentService);
 
@@ -224,7 +216,7 @@ public class InventoryModuleTests : IDisposable
         _context.ShopSettings.Add(new ShopSetting
         {
             ShopName = "Test Shop",
-            CurrencySymbol = "$",
+            CurrencySymbol = "Rs",
             AllowNegativeStock = true,
             DefaultReorderMultiplier = 2.0m
         });
@@ -577,7 +569,6 @@ public class InventoryModuleTests : IDisposable
             _adjustmentService,
             _productService,
             _stockLedgerQuery,
-            _authService,
             dialogServiceMock.Object);
 
         // 1. Multi-add products from dialog

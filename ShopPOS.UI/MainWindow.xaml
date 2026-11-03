@@ -9,7 +9,6 @@
         xmlns:vmBrand="clr-namespace:ShopPOS.UI.ViewModels.Brands"
         xmlns:vmUnit="clr-namespace:ShopPOS.UI.ViewModels.Units"
         xmlns:vmSupp="clr-namespace:ShopPOS.UI.ViewModels.Suppliers"
-        xmlns:vmCust="clr-namespace:ShopPOS.UI.ViewModels.Customers"
         xmlns:vmPurch="clr-namespace:ShopPOS.UI.ViewModels.Purchases"
         xmlns:vmPay="clr-namespace:ShopPOS.UI.ViewModels.SupplierPayments"
         xmlns:vmRet="clr-namespace:ShopPOS.UI.ViewModels.PurchaseReturns"
@@ -18,17 +17,16 @@
         xmlns:vmInv="clr-namespace:ShopPOS.UI.ViewModels.Inventory"
         xmlns:vmDash="clr-namespace:ShopPOS.UI.ViewModels.Dashboard"
         xmlns:vmSales="clr-namespace:ShopPOS.UI.ViewModels.Sales"
-        xmlns:vmShifts="clr-namespace:ShopPOS.UI.ViewModels.Shifts"
         xmlns:views="clr-namespace:ShopPOS.UI.Views"
         mc:Ignorable="d"
         Title="Shop POS"
-        Height="780"
-        Width="1200"
-        MinHeight="600"
-        MinWidth="960"
+        Height="768"
+        Width="1366"
+        MinHeight="720"
+        MinWidth="1280"
         WindowStartupLocation="CenterScreen"
-        Background="#F1F5F9"
-        FontFamily="Segoe UI Variable, Segoe UI, sans-serif">
+        Background="{DynamicResource PageBackgroundBrush}"
+        FontFamily="{StaticResource AppFontFamily}">
 
     <Window.Resources>
         <DataTemplate DataType="{x:Type vmDash:DashboardViewModel}">
@@ -51,9 +49,6 @@
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmSupp:SuppliersViewModel}">
             <views:SuppliersView />
-        </DataTemplate>
-        <DataTemplate DataType="{x:Type vmCust:CustomersViewModel}">
-            <views:CustomersView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vmPurch:PurchasesViewModel}">
             <views:PurchasesView />
@@ -94,59 +89,198 @@
         <DataTemplate DataType="{x:Type vmSales:SaleReturnsViewModel}">
             <views:SaleReturnsView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vmShifts:ShiftsViewModel}">
-            <views:ShiftsView />
-        </DataTemplate>
     </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
-            <!-- Top Header -->
-            <RowDefinition Height="64" />
-            <!-- Main Content Area with Sidebar -->
+            <!-- Top Bar -->
+            <RowDefinition Height="54" />
+            <!-- Main Content Area -->
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <!-- ================= TOP HEADER ================= -->
+        <!-- ================= TOP BAR ================= -->
         <Border Grid.Row="0"
-                Background="#0F172A"
-                Padding="24,0">
+                Background="{DynamicResource CardBackgroundBrush}"
+                BorderBrush="{DynamicResource ThinRuleBrush}"
+                BorderThickness="0,0,0,1"
+                Padding="16,0">
             <Grid>
                 <Grid.ColumnDefinitions>
+                    <!-- Global Search -->
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
+                    <!-- Right Controls (Theme Toggle, User Profile) -->
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <!-- Store Brand -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Border Width="38" Height="38" CornerRadius="10" Background="#2563EB" Margin="0,0,12,0">
-                        <TextBlock Text="🛍️" FontSize="20" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{Binding ShopName}"
-                                   FontSize="16"
-                                   FontWeight="Bold"
-                                   Foreground="White" />
-                        <TextBlock Text="Offline POS Terminal"
-                                   FontSize="11"
-                                   Foreground="#94A3B8" />
-                    </StackPanel>
-                </StackPanel>
+                <!-- Global Search Box -->
+                <Grid Grid.Column="0" VerticalAlignment="Center">
+                    <Border Background="{DynamicResource InputBackgroundBrush}"
+                            BorderBrush="{DynamicResource InputBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Width="360"
+                            Height="34">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="32" />
+                            </Grid.ColumnDefinitions>
 
-                <!-- Right Header: User Info -->
+                            <!-- Magnifying Glass Icon -->
+                            <Path Grid.Column="0"
+                                  Data="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                                  Fill="{DynamicResource TextMutedBrush}"
+                                  Stretch="Uniform"
+                                  Width="14"
+                                  Height="14"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center" />
+
+                            <TextBox x:Name="GlobalSearchTextBox"
+                                     Grid.Column="1"
+                                     Text="{Binding GlobalSearchText, UpdateSourceTrigger=PropertyChanged}"
+                                     BorderThickness="0"
+                                     Background="Transparent"
+                                     Foreground="{DynamicResource InputTextBrush}"
+                                     VerticalAlignment="Center"
+                                     Padding="0,2"
+                                     FontSize="12" />
+
+                            <!-- "/" Shortcut Hint Badge -->
+                            <Border Grid.Column="2"
+                                    Background="{DynamicResource SecondaryBackgroundBrush}"
+                                    BorderBrush="{DynamicResource SecondaryBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="3"
+                                    Width="18"
+                                    Height="18"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center">
+                                <TextBlock Text="/"
+                                           FontFamily="{StaticResource AppMonospaceFontFamily}"
+                                           FontSize="10"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource TextMutedBrush}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center" />
+                            </Border>
+                        </Grid>
+                    </Border>
+
+                    <!-- Global Search Results Popup -->
+                    <Popup x:Name="GlobalSearchPopup"
+                           IsOpen="{Binding IsSearchOpen, Mode=TwoWay}"
+                           PlacementTarget="{Binding ElementName=GlobalSearchTextBox}"
+                           Placement="Bottom"
+                           StaysOpen="False"
+                           AllowsTransparency="True">
+                        <Border Background="{DynamicResource CardBackgroundBrush}"
+                                BorderBrush="{DynamicResource ThinRuleBrush}"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Width="360"
+                                MaxHeight="380"
+                                Margin="0,4,0,0">
+                            <ListBox ItemsSource="{Binding SearchResults}"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type vm:GlobalSearchResultItem}">
+                                        <Border Padding="10,8"
+                                                BorderBrush="{DynamicResource ThinRuleBrush}"
+                                                BorderThickness="0,0,0,1"
+                                                Cursor="Hand">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="{Binding Title}"
+                                                               FontWeight="SemiBold"
+                                                               FontSize="12"
+                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                    <TextBlock Text="{Binding Subtitle}"
+                                                               FontSize="11"
+                                                               Foreground="{DynamicResource TextMutedBrush}"
+                                                               Margin="0,2,0,0" />
+                                                </StackPanel>
+                                                <Border Grid.Column="1"
+                                                        Background="{DynamicResource TableHeaderBackgroundBrush}"
+                                                        BorderBrush="{DynamicResource ThinRuleBrush}"
+                                                        BorderThickness="1"
+                                                        CornerRadius="3"
+                                                        Padding="6,2"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding Group}"
+                                                               FontSize="10"
+                                                               FontWeight="SemiBold"
+                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                </Border>
+                                            </Grid>
+                                            <Border.InputBindings>
+                                                <MouseBinding Gesture="LeftClick"
+                                                              Command="{Binding DataContext.SelectSearchResultCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                              CommandParameter="{Binding}" />
+                                            </Border.InputBindings>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+                        </Border>
+                    </Popup>
+                </Grid>
+
+                <!-- Right Controls: Theme Toggle & Owner Profile -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- User Avatar -->
-                    <Border Width="36" Height="36" CornerRadius="18" Background="#334155" Margin="0,0,10,0">
-                        <TextBlock Text="👤" FontSize="16" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <!-- Sun / Moon Theme Toggle Button -->
+                    <Button Command="{Binding ToggleThemeCommand}"
+                            Style="{StaticResource GhostButtonStyle}"
+                            ToolTip="Toggle Light / Dark Theme"
+                            Width="36"
+                            Height="34"
+                            Margin="0,0,12,0">
+                        <Grid>
+                            <!-- Sun Icon (shown in Dark theme) -->
+                            <Path Data="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"
+                                  Fill="{DynamicResource TextPrimaryBrush}"
+                                  Stretch="Uniform"
+                                  Width="16"
+                                  Height="16" />
+                        </Grid>
+                    </Button>
+
+                    <!-- Thin Divider -->
+                    <Border Width="1" Height="20" Background="{DynamicResource ThinRuleBrush}" Margin="0,0,12,0" />
+
+                    <!-- User Identity Avatar -->
+                    <Border Width="30"
+                            Height="30"
+                            CornerRadius="15"
+                            Background="{DynamicResource PrimaryBrush}"
+                            Margin="0,0,8,0">
+                        <TextBlock Text="O"
+                                   FontSize="13"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
                     </Border>
 
-                    <!-- User Name -->
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="{Binding CurrentUserName}"
-                                   FontSize="13"
+                                   FontSize="12"
                                    FontWeight="SemiBold"
-                                   Foreground="White" />
+                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                        <TextBlock Text="OFFLINE TERMINAL"
+                                   FontFamily="{StaticResource AppMonospaceFontFamily}"
+                                   FontSize="9"
+                                   Foreground="{DynamicResource TextMutedBrush}" />
                     </StackPanel>
                 </StackPanel>
             </Grid>
@@ -156,91 +290,160 @@
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <!-- Left Navigation Sidebar -->
-                <ColumnDefinition Width="240" />
+                <ColumnDefinition Width="230" />
                 <!-- Content Area -->
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!-- Left Navigation Menu -->
+            <!-- Sidebar -->
             <Border Grid.Column="0"
-                    Background="#1E293B"
-                    BorderBrush="#334155"
+                    Background="{DynamicResource SidebarBackgroundBrush}"
+                    BorderBrush="{DynamicResource SidebarBorderBrush}"
                     BorderThickness="0,0,1,0">
                 <Grid>
                     <Grid.RowDefinitions>
+                        <!-- Top Brand / Shop Name -->
                         <RowDefinition Height="Auto" />
+                        <!-- Grouped Nav Items (Scrollable) -->
                         <RowDefinition Height="*" />
+                        <!-- WAL Status Footer -->
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0"
-                               Text="NAVIGATION"
-                               FontSize="11"
-                               FontWeight="Bold"
-                               Foreground="#64748B"
-                               Margin="20,20,0,10" />
-
-                    <!-- Menu ListBox -->
-                    <ListBox Grid.Row="1"
-                             ItemsSource="{Binding NavigationItems}"
-                             SelectedItem="{Binding SelectedNavigationItem, Mode=TwoWay}"
-                             Background="Transparent"
-                             BorderThickness="0"
-                             Padding="10,0">
-                        <ListBox.ItemContainerStyle>
-                            <Style TargetType="ListBoxItem">
-                                <Setter Property="Padding" Value="14,12" />
-                                <Setter Property="Margin" Value="0,2" />
-                                <Setter Property="Cursor" Value="Hand" />
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="ListBoxItem">
-                                            <Border x:Name="ItemBorder"
-                                                    CornerRadius="8"
-                                                    Background="Transparent"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter />
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter TargetName="ItemBorder" Property="Background" Value="#334155" />
-                                                </Trigger>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter TargetName="ItemBorder" Property="Background" Value="#2563EB" />
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </ListBox.ItemContainerStyle>
-
-                        <ListBox.ItemTemplate>
-                            <DataTemplate DataType="{x:Type vm:NavigationItem}">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="📁" FontSize="14" Margin="0,0,10,0" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding Title}"
-                                               FontSize="13"
-                                               FontWeight="Medium"
-                                               Foreground="White"
-                                               VerticalAlignment="Center" />
-                                </StackPanel>
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-
-                    <!-- System Status Footer -->
-                    <Border Grid.Row="2"
-                            Background="#0F172A"
+                    <!-- Top Brand Header -->
+                    <Border Grid.Row="0"
                             Padding="16,14"
-                            BorderBrush="#334155"
+                            BorderBrush="{DynamicResource SidebarBorderBrush}"
+                            BorderThickness="0,0,0,1">
+                        <StackPanel>
+                            <TextBlock Text="{Binding ShopName}"
+                                       FontSize="14"
+                                       FontWeight="Bold"
+                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                       TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="POS TERMINAL"
+                                       FontFamily="{StaticResource AppMonospaceFontFamily}"
+                                       FontSize="9"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource SidebarHeaderBrush}"
+                                       Margin="0,2,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Scrollable Sidebar Groups -->
+                    <ScrollViewer Grid.Row="1"
+                                  VerticalScrollBarVisibility="Auto"
+                                  HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding NavigationGroups}" Margin="0,8">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate DataType="{x:Type vm:NavigationGroup}">
+                                    <StackPanel Margin="0,4,0,8">
+                                        <!-- Group Header (Small Uppercase Letter-Spaced) -->
+                                        <TextBlock Text="{Binding Header}"
+                                                   FontFamily="{StaticResource AppMonospaceFontFamily}"
+                                                   FontSize="10"
+                                                   FontWeight="Bold"
+                                                   Foreground="{DynamicResource SidebarHeaderBrush}"
+                                                   Margin="16,6,16,4" />
+
+                                        <!-- Group Items -->
+                                        <ItemsControl ItemsSource="{Binding Items}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate DataType="{x:Type vm:NavigationItem}">
+                                                    <Button Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                            CommandParameter="{Binding}"
+                                                            HorizontalContentAlignment="Stretch"
+                                                            Height="34"
+                                                            Margin="8,1"
+                                                            Cursor="Hand">
+                                                        <Button.Style>
+                                                            <Style TargetType="Button">
+                                                                <Setter Property="Background" Value="Transparent" />
+                                                                <Setter Property="BorderThickness" Value="0" />
+                                                                <Setter Property="Padding" Value="10,0" />
+                                                                <Setter Property="Template">
+                                                                    <Setter.Value>
+                                                                        <ControlTemplate TargetType="Button">
+                                                                            <Border x:Name="ItemBorder"
+                                                                                    CornerRadius="4"
+                                                                                    Background="{TemplateBinding Background}"
+                                                                                    Padding="{TemplateBinding Padding}">
+                                                                                <Grid>
+                                                                                    <Grid.ColumnDefinitions>
+                                                                                        <ColumnDefinition Width="*" />
+                                                                                        <ColumnDefinition Width="Auto" />
+                                                                                    </Grid.ColumnDefinitions>
+
+                                                                                    <!-- Nav Item Title -->
+                                                                                    <TextBlock x:Name="TitleText"
+                                                                                               Grid.Column="0"
+                                                                                               Text="{Binding Title}"
+                                                                                               FontSize="12"
+                                                                                               FontWeight="Medium"
+                                                                                               Foreground="{DynamicResource SidebarTextBrush}"
+                                                                                               VerticalAlignment="Center" />
+
+                                                                                    <!-- Right-Aligned Shortcut Badge (e.g. F2 on Sales POS) -->
+                                                                                    <Border x:Name="ShortcutBadge"
+                                                                                            Grid.Column="1"
+                                                                                            Background="{DynamicResource SecondaryBackgroundBrush}"
+                                                                                            BorderBrush="{DynamicResource SecondaryBorderBrush}"
+                                                                                            BorderThickness="1"
+                                                                                            CornerRadius="3"
+                                                                                            Padding="4,1"
+                                                                                            VerticalAlignment="Center"
+                                                                                            Visibility="{Binding Shortcut, Converter={StaticResource StringToVisibilityConverter}}">
+                                                                                        <TextBlock Text="{Binding Shortcut}"
+                                                                                                   FontFamily="{StaticResource AppMonospaceFontFamily}"
+                                                                                                   FontSize="9"
+                                                                                                   FontWeight="Bold"
+                                                                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                                                    </Border>
+                                                                                </Grid>
+                                                                            </Border>
+                                                                            <ControlTemplate.Triggers>
+                                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SidebarHoverBrush}" />
+                                                                                    <Setter TargetName="TitleText" Property="Foreground" Value="{DynamicResource SidebarTextActiveBrush}" />
+                                                                                </Trigger>
+                                                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                                                    <Setter TargetName="ItemBorder" Property="Background" Value="{DynamicResource SidebarActiveBrush}" />
+                                                                                    <Setter TargetName="TitleText" Property="Foreground" Value="{DynamicResource SidebarTextActiveBrush}" />
+                                                                                    <Setter TargetName="TitleText" Property="FontWeight" Value="SemiBold" />
+                                                                                </DataTrigger>
+                                                                            </ControlTemplate.Triggers>
+                                                                        </ControlTemplate>
+                                                                    </Setter.Value>
+                                                                </Setter>
+                                                            </Style>
+                                                        </Button.Style>
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Bottom Status Footer -->
+                    <Border Grid.Row="2"
+                            Background="Transparent"
+                            Padding="16,12"
+                            BorderBrush="{DynamicResource SidebarBorderBrush}"
                             BorderThickness="0,1,0,0">
                         <StackPanel>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                <Ellipse Width="8" Height="8" Fill="#10B981" Margin="0,0,6,0" VerticalAlignment="Center" />
-                                <TextBlock Text="SQLite WAL Connected" FontSize="11" Foreground="#94A3B8" />
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                                <Ellipse Width="7" Height="7" Fill="{DynamicResource SuccessBrush}" Margin="0,0,6,0" VerticalAlignment="Center" />
+                                <TextBlock Text="SQLite WAL connected"
+                                           FontFamily="{StaticResource AppMonospaceFontFamily}"
+                                           FontSize="10"
+                                           Foreground="{DynamicResource SidebarTextBrush}" />
                             </StackPanel>
-                            <TextBlock Text="Local Offline Engine" FontSize="10" Foreground="#64748B" />
+                            <TextBlock Text="Local offline engine"
+                                       FontSize="10"
+                                       Foreground="{DynamicResource SidebarHeaderBrush}" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -250,7 +453,8 @@
             <ContentControl Grid.Column="1"
                             Content="{Binding CurrentView}"
                             HorizontalContentAlignment="Stretch"
-                            VerticalContentAlignment="Stretch" />
+                            VerticalContentAlignment="Stretch"
+                            Margin="16" />
         </Grid>
     </Grid>
 </Window>

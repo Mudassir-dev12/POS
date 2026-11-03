@@ -13,8 +13,7 @@ public partial class StockAdjustmentsViewModel : ObservableObject
     private readonly IStockAdjustmentService _adjustmentService;
     private readonly IProductService _productService;
     private readonly IStockLedgerQuery _stockLedgerQuery;
-    private readonly IAuthService _authService;
-    private readonly IDialogService _dialogService;
+        private readonly IDialogService _dialogService;
 
     [ObservableProperty]
     private DateTime? _fromDate;
@@ -55,13 +54,11 @@ public partial class StockAdjustmentsViewModel : ObservableObject
         IStockAdjustmentService adjustmentService,
         IProductService productService,
         IStockLedgerQuery stockLedgerQuery,
-        IAuthService authService,
         IDialogService dialogService)
     {
         _adjustmentService = adjustmentService;
         _productService = productService;
         _stockLedgerQuery = stockLedgerQuery;
-        _authService = authService;
         _dialogService = dialogService;
     }
 
@@ -78,7 +75,7 @@ public partial class StockAdjustmentsViewModel : ObservableObject
         ErrorMessage = null;
         try
         {
-            var userRole = _authService.CurrentUser?.Role?.Name;
+            var userRole = "Owner";
             var result = await _adjustmentService.GetAdjustmentsAsync(FromDate, ToDate, SelectedStatus, CurrentPage, PageSize, userRole);
             if (result.Success && result.Data != null)
             {
@@ -92,7 +89,8 @@ public partial class StockAdjustmentsViewModel : ObservableObject
                 TotalPages = Math.Max(1, (int)Math.Ceiling((double)TotalCount / PageSize));
                 int start = TotalCount == 0 ? 0 : ((CurrentPage - 1) * PageSize) + 1;
                 int end = Math.Min(CurrentPage * PageSize, TotalCount);
-                RowCountText = $"Showing {start}-{end} of {TotalCount} adjustments";
+                RowCountText = $"Showing {start}-{end} of {TotalCount} adjustments";
+                SyncSelectionState();
             }
             else
             {
@@ -112,7 +110,7 @@ public partial class StockAdjustmentsViewModel : ObservableObject
     [RelayCommand]
     public async Task NewAdjustmentAsync()
     {
-        var vm = new StockAdjustmentDialogViewModel(null, _adjustmentService, _productService, _stockLedgerQuery, _authService, _dialogService);
+        var vm = new StockAdjustmentDialogViewModel(null, _adjustmentService, _productService, _stockLedgerQuery, _dialogService);
         await vm.InitializeAsync();
         bool? res = _dialogService.ShowStockAdjustmentDialog(vm);
         if (res == true)
@@ -126,7 +124,7 @@ public partial class StockAdjustmentsViewModel : ObservableObject
     {
         if (SelectedAdjustment == null) return;
 
-        var vm = new StockAdjustmentDialogViewModel(SelectedAdjustment.Id, _adjustmentService, _productService, _stockLedgerQuery, _authService, _dialogService);
+        var vm = new StockAdjustmentDialogViewModel(SelectedAdjustment.Id, _adjustmentService, _productService, _stockLedgerQuery, _dialogService);
         await vm.InitializeAsync();
         bool? res = _dialogService.ShowStockAdjustmentDialog(vm);
         if (res == true)
@@ -151,8 +149,8 @@ public partial class StockAdjustmentsViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var userId = _authService.CurrentUser?.Id;
-            var userRole = _authService.CurrentUser?.Role?.Name;
+            var userId = 1;
+            var userRole = "Owner";
 
             var result = await _adjustmentService.PostAdjustmentAsync(SelectedAdjustment.Id, userId, userRole);
             if (result.Success)
@@ -187,8 +185,8 @@ public partial class StockAdjustmentsViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var userId = _authService.CurrentUser?.Id;
-            var userRole = _authService.CurrentUser?.Role?.Name;
+            var userId = 1;
+            var userRole = "Owner";
 
             var result = await _adjustmentService.CancelAdjustmentAsync(SelectedAdjustment.Id, reason, userId, userRole);
             if (result.Success)
@@ -223,8 +221,8 @@ public partial class StockAdjustmentsViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var userId = _authService.CurrentUser?.Id;
-            var userRole = _authService.CurrentUser?.Role?.Name;
+            var userId = 1;
+            var userRole = "Owner";
 
             var result = await _adjustmentService.DeleteAdjustmentDraftAsync(SelectedAdjustment.Id, userId, userRole);
             if (result.Success)
@@ -261,4 +259,134 @@ public partial class StockAdjustmentsViewModel : ObservableObject
             await LoadDataAsync();
         }
     }
+
+    // Bulk selection
+    [ObservableProperty]
+    private int _selectedCount = 0;
+
+    [ObservableProperty]
+    private bool? _isAllOnPageSelected = false;
+
+    [ObservableProperty]
+    private bool _isAllResultsSelected = false;
+
+    [ObservableProperty]
+    private bool _canShowDeleteSelected = true;
+
+    [ObservableProperty]
+    private bool _canShowCancelSelected = true;
+
+    public HashSet<int> SelectedIds { get; } = new();
+
+    public bool HasSelection => SelectedCount > 0;
+
+    public bool ShowSelectAllResultsBanner => TotalCount > Items.Count && IsAllOnPageSelected == true && !IsAllResultsSelected;
+
+    public string SelectAllResultsBannerText => $"All {Items.Count} adjustments on this page are selected. Select all {TotalCount:N0} adjustments matching this filter?";
+
+    public string SelectionStatusText => IsAllResultsSelected ? $"All {TotalCount:N0} adjustments selected across all pages" : $"{SelectedCount:N0} selected";
+
+    [RelayCommand]
+    public void ToggleSelectAllOnPage(bool? isChecked)
+    {
+        bool select = isChecked == true;
+        foreach (var item in Items)
+        {
+            item.IsSelected = select;
+            if (select) SelectedIds.Add(item.Id);
+            else SelectedIds.Remove(item.Id);
+        }
+        if (!select) IsAllResultsSelected = false;
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    public void SelectAllOnPage()
+    {
+        ToggleSelectAllOnPage(IsAllOnPageSelected != true);
+    }
+
+    [RelayCommand]
+    public void ItemSelectionChanged(StockAdjustmentListDto item)
+    {
+        if (item.IsSelected) SelectedIds.Add(item.Id);
+        else { SelectedIds.Remove(item.Id); IsAllResultsSelected = false; }
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    public async Task SelectAllFilteredResultsAsync()
+    {
+        var allIds = await _adjustmentService.GetFilteredAdjustmentIdsAsync(FromDate, ToDate, SelectedStatus);
+        foreach (var id in allIds) SelectedIds.Add(id);
+        IsAllResultsSelected = true;
+        foreach (var item in Items) item.IsSelected = true;
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    public void ClearSelection()
+    {
+        SelectedIds.Clear();
+        IsAllResultsSelected = false;
+        IsAllOnPageSelected = false;
+        foreach (var item in Items) item.IsSelected = false;
+        UpdateSelectionState();
+    }
+
+    public void UpdateSelectionState()
+    {
+        SelectedCount = SelectedIds.Count;
+        int onPage = Items.Count;
+        int selected = Items.Count(i => i.IsSelected);
+        if (onPage == 0 || selected == 0) IsAllOnPageSelected = false;
+        else if (selected == onPage) IsAllOnPageSelected = true;
+        else IsAllOnPageSelected = null;
+
+        OnPropertyChanged(nameof(HasSelection));
+        OnPropertyChanged(nameof(ShowSelectAllResultsBanner));
+        OnPropertyChanged(nameof(SelectAllResultsBannerText));
+        OnPropertyChanged(nameof(SelectionStatusText));
+    }
+
+    private void SyncSelectionState()
+    {
+        foreach (var item in Items)
+        {
+            item.IsSelected = SelectedIds.Contains(item.Id);
+        }
+        UpdateSelectionState();
+    }
+
+    [RelayCommand]
+    public async Task DeleteSelectedAsync()
+    {
+        if (SelectedCount == 0) return;
+        bool requireTyped = SelectedCount > 50 || IsAllResultsSelected;
+        if (!_dialogService.ShowBulkConfirmDialog("Delete", SelectedCount, requireTyped)) return;
+
+        var ids = SelectedIds.ToList();
+        var result = await _adjustmentService.BulkDeleteDraftsAsync(ids, 1);
+        _dialogService.ShowBulkSummaryDialog("Bulk Delete Summary", result);
+        ClearSelection();
+        await LoadDataAsync();
+    }
+
+    [RelayCommand]
+    public async Task CancelSelectedAsync()
+    {
+        if (SelectedCount == 0) return;
+        string? reason = _dialogService.ShowReasonPromptDialog("Cancel Selected", "Enter a shared cancellation reason for all selected adjustments:");
+        if (string.IsNullOrWhiteSpace(reason)) return;
+
+        bool requireTyped = SelectedCount > 50 || IsAllResultsSelected;
+        if (!_dialogService.ShowBulkConfirmDialog("Cancel", SelectedCount, requireTyped, $"Are you sure you want to cancel {SelectedCount:N0} adjustments with reason: '{reason.Trim()}'?")) return;
+
+        var ids = SelectedIds.ToList();
+        var result = await _adjustmentService.BulkCancelAdjustmentsAsync(ids, reason.Trim(), 1);
+        _dialogService.ShowBulkSummaryDialog("Bulk Cancel Summary", result);
+        ClearSelection();
+        await LoadDataAsync();
+    }
+
 }

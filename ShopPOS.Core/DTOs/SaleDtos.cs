@@ -1,3 +1,4 @@
+using ShopPOS.Core.Interfaces;
 using ShopPOS.Core.Enums;
 
 namespace ShopPOS.Core.DTOs;
@@ -27,7 +28,6 @@ public class SalePaymentDto
 public class SaveSaleDto
 {
     public int? Id { get; set; }
-    public int? CustomerId { get; set; }
     public int? PriceLevelId { get; set; }
     public string? Notes { get; set; }
     public List<SaleLineItemDto> Items { get; set; } = new();
@@ -38,7 +38,6 @@ public class SaveSaleDto
 public class CompleteSaleDto
 {
     public int? HeldBillId { get; set; }
-    public int? CustomerId { get; set; }
     public int? PriceLevelId { get; set; }
     public string? Notes { get; set; }
     public List<SaleLineItemDto> Items { get; set; } = new();
@@ -81,8 +80,6 @@ public class SaleDetailDto
     public string? SaleNumber { get; set; }
     public string? HoldNumber { get; set; }
     public DateTime SaleDate { get; set; }
-    public int? CustomerId { get; set; }
-    public string? CustomerName { get; set; }
     public int? PriceLevelId { get; set; }
     public string? PriceLevelName { get; set; }
     public SaleStatus Status { get; set; }
@@ -97,8 +94,6 @@ public class SaleDetailDto
     public decimal DueAmount { get; set; }
     public decimal TotalCost { get; set; }
     public string? Notes { get; set; }
-    public int? ShiftId { get; set; }
-    public string? ShiftNumber { get; set; }
     public int ItemCount { get; set; }
     public string PaymentMethodsSummary { get; set; } = string.Empty;
     public DateTime? CompletedAt { get; set; }
@@ -110,35 +105,44 @@ public class SaleDetailDto
     public List<SalePaymentDetailDto> Payments { get; set; } = new();
 }
 
-public class SaleSummaryDto
+public class SaleSummaryDto : ISelectable
 {
+    public bool IsSelected { get; set; }
     public int Id { get; set; }
     public string? SaleNumber { get; set; }
     public string? HoldNumber { get; set; }
     public DateTime SaleDate { get; set; }
-    public int? CustomerId { get; set; }
-    public string? CustomerName { get; set; }
     public SaleStatus Status { get; set; }
     public decimal GrandTotal { get; set; }
     public decimal PaidAmount { get; set; }
     public decimal DueAmount { get; set; }
     public decimal TotalCost { get; set; }
     public decimal Profit => GrandTotal - TotalCost;
-    public string? ShiftNumber { get; set; }
     public int ItemCount { get; set; }
     public string PaymentMethodsSummary { get; set; } = string.Empty;
+    public bool HasOldDue => DueAmount > 0;
 }
 
 public class SaleSearchDto
 {
     public string? SearchTerm { get; set; }
-    public int? CustomerId { get; set; }
-    public int? ShiftId { get; set; }
     public SaleStatus? Status { get; set; }
     public DateTime? DateFrom { get; set; }
     public DateTime? DateTo { get; set; }
     public int PageNumber { get; set; } = 1;
     public int PageSize { get; set; } = 50;
+}
+
+public class FilteredSalesPaymentBreakdownDto
+{
+    public int SalesCount { get; set; }
+    public decimal TotalGrandTotal { get; set; }
+    public decimal TotalCash { get; set; }
+    public decimal TotalCard { get; set; }
+    public decimal TotalBank { get; set; }
+    public decimal TotalMobileWallet { get; set; }
+    public decimal TotalOther { get; set; }
+    public decimal TotalDueOld { get; set; }
 }
 
 public class TodaySalesSummaryDto
@@ -156,4 +160,3 @@ public class TodaySalesSummaryDto
     public decimal BankSales { get; set; }
     public decimal OtherSales { get; set; }
 }
-

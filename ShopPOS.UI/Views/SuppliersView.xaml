@@ -7,26 +7,29 @@
              xmlns:dto="clr-namespace:ShopPOS.Core.DTOs;assembly=ShopPOS.Core"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance vm:SuppliersViewModel}"
-             Background="#F1F5F9"
-             FontFamily="Segoe UI Variable, Segoe UI, sans-serif"
              Loaded="UserControl_Loaded">
 
     <UserControl.InputBindings>
+        <KeyBinding Gesture="Ctrl+A" Command="{Binding SelectAllOnPageCommand}" />
         <KeyBinding Key="N" Modifiers="Ctrl" Command="{Binding AddCommand}" />
         <KeyBinding Key="F5" Command="{Binding RefreshCommand}" />
         <KeyBinding Key="Delete" Command="{Binding DeleteOrDeactivateCommand}" />
         <KeyBinding Key="Enter" Command="{Binding EditCommand}" />
     </UserControl.InputBindings>
 
-    <Grid Margin="24">
+    <Grid>
         <Grid.RowDefinitions>
+            <!-- Header bar with Title & Action buttons -->
             <RowDefinition Height="Auto" />
+            <!-- Search & Filter bar -->
             <RowDefinition Height="Auto" />
+            <!-- DataGrid Table & Bulk Actions -->
             <RowDefinition Height="*" />
+            <!-- Paging footer -->
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Header -->
+        <!-- 1. Header Bar -->
         <Grid Grid.Row="0" Margin="0,0,0,16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -34,221 +37,231 @@
             </Grid.ColumnDefinitions>
 
             <StackPanel Grid.Column="0">
-                <TextBlock Text="Vendors &amp; Suppliers" FontSize="22" FontWeight="Bold" Foreground="#0F172A" />
-                <TextBlock Text="Manage supplier directory, vendor terms, and initial payable balances." FontSize="13" Foreground="#64748B" Margin="0,2,0,0" />
+                <TextBlock Text="Vendors &amp; suppliers" Style="{StaticResource PageTitleStyle}" />
+                <TextBlock Text="Manage supplier directory, vendor terms, and payable balances."
+                           Style="{StaticResource SubTitleStyle}"
+                           Margin="0,4,0,0" />
             </StackPanel>
 
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
-                <Button Content="+ New Supplier (Ctrl+N)"
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Content="New supplier Ctrl N"
                         Command="{Binding AddCommand}"
-                        IsEnabled="{Binding CanAdd}"
-                        Background="#2563EB"
-                        Foreground="White"
-                        FontWeight="Bold"
-                        Padding="14,8"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Margin="0,0,8,0" />
 
-                <Button Content="🔄 Refresh (F5)"
+                <Button Content="Refresh F5"
                         Command="{Binding RefreshCommand}"
-                        Background="#E2E8F0"
-                        Foreground="#334155"
-                        FontWeight="SemiBold"
-                        Padding="12,8"
-                        BorderThickness="0"
-                        Cursor="Hand" />
+                        Style="{StaticResource ToolbarButtonStyle}" />
             </StackPanel>
         </Grid>
 
-        <!-- Search Bar -->
-        <Border Grid.Row="1" Background="White" CornerRadius="8" Padding="16,10" Margin="0,0,0,14" BorderBrush="#E2E8F0" BorderThickness="1">
+        <!-- 2. Search & Filters Bar -->
+        <Border Grid.Row="1" Style="{StaticResource FilterBarStyle}">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="320" />
-                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="280" />
+                    <ColumnDefinition Width="16" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
                 <TextBox Grid.Column="0"
                          Text="{Binding SearchTerm, UpdateSourceTrigger=PropertyChanged}"
-                         Padding="8,6"
-                         FontSize="13">
-                    <TextBox.Style>
-                        <Style TargetType="TextBox">
-                            <Style.Resources>
-                                <VisualBrush x:Key="CueBannerBrush" AlignmentX="Left" AlignmentY="Center" Stretch="None">
-                                    <VisualBrush.Visual>
-                                        <TextBlock Text="🔍 Search supplier name, phone, email..." Foreground="#94A3B8" FontSize="12" Margin="6,0,0,0" />
-                                    </VisualBrush.Visual>
-                                </VisualBrush>
-                            </Style.Resources>
-                            <Style.Triggers>
-                                <Trigger Property="Text" Value="">
-                                    <Setter Property="Background" Value="{StaticResource CueBannerBrush}" />
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </TextBox.Style>
-                </TextBox>
+                         ToolTip="Search supplier by name, contact, phone, or email" />
 
-                <CheckBox Grid.Column="2" Content="Show Inactive" IsChecked="{Binding ShowInactive}" FontWeight="Medium" Foreground="#64748B" VerticalAlignment="Center" />
-                <TextBlock Grid.Column="3" Text="{Binding ErrorMessage}" Foreground="#DC2626" FontWeight="SemiBold" HorizontalAlignment="Right" VerticalAlignment="Center" />
+                <CheckBox Grid.Column="2"
+                          Content="Show Inactive"
+                          IsChecked="{Binding ShowInactive}"
+                          VerticalAlignment="Center" />
             </Grid>
         </Border>
 
-        <!-- Main Body: DataGrid (left) + Read-Only Detail Panel (right) -->
+        <!-- 3. Table Area & Bulk Actions -->
         <Grid Grid.Row="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="18" />
-                <ColumnDefinition Width="1*" MinWidth="260" />
-            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-            <!-- DataGrid Table -->
-            <Border Grid.Column="0" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1">
-                <DataGrid ItemsSource="{Binding Items}"
-                          SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
-                          AutoGenerateColumns="False"
-                          IsReadOnly="True"
-                          SelectionMode="Single"
-                          Background="White"
-                          BorderThickness="0"
-                          RowHeight="38"
-                          MouseDoubleClick="DataGrid_MouseDoubleClick">
-                    <DataGrid.RowStyle>
-                        <Style TargetType="DataGridRow">
-                            <Setter Property="Opacity" Value="{Binding IsActive, Converter={StaticResource InactiveOpacityConverter}}" />
-                        </Style>
-                    </DataGrid.RowStyle>
-                    <DataGrid.Columns>
-                        <DataGridTextColumn Header="Supplier Name" Binding="{Binding Name}" Width="1.5*" FontWeight="Bold" />
-                        <DataGridTextColumn Header="Contact Person" Binding="{Binding ContactPerson}" Width="*" />
-                        <DataGridTextColumn Header="Phone" Binding="{Binding Phone}" Width="110" />
-                        <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="*" />
-                        <DataGridTextColumn Header="Opening Bal." Binding="{Binding OpeningBalance, StringFormat='{}{0:0.00}'}" Width="100" FontWeight="SemiBold" />
-                        <DataGridTextColumn Header="Live Balance" Binding="{Binding CurrentBalance, StringFormat='{}{0:0.00}'}" Width="105" FontWeight="Bold" />
-                        <DataGridTemplateColumn Header="Status" Width="80">
-                            <DataGridTemplateColumn.CellTemplate>
-                                <DataTemplate DataType="{x:Type dto:SupplierDto}">
-                                    <Border CornerRadius="4" Padding="6,2" HorizontalAlignment="Left">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="#DCFCE7" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsActive}" Value="False">
-                                                        <Setter Property="Background" Value="#F1F5F9" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <TextBlock Text="{Binding IsActive, Converter={StaticResource BooleanToVisibilityConverter}}" FontSize="11" FontWeight="Bold" Foreground="#16A34A" />
-                                    </Border>
-                                </DataTemplate>
-                            </DataGridTemplateColumn.CellTemplate>
-                        </DataGridTemplateColumn>
-                    </DataGrid.Columns>
-                </DataGrid>
+            <!-- Bulk Selection Status Banner -->
+            <Border Grid.Row="0"
+                    Background="{DynamicResource SecondaryBackgroundBrush}"
+                    BorderBrush="{DynamicResource SecondaryBorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding HasSelection, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding SelectionStatusText}"
+                                   FontWeight="Bold"
+                                   Foreground="{DynamicResource TextPrimaryBrush}"
+                                   VerticalAlignment="Center" />
+                        <Button Content="Clear selection"
+                                Command="{Binding ClearSelectionCommand}"
+                                Style="{StaticResource GhostButtonStyle}"
+                                Padding="8,2"
+                                Margin="8,0,0,0" />
+                    </StackPanel>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Delete selected"
+                                Command="{Binding DeleteSelectedCommand}"
+                                Style="{StaticResource DangerButtonStyle}"
+                                Visibility="{Binding CanShowDeleteSelected, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                Margin="0,0,8,0" />
+                        <Button Content="Cancel selected"
+                                Command="{Binding CancelSelectedCommand}"
+                                Style="{StaticResource SecondaryButtonStyle}"
+                                Visibility="{Binding CanShowCancelSelected, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    </StackPanel>
+                </Grid>
             </Border>
 
-            <!-- Read-Only Detail Panel -->
-            <Border Grid.Column="2" Background="White" CornerRadius="8" BorderBrush="#E2E8F0" BorderThickness="1" Padding="18">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <TextBlock Text="Supplier Details" FontSize="16" FontWeight="Bold" Foreground="#0F172A" />
+            <!-- Select All Filtered Results Cross-Page Banner -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource WarningBackgroundBrush}"
+                    BorderBrush="{DynamicResource WarningBrush}"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="12,8"
+                    Margin="0,0,0,10"
+                    Visibility="{Binding ShowSelectAllResultsBanner, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                    <TextBlock Text="{Binding SelectAllResultsBannerText}"
+                               Foreground="{DynamicResource WarningTextBrush}"
+                               FontWeight="Medium"
+                               VerticalAlignment="Center" />
+                    <Button Content="Select all matching results across all pages"
+                            Command="{Binding SelectAllFilteredResultsCommand}"
+                            Style="{StaticResource GhostButtonStyle}"
+                            FontWeight="Bold"
+                            Foreground="{DynamicResource WarningTextBrush}"
+                            Margin="8,0,0,0" />
+                </StackPanel>
+            </Border>
 
-                        <Border Background="#F8FAFC" CornerRadius="6" Padding="12" Margin="0,4,0,0">
-                            <StackPanel>
-                                <StackPanel>
-                                    <TextBlock Text="NAME" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
-                                    <TextBlock Text="{Binding SelectedItem.Name, FallbackValue='(Select a supplier)'}" FontSize="14" FontWeight="Bold" Foreground="#0F172A" TextWrapping="Wrap" />
-                                </StackPanel>
+            <!-- Main DataGrid Container -->
+            <Border Grid.Row="2" Style="{StaticResource CardBorderStyle}" Padding="0">
+                <Grid>
+                    <!-- Loading Indicator Overlay -->
+                    <Border Background="{DynamicResource OverlayBackgroundBrush}"
+                            Panel.ZIndex="10"
+                            Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Loading suppliers..."
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center" />
+                    </Border>
 
-                                <StackPanel>
-                                    <TextBlock Text="CONTACT PERSON" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
-                                    <TextBlock Text="{Binding SelectedItem.ContactPerson, FallbackValue='—'}" FontSize="12" Foreground="#334155" />
-                                </StackPanel>
+                    <!-- Empty State Message -->
+                    <Border HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Panel.ZIndex="5"
+                            Visibility="{Binding Items.Count, Converter={StaticResource InverseBooleanConverter}}">
+                        <TextBlock Text="No suppliers to show"
+                                   FontSize="13"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   HorizontalAlignment="Center" />
+                    </Border>
 
-                                <StackPanel>
-                                    <TextBlock Text="PHONE" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
-                                    <TextBlock Text="{Binding SelectedItem.Phone, FallbackValue='—'}" FontSize="12" Foreground="#334155" />
-                                </StackPanel>
+                    <!-- DataGrid -->
+                    <DataGrid ItemsSource="{Binding Items}"
+                              SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                              MouseDoubleClick="DataGrid_MouseDoubleClick">
+                        <DataGrid.Columns>
+                            <!-- Selection Checkbox Column -->
+                            <DataGridTemplateColumn Width="38" CanUserResize="False">
+                                <DataGridTemplateColumn.Header>
+                                    <CheckBox IsChecked="{Binding DataContext.IsAllOnPageSelected, RelativeSource={RelativeSource AncestorType=UserControl}, Mode=TwoWay}"
+                                              Command="{Binding DataContext.ToggleSelectAllOnPageCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                              HorizontalAlignment="Center"
+                                              VerticalAlignment="Center" />
+                                </DataGridTemplateColumn.Header>
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <CheckBox IsChecked="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}"
+                                                  Command="{Binding DataContext.ItemSelectionChangedCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                  CommandParameter="{Binding}"
+                                                  HorizontalAlignment="Center"
+                                                  VerticalAlignment="Center" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
 
-                                <StackPanel>
-                                    <TextBlock Text="EMAIL" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
-                                    <TextBlock Text="{Binding SelectedItem.Email, FallbackValue='—'}" FontSize="12" Foreground="#334155" TextWrapping="Wrap" />
-                                </StackPanel>
+                            <DataGridTextColumn Header="SUPPLIER NAME" Binding="{Binding Name}" Width="2*" FontWeight="Medium" />
+                            <DataGridTextColumn Header="CONTACT PERSON" Binding="{Binding ContactPerson}" Width="*" />
+                            <DataGridTextColumn Header="PHONE" Binding="{Binding Phone}" Width="120" ElementStyle="{StaticResource MonospaceTextStyle}" />
+                            <DataGridTextColumn Header="EMAIL" Binding="{Binding Email}" Width="1.5*" />
 
-                                <StackPanel>
-                                    <TextBlock Text="TAX / VAT NUMBER" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
-                                    <TextBlock Text="{Binding SelectedItem.TaxNumber, FallbackValue='—'}" FontSize="12" Foreground="#334155" />
-                                </StackPanel>
+                            <!-- Current Balance (Right-aligned, Monospace) -->
+                            <DataGridTextColumn Header="BALANCE"
+                                                Binding="{Binding CurrentBalance, Converter={StaticResource MoneyConverter}}"
+                                                Width="110"
+                                                ElementStyle="{StaticResource MonospaceNumericCell}" />
 
-                                <StackPanel>
-                                    <TextBlock Text="ADDRESS" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
-                                    <TextBlock Text="{Binding SelectedItem.Address, FallbackValue='—'}" FontSize="12" Foreground="#334155" TextWrapping="Wrap" />
-                                </StackPanel>
-
-                                <StackPanel>
-                                    <TextBlock Text="NOTES / TERMS" FontSize="10" FontWeight="Bold" Foreground="#64748B" />
-                                    <TextBlock Text="{Binding SelectedItem.Notes, FallbackValue='—'}" FontSize="12" Foreground="#334155" TextWrapping="Wrap" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Opening Balance Highlight Card -->
-                        <Border Background="#EFF6FF" BorderBrush="#BFDBFE" BorderThickness="1" CornerRadius="6" Padding="12">
-                            <StackPanel>
-                                <TextBlock Text="OPENING BALANCE" FontSize="10" FontWeight="Bold" Foreground="#1E40AF" />
-                                <TextBlock Text="{Binding SelectedItem.OpeningBalance, StringFormat='We owe them: {0:C}', FallbackValue='We owe them: $0.00'}"
-                                           FontSize="15"
-                                           FontWeight="Bold"
-                                           Foreground="#1E3A8A"
-                                           Margin="0,4,0,2" />
-                                <TextBlock Text="(Positive = Store payable to vendor)" FontSize="10" Foreground="#3B82F6" />
-                            </StackPanel>
-                        </Border>
-
-                        <!-- Live Current Balance Card & View Ledger -->
-                        <Border Background="#F0FDF4" BorderBrush="#BBF7D0" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,10,0,0">
-                            <StackPanel>
-                                <TextBlock Text="CURRENT PAYABLE BALANCE" FontSize="10" FontWeight="Bold" Foreground="#166534" />
-                                <TextBlock Text="{Binding SelectedItem.CurrentBalance, StringFormat='Outstanding: {0:C}', FallbackValue='Outstanding: $0.00'}"
-                                           FontSize="16"
-                                           FontWeight="Bold"
-                                           Foreground="#15803D"
-                                           Margin="0,4,0,2" />
-                                <TextBlock Text="(Calculated live from purchases and payments ledger)" FontSize="10" Foreground="#16A34A" Margin="0,0,0,10" />
-
-                                <Button Content="📖 View Ledger"
-                                        Command="{Binding ViewLedgerCommand}"
-                                        CommandParameter="{Binding SelectedItem}"
-                                        Background="#16A34A"
-                                        Foreground="White"
-                                        FontWeight="Bold"
-                                        Padding="10,6"
-                                        BorderThickness="0"
-                                        Cursor="Hand" />
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </ScrollViewer>
+                            <!-- Status Column -->
+                            <DataGridTemplateColumn Header="STATUS" Width="90">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate DataType="{x:Type dto:SupplierDto}">
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Ellipse Style="{StaticResource StatusDotActive}"
+                                                     Visibility="{Binding IsActive, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                            <Ellipse Style="{StaticResource StatusDotInactive}"
+                                                     Visibility="{Binding IsActive, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                            <TextBlock Text="{Binding IsActive, Converter={StaticResource BooleanToActiveStatusConverter}}"
+                                                       FontSize="11"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
             </Border>
         </Grid>
 
-        <!-- Footer -->
-        <Border Grid.Row="3" Margin="0,14,0,0">
+        <!-- 4. Paging Footer -->
+        <Border Grid.Row="3" Style="{StaticResource PaginationBarStyle}">
             <Grid>
-                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding RowCountText}" FontWeight="SemiBold" Foreground="#334155" FontSize="13" />
-                    <TextBlock Text="  •  Double-click or Enter to edit  •  Del to delete/deactivate" FontSize="12" Foreground="#94A3B8" />
-                </StackPanel>
+                <TextBlock Text="{Binding RowCountText}"
+                           FontFamily="{StaticResource AppMonospaceFontFamily}"
+                           FontSize="11"
+                           FontWeight="Medium"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           VerticalAlignment="Center" />
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="◀ Prev" Command="{Binding PreviousPageCommand}" Padding="12,6" Background="White" BorderBrush="#CBD5E1" BorderThickness="1" Cursor="Hand" />
-                    <TextBlock Text="{Binding CurrentPage, StringFormat='Page {0}'}" FontWeight="SemiBold" VerticalAlignment="Center" />
-                    <TextBlock Text="{Binding TotalPages, StringFormat='of {0}'}" Foreground="#64748B" VerticalAlignment="Center" />
-                    <Button Content="Next ▶" Command="{Binding NextPageCommand}" Padding="12,6" Background="White" BorderBrush="#CBD5E1" BorderThickness="1" Cursor="Hand" />
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    <Button Content="&lt; Prev"
+                            Command="{Binding PreviousPageCommand}"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            MinWidth="54" />
+
+                    <TextBlock Text="{Binding CurrentPage, StringFormat='Page {0}'}"
+                               FontFamily="{StaticResource AppMonospaceFontFamily}"
+                               FontSize="11"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource TextPrimaryBrush}"
+                               VerticalAlignment="Center"
+                               Margin="8,0" />
+
+                    <TextBlock Text="{Binding TotalPages, StringFormat='of {0}'}"
+                               FontFamily="{StaticResource AppMonospaceFontFamily}"
+                               FontSize="11"
+                               Foreground="{DynamicResource TextMutedBrush}"
+                               VerticalAlignment="Center"
+                               Margin="0,0,8,0" />
+
+                    <Button Content="Next &gt;"
+                            Command="{Binding NextPageCommand}"
+                            Style="{StaticResource PaginationButtonStyle}"
+                            MinWidth="54" />
                 </StackPanel>
             </Grid>
         </Border>

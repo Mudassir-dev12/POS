@@ -12,9 +12,6 @@ public class Sale : BaseEntity
     public string? HoldNumber { get; set; }
     public DateTime SaleDate { get; set; } = DateTime.Now;
 
-    public int? CustomerId { get; set; }
-    public Customer? Customer { get; set; }
-
     public int? PriceLevelId { get; set; }
     public PriceLevel? PriceLevel { get; set; }
 
@@ -28,13 +25,14 @@ public class Sale : BaseEntity
     public decimal GrandTotal { get; set; } = 0m;
     public decimal PaidAmount { get; set; } = 0m;
     public decimal ChangeAmount { get; set; } = 0m;
+
+    /// <summary>
+    /// Historical due balance for pre-migration sales. New sales are strictly paid in full (DueAmount = 0).
+    /// </summary>
     public decimal DueAmount { get; set; } = 0m;
     public decimal TotalCost { get; set; } = 0m;
 
     public string? Notes { get; set; }
-
-    public int? ShiftId { get; set; }
-    public Shift? Shift { get; set; }
 
     public DateTime? CompletedAt { get; set; }
     public DateTime? CancelledAt { get; set; }
@@ -44,4 +42,3 @@ public class Sale : BaseEntity
     public ICollection<SalePayment> Payments { get; set; } = new List<SalePayment>();
     public ICollection<SaleReturn> Returns { get; set; } = new List<SaleReturn>();
 }
-
