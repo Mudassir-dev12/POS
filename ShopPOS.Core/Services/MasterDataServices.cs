@@ -48,7 +48,7 @@ public class CategoryService : ICategoryService
         return Result.Ok<IReadOnlyList<CategoryDto>>(dtos);
     }
 
-    public async Task<Result<CategoryDto>> CreateCategoryAsync(CreateCategoryDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result<CategoryDto>> CreateCategoryAsync(CreateCategoryDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         var val = await _createValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -83,7 +83,7 @@ public class CategoryService : ICategoryService
         });
     }
 
-    public async Task<Result<CategoryDto>> UpdateCategoryAsync(UpdateCategoryDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result<CategoryDto>> UpdateCategoryAsync(UpdateCategoryDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         var val = await _updateValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -128,7 +128,7 @@ public class CategoryService : ICategoryService
         });
     }
 
-    public async Task<Result> DeactivateCategoryAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result> DeactivateCategoryAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         var category = await _categoryRepository.GetByIdAsync(id, cancellationToken);
         if (category == null)
@@ -144,7 +144,7 @@ public class CategoryService : ICategoryService
         return Result.Ok();
     }
 
-    public async Task<Result> DeleteCategoryAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteCategoryAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         var category = await _categoryRepository.GetByIdAsync(id, cancellationToken);
         if (category == null)
@@ -255,7 +255,7 @@ public class BrandService : IBrandService
         return Result.Ok<IReadOnlyList<BrandDto>>(dtos);
     }
 
-    public async Task<Result<BrandDto>> CreateBrandAsync(CreateBrandDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result<BrandDto>> CreateBrandAsync(CreateBrandDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         var val = await _createValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -282,7 +282,7 @@ public class BrandService : IBrandService
         return Result.Ok(new BrandDto { Id = brand.Id, Name = brand.Name, Description = brand.Description, IsActive = brand.IsActive });
     }
 
-    public async Task<Result<BrandDto>> UpdateBrandAsync(UpdateBrandDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result<BrandDto>> UpdateBrandAsync(UpdateBrandDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         var val = await _updateValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -311,7 +311,7 @@ public class BrandService : IBrandService
         return Result.Ok(new BrandDto { Id = existing.Id, Name = existing.Name, Description = existing.Description, IsActive = existing.IsActive });
     }
 
-    public async Task<Result> DeactivateBrandAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result> DeactivateBrandAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         var brand = await _brandRepository.GetByIdAsync(id, cancellationToken);
         if (brand == null)
@@ -326,7 +326,7 @@ public class BrandService : IBrandService
         return Result.Ok();
     }
 
-    public async Task<Result> DeleteBrandAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteBrandAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         var brand = await _brandRepository.GetByIdAsync(id, cancellationToken);
         if (brand == null)
@@ -437,7 +437,7 @@ public class UnitService : IUnitService
         return Result.Ok<IReadOnlyList<UnitDto>>(dtos);
     }
 
-    public async Task<Result<UnitDto>> CreateUnitAsync(CreateUnitDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result<UnitDto>> CreateUnitAsync(CreateUnitDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         var val = await _createValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -465,7 +465,7 @@ public class UnitService : IUnitService
         return Result.Ok(new UnitDto { Id = unit.Id, Name = unit.Name, ShortName = unit.ShortName, AllowDecimal = unit.AllowDecimal, IsActive = unit.IsActive });
     }
 
-    public async Task<Result<UnitDto>> UpdateUnitAsync(UpdateUnitDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result<UnitDto>> UpdateUnitAsync(UpdateUnitDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         var val = await _updateValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -495,7 +495,7 @@ public class UnitService : IUnitService
         return Result.Ok(new UnitDto { Id = existing.Id, Name = existing.Name, ShortName = existing.ShortName, AllowDecimal = existing.AllowDecimal, IsActive = existing.IsActive });
     }
 
-    public async Task<Result> DeactivateUnitAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result> DeactivateUnitAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         var unit = await _unitRepository.GetByIdAsync(id, cancellationToken);
         if (unit == null)
@@ -510,7 +510,7 @@ public class UnitService : IUnitService
         return Result.Ok();
     }
 
-    public async Task<Result> DeleteUnitAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteUnitAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         var unit = await _unitRepository.GetByIdAsync(id, cancellationToken);
         if (unit == null)
@@ -602,13 +602,13 @@ public class SupplierService : ISupplierService
         _auditLogService = auditLogService;
     }
 
-    public async Task<Result<PagedResult<SupplierDto>>> GetPagedSuppliersAsync(MasterDataSearchQuery query, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result<PagedResult<SupplierDto>>> GetPagedSuppliersAsync(MasterDataSearchQuery query, CancellationToken cancellationToken = default)
     {
         var paged = await _supplierRepository.GetPagedAsync(query, cancellationToken);
         return Result.Ok(paged);
     }
 
-    public async Task<Result<IReadOnlyList<SupplierDto>>> GetFlatListAsync(bool includeInactive = false, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IReadOnlyList<SupplierDto>>> GetFlatListAsync(bool includeInactive = false, CancellationToken cancellationToken = default)
     {
         var list = await _supplierRepository.GetAllFlatAsync(includeInactive, cancellationToken);
         var dtos = list.Select(s => new SupplierDto
@@ -627,7 +627,7 @@ public class SupplierService : ISupplierService
         return Result.Ok<IReadOnlyList<SupplierDto>>(dtos);
     }
 
-    public async Task<Result<SupplierDto>> CreateSupplierAsync(CreateSupplierDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result<SupplierDto>> CreateSupplierAsync(CreateSupplierDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         var val = await _createValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -672,7 +672,7 @@ public class SupplierService : ISupplierService
         });
     }
 
-    public async Task<Result<SupplierDto>> UpdateSupplierAsync(UpdateSupplierDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result<SupplierDto>> UpdateSupplierAsync(UpdateSupplierDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         var val = await _updateValidator.ValidateAsync(dto, cancellationToken);
         if (!val.IsValid)
@@ -725,7 +725,7 @@ public class SupplierService : ISupplierService
         });
     }
 
-    public async Task<Result> DeactivateSupplierAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result> DeactivateSupplierAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         var supplier = await _supplierRepository.GetByIdAsync(id, cancellationToken);
         if (supplier == null)
@@ -740,7 +740,7 @@ public class SupplierService : ISupplierService
         return Result.Ok();
     }
 
-    public async Task<Result> DeleteSupplierAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteSupplierAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         var supplier = await _supplierRepository.GetByIdAsync(id, cancellationToken);
         if (supplier == null)

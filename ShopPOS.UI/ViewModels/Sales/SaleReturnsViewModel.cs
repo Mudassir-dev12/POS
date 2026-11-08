@@ -15,6 +15,9 @@ public partial class SaleReturnsViewModel : ObservableObject
     private readonly IDialogService _dialogService;
 
     [ObservableProperty]
+    private int _activeTab = 0; // 0 = Recent Purchases/Sales, 1 = Processed Returns History
+
+    [ObservableProperty]
     private string _searchTerm = string.Empty;
 
     [ObservableProperty]
@@ -27,6 +30,9 @@ public partial class SaleReturnsViewModel : ObservableObject
     private SaleReturnDetailDto? _selectedItem;
 
     [ObservableProperty]
+    private SaleSummaryDto? _selectedSale;
+
+    [ObservableProperty]
     private bool _isLoading;
 
     [ObservableProperty]
@@ -36,6 +42,7 @@ public partial class SaleReturnsViewModel : ObservableObject
     private string _currencySymbol = "Rs";
 
     public ObservableCollection<SaleReturnDetailDto> Items { get; } = new();
+    public ObservableCollection<SaleSummaryDto> RecentSales { get; } = new();
 
     public SaleReturnsViewModel(
         ISaleReturnService saleReturnService,
@@ -60,7 +67,26 @@ public partial class SaleReturnsViewModel : ObservableObject
         }
         catch { }
 
-        await LoadReturnsAsync();
+        await RefreshAllAsync();
+    }
+
+    [RelayCommand]
+    public async Task RefreshAllAsync()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        try
+        {
+            await Task.WhenAll(LoadRecentSalesInternalAsync(), LoadReturnsInternalAsync());
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     [RelayCommand]
@@ -70,25 +96,7 @@ public partial class SaleReturnsViewModel : ObservableObject
         ErrorMessage = null;
         try
         {
-            Items.Clear();
-
-            DateTime? from = DateFrom?.Date;
-            DateTime? to = DateTo?.Date.AddDays(1).AddTicks(-1);
-
-            var criteria = new SaleReturnSearchDto
-            {
-                SearchTerm = SearchTerm?.Trim(),
-                DateFrom = from,
-                DateTo = to,
-                PageNumber = 1,
-                PageSize = 100
-            };
-
-            var paged = await _saleReturnService.SearchSaleReturnsAsync(criteria);
-            foreach (var r in paged.Items)
-            {
-                Items.Add(r);
-            }
+            await LoadReturnsInternalAsync();
         }
         catch (Exception ex)
         {
@@ -97,6 +105,71 @@ public partial class SaleReturnsViewModel : ObservableObject
         finally
         {
             IsLoading = false;
+        }
+    }
+
+    private async Task LoadReturnsInternalAsync()
+    {
+        Items.Clear();
+
+        DateTime? from = DateFrom?.Date;
+        DateTime? to = DateTo?.Date.AddDays(1).AddTicks(-1);
+
+        var criteria = new SaleReturnSearchDto
+        {
+            SearchTerm = SearchTerm?.Trim(),
+            DateFrom = from,
+            DateTo = to,
+            PageNumber = 1,
+            PageSize = 100
+        };
+
+        var paged = await _saleReturnService.SearchSaleReturnsAsync(criteria);
+        foreach (var r in paged.Items)
+        {
+            Items.Add(r);
+        }
+    }
+
+    [RelayCommand]
+    public async Task LoadRecentSalesAsync()
+    {
+        IsLoading = true;
+        ErrorMessage = null;
+        try
+        {
+            await LoadRecentSalesInternalAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task LoadRecentSalesInternalAsync()
+    {
+        RecentSales.Clear();
+
+        DateTime? from = DateFrom?.Date;
+        DateTime? to = DateTo?.Date.AddDays(1).AddTicks(-1);
+
+        var criteria = new SaleSearchDto
+        {
+            SearchTerm = SearchTerm?.Trim(),
+            DateFrom = from,
+            DateTo = to,
+            PageNumber = 1,
+            PageSize = 100
+        };
+
+        var paged = await _saleService.SearchSalesAsync(criteria);
+        foreach (var s in paged.Items)
+        {
+            RecentSales.Add(s);
         }
     }
 
@@ -114,7 +187,39 @@ public partial class SaleReturnsViewModel : ObservableObject
         bool? posted = _dialogService.ShowSaleReturnDialog(vm);
         if (posted == true && vm.Confirmed)
         {
-            _ = LoadReturnsAsync();
+            _ = RefreshAllAsync();
+        }
+    }
+
+    [RelayCommand]
+    public void ReturnSale(SaleSummaryDto? sale)
+    {
+        if (sale == null) return;
+        var vm = new SaleReturnDialogViewModel(
+            sale.Id,
+            sale.SaleNumber,
+            _saleReturnService,
+            _saleService,
+            _shopSettingService,
+            _dialogService);
+
+        bool? posted = _dialogService.ShowSaleReturnDialog(vm);
+        if (posted == true && vm.Confirmed)
+        {
+            _ = RefreshAllAsync();
+        }
+    }
+
+    [RelayCommand]
+    public void ReturnSelectedSale()
+    {
+        if (SelectedSale != null)
+        {
+            ReturnSale(SelectedSale);
+        }
+        else
+        {
+            NewReturn();
         }
     }
 
@@ -138,7 +243,7 @@ public partial class SaleReturnsViewModel : ObservableObject
         if (result.Success)
         {
             _dialogService.ShowMessage($"Return '{SelectedItem.ReturnNumber}' cancelled successfully.", "Return Cancelled");
-            await LoadReturnsAsync();
+            await RefreshAllAsync();
         }
         else
         {
@@ -146,7 +251,7 @@ public partial class SaleReturnsViewModel : ObservableObject
         }
     }
 
-    // Bulk selection
+    // Bulk selection for Returns
     [ObservableProperty]
     private int _selectedCount = 0;
 
@@ -267,7 +372,6 @@ public partial class SaleReturnsViewModel : ObservableObject
         var result = await _saleReturnService.BulkCancelSaleReturnsAsync(ids, reason.Trim(), 1);
         _dialogService.ShowBulkSummaryDialog("Bulk Cancel Summary", result);
         ClearSelection();
-        await LoadReturnsAsync();
+        await RefreshAllAsync();
     }
-
 }

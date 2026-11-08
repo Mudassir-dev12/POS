@@ -44,7 +44,7 @@ public class PurchaseService : IPurchaseService
         _updateValidator = updateValidator;
     }
 
-    public async Task<Result<PagedResult<PurchaseListDto>>> GetPurchasesAsync(PurchaseSearchQuery query, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PagedResult<PurchaseListDto>>> GetPurchasesAsync(PurchaseSearchQuery query, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -52,7 +52,7 @@ public class PurchaseService : IPurchaseService
         return Result.Ok(result);
     }
 
-    public async Task<Result<PurchaseDetailDto>> GetPurchaseByIdAsync(int id, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PurchaseDetailDto>> GetPurchaseByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -65,7 +65,7 @@ public class PurchaseService : IPurchaseService
         return Result.Ok(detail);
     }
 
-    public async Task<Result<PurchaseDetailDto>> CreatePurchaseDraftAsync(CreatePurchaseDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PurchaseDetailDto>> CreatePurchaseDraftAsync(CreatePurchaseDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -164,7 +164,7 @@ public class PurchaseService : IPurchaseService
             }
         }
 
-        var detailRes = await GetPurchaseByIdAsync(purchase.Id, userRole, cancellationToken);
+        var detailRes = await GetPurchaseByIdAsync(purchase.Id, cancellationToken);
         if (detailRes.Success && detailRes.Data != null)
         {
             detailRes.Data.Warnings = warnings;
@@ -172,7 +172,7 @@ public class PurchaseService : IPurchaseService
         return detailRes;
     }
 
-    public async Task<Result<PurchaseDetailDto>> UpdatePurchaseDraftAsync(UpdatePurchaseDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PurchaseDetailDto>> UpdatePurchaseDraftAsync(UpdatePurchaseDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -276,7 +276,7 @@ public class PurchaseService : IPurchaseService
             }
         }
 
-        var detailRes = await GetPurchaseByIdAsync(purchase.Id, userRole, cancellationToken);
+        var detailRes = await GetPurchaseByIdAsync(purchase.Id, cancellationToken);
         if (detailRes.Success && detailRes.Data != null)
         {
             detailRes.Data.Warnings = warnings;
@@ -284,7 +284,7 @@ public class PurchaseService : IPurchaseService
         return detailRes;
     }
 
-    public async Task<Result<bool>> DeletePurchaseDraftAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<bool>> DeletePurchaseDraftAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -311,7 +311,7 @@ public class PurchaseService : IPurchaseService
         return Result.Ok(true);
     }
 
-    public async Task<Result<PurchaseDetailDto>> PostPurchaseAsync(int purchaseId, decimal? payNowAmount, PaymentMethod? payNowMethod, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PurchaseDetailDto>> PostPurchaseAsync(int purchaseId, decimal? payNowAmount, PaymentMethod? payNowMethod, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -454,11 +454,11 @@ public class PurchaseService : IPurchaseService
                 purchase.Id,
                 $"Posted purchase {purchase.PurchaseNumber} (Total: {purchase.GrandTotal}, Paid: {purchase.PaidAmount})");
 
-            return await GetPurchaseByIdAsync(purchase.Id, userRole, cancellationToken);
+            return await GetPurchaseByIdAsync(purchase.Id, cancellationToken);
         }, cancellationToken);
     }
 
-    public async Task<Result<bool>> CancelPurchaseAsync(int purchaseId, string reason, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<bool>> CancelPurchaseAsync(int purchaseId, string reason, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -542,7 +542,7 @@ public class PurchaseService : IPurchaseService
         }, cancellationToken);
     }
 
-    public async Task<Result<byte[]>> ExportPurchasePdfAsync(int purchaseId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<byte[]>> ExportPurchasePdfAsync(int purchaseId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -597,7 +597,7 @@ public class PurchaseService : IPurchaseService
                 continue;
             }
 
-            var delRes = await DeletePurchaseDraftAsync(id, userId, null, cancellationToken);
+            var delRes = await DeletePurchaseDraftAsync(id, userId, cancellationToken);
             if (delRes.Success)
             {
                 result.Items.Add(new BulkItemResult { Id = id, Identifier = p.PurchaseNumber, Success = true });
@@ -625,7 +625,7 @@ public class PurchaseService : IPurchaseService
                 continue;
             }
 
-            var cancelRes = await CancelPurchaseAsync(id, reason, userId, null, cancellationToken);
+            var cancelRes = await CancelPurchaseAsync(id, reason, userId, cancellationToken);
             if (cancelRes.Success)
             {
                 result.Items.Add(new BulkItemResult { Id = id, Identifier = p.PurchaseNumber, Success = true });

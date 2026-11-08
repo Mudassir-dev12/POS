@@ -10,8 +10,7 @@ public partial class UnitDialogViewModel : ObservableObject
 {
     private readonly IUnitService _unitService;
     private readonly int? _currentUserId;
-    private readonly string? _currentUserRole;
-
+    
     [ObservableProperty]
     private string _dialogTitle = "Add Unit of Measure";
 
@@ -44,12 +43,10 @@ public partial class UnitDialogViewModel : ObservableObject
 
     public event Action<bool>? RequestClose;
 
-    public UnitDialogViewModel(IUnitService unitService, int? currentUserId, string? currentUserRole)
+    public UnitDialogViewModel(IUnitService unitService, int? currentUserId)
     {
         _unitService = unitService;
-        _currentUserId = currentUserId;
-        _currentUserRole = currentUserRole;
-    }
+        _currentUserId = currentUserId;    }
 
     public void Initialize(UnitDto? unit = null)
     {
@@ -85,7 +82,7 @@ public partial class UnitDialogViewModel : ObservableObject
                 Name = Name,
                 ShortName = ShortName,
                 AllowDecimal = AllowDecimal
-            }, _currentUserId, _currentUserRole);
+            }, _currentUserId);
 
             if (!res.Success)
             {
@@ -102,7 +99,7 @@ public partial class UnitDialogViewModel : ObservableObject
                 ShortName = ShortName,
                 AllowDecimal = AllowDecimal,
                 IsActive = IsActive
-            }, _currentUserId, _currentUserRole);
+            }, _currentUserId);
 
             if (!res.Success)
             {

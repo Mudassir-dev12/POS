@@ -218,7 +218,7 @@ public class SaleReturnService : ISaleReturnService
             var saleReturn = new SaleReturn
             {
                 ReturnNumber = returnNumber,
-                ReturnDate = DateTime.Now,
+                ReturnDate = dto.ReturnDateOverride ?? DateTime.Now,
                 SaleId = dto.SaleId,
                 Status = SaleReturnStatus.Posted,
                 SubTotal = _calculator.Round(totalSubTotal),

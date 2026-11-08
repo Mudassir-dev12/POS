@@ -21,22 +21,24 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <StackPanel Grid.Row="0" Margin="0,0,0,16">
-            <TextBlock Text="Receipt Printer &amp; Cash Drawer" Style="{DynamicResource SectionHeaderStyle}" />
-            <TextBlock Text="Configure hardware thermal printing, driver queue, and pulse signals." Style="{DynamicResource SubtitleStyle}" Margin="0,3,0,0" />
-        </StackPanel>
+        <Border Grid.Row="0" Background="{DynamicResource PrimaryBrush}" CornerRadius="8" Padding="16,12" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="Receipt Printer &amp; Cash Drawer" FontSize="18" FontWeight="Bold" Foreground="White" />
+                <TextBlock Text="Configure hardware thermal printing, driver queue, and pulse signals" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
+            </StackPanel>
+        </Border>
 
         <!-- Form Body -->
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <!-- Printing Mode -->
-                <TextBlock Text="PRINTING MODE" Style="{DynamicResource FormLabelStyle}" />
+                <TextBlock Text="PRINTING MODE" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,4" />
                 <ComboBox ItemsSource="{Binding AvailablePrinterModes}"
                           SelectedItem="{Binding PrinterMode, Mode=TwoWay}"
-                          Margin="0,0,0,14" />
+                          Padding="8,6" FontSize="13" Margin="0,0,0,14" />
 
                 <!-- Printer Queue -->
-                <TextBlock Text="INSTALLED WINDOWS PRINTER" Style="{DynamicResource FormLabelStyle}" />
+                <TextBlock Text="INSTALLED WINDOWS PRINTER" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,4" />
                 <Grid Margin="0,0,0,14">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -46,11 +48,13 @@
                     <ComboBox Grid.Column="0"
                               ItemsSource="{Binding InstalledPrinters}"
                               SelectedItem="{Binding SelectedPrinter, Mode=TwoWay}"
-                              IsEditable="True" />
+                              IsEditable="True"
+                              Padding="8,6" FontSize="13" />
                     <Button Grid.Column="2"
                             Content="Refresh"
                             Command="{Binding RefreshPrintersCommand}"
-                            Style="{DynamicResource SecondaryButtonStyle}" />
+                            Style="{DynamicResource SecondaryButtonStyle}"
+                            Padding="12,6" />
                 </Grid>
 
                 <!-- Paper Width & Copies -->
@@ -62,17 +66,20 @@
                     </Grid.ColumnDefinitions>
 
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="PAPER ROLL WIDTH" Style="{DynamicResource FormLabelStyle}" />
+                        <TextBlock Text="PAPER ROLL WIDTH" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,4" />
                         <ComboBox SelectedValuePath="Tag"
-                                  SelectedValue="{Binding ReceiptWidthMm, Mode=TwoWay}">
+                                  SelectedValue="{Binding ReceiptWidthMm, Mode=TwoWay}"
+                                  Padding="8,6" FontSize="13">
                             <ComboBoxItem Content="80 mm (Standard Thermal)" Tag="80" />
                             <ComboBoxItem Content="58 mm (Compact Thermal)" Tag="58" />
                         </ComboBox>
                     </StackPanel>
 
                     <StackPanel Grid.Column="2">
-                        <TextBlock Text="COPIES PER SALE" Style="{DynamicResource FormLabelStyle}" />
-                        <TextBox Text="{Binding ReceiptCopies, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <TextBlock Text="COPIES PER SALE" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding ReceiptCopies, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{DynamicResource InputTextBoxStyle}"
+                                 Padding="8,6" />
                     </StackPanel>
                 </Grid>
 
@@ -86,21 +93,24 @@
                           FontWeight="SemiBold" FontSize="13" Margin="0,0,0,14" />
 
                 <!-- Receipt Footer -->
-                <TextBlock Text="RECEIPT FOOTER MESSAGE" Style="{DynamicResource FormLabelStyle}" />
+                <TextBlock Text="RECEIPT FOOTER MESSAGE" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,4" />
                 <TextBox Text="{Binding ReceiptFooter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                         Margin="0,0,0,16" />
+                         Style="{DynamicResource InputTextBoxStyle}"
+                         Padding="8,6" Margin="0,0,0,16" />
 
                 <!-- Hardware Test Actions -->
-                <Border Style="{DynamicResource CardBorderStyle}" Padding="12" Margin="0,0,0,10">
+                <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,10">
                     <StackPanel>
-                        <TextBlock Text="HARDWARE DIAGNOSTICS" Style="{DynamicResource FormLabelStyle}" Margin="0,0,0,8" />
+                        <TextBlock Text="HARDWARE DIAGNOSTICS" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,8" />
                         <StackPanel Orientation="Horizontal">
                             <Button Content="Test Print Receipt"
                                     Command="{Binding TestPrintCommand}"
-                                    Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,10,0" />
+                                    Style="{DynamicResource SecondaryButtonStyle}"
+                                    Padding="14,8" Margin="0,0,10,0" />
                             <Button Content="Open Cash Drawer"
                                     Command="{Binding OpenCashDrawerCommand}"
-                                    Style="{DynamicResource SecondaryButtonStyle}" />
+                                    Style="{DynamicResource SecondaryButtonStyle}"
+                                    Padding="14,8" />
                         </StackPanel>
                     </StackPanel>
                 </Border>
@@ -109,13 +119,13 @@
 
         <!-- Status / Error Banner -->
         <StackPanel Grid.Row="2" Margin="0,4,0,10">
-            <Border Background="{DynamicResource SuccessBackgroundBrush}" BorderBrush="{DynamicResource SuccessBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,6"
+            <Border Background="{DynamicResource SuccessBackgroundBrush}" BorderBrush="{DynamicResource SuccessBrush}" BorderThickness="1" CornerRadius="4" Padding="10,6"
                     Visibility="{Binding StatusMessage, Converter={StaticResource NullToVisibilityConverter}}">
-                <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource SuccessTextBrush}" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding StatusMessage}" Foreground="{DynamicResource SuccessBrush}" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap" />
             </Border>
-            <Border Background="{DynamicResource DangerBackgroundBrush}" BorderBrush="{DynamicResource DangerBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,6"
+            <Border Background="{DynamicResource DangerBackgroundBrush}" BorderBrush="{DynamicResource DangerBrush}" BorderThickness="1" CornerRadius="4" Padding="10,6"
                     Visibility="{Binding ErrorMessage, Converter={StaticResource NullToVisibilityConverter}}">
-                <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerTextBrush}" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap" />
+                <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerBrush}" FontWeight="SemiBold" FontSize="12" TextWrapping="Wrap" />
             </Border>
         </StackPanel>
 
@@ -123,9 +133,11 @@
         <Border Grid.Row="3" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0" Padding="0,12,0,0">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                 <Button Content="Cancel" Command="{Binding CancelCommand}"
-                        Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,10,0" />
+                        Style="{DynamicResource SecondaryButtonStyle}"
+                        Padding="16,8" Margin="0,0,10,0" />
                 <Button Content="Save Settings" Command="{Binding SaveCommand}"
-                        Style="{DynamicResource PrimaryButtonStyle}" />
+                        Style="{DynamicResource PrimaryButtonStyle}"
+                        Padding="18,8" />
             </StackPanel>
         </Border>
     </Grid>

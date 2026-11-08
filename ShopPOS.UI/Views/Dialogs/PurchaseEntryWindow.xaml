@@ -14,7 +14,8 @@
         MinHeight="680"
         MinWidth="1024"
         Style="{StaticResource DialogWindowStyle}"
-        Loaded="Window_Loaded">
+        Loaded="Window_Loaded"
+        PreviewKeyDown="Window_PreviewKeyDown">
 
     <Window.Resources>
         <ObjectDataProvider x:Key="PaymentMethods" MethodName="GetValues" ObjectType="{x:Type sys:Enum}">

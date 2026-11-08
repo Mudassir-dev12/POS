@@ -1,0 +1,555 @@
+<UserControl x:Class="ShopPOS.UI.Views.ReportsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Reports"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance vm:ReportsViewModel}"
+             Background="{DynamicResource PageBackgroundBrush}">
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding LoadReportCommand}" />
+    </UserControl.InputBindings>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <!-- Left Report Menu (280px) -->
+            <ColumnDefinition Width="280" />
+            <ColumnDefinition Width="1" />
+            <!-- Right Selected Report Content Area -->
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ================= LEFT REPORT SELECTOR ================= -->
+        <Border Grid.Column="0" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <Border Grid.Row="0" Padding="20,16" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+                    <StackPanel>
+                        <TextBlock Text="REPORTS CENTER" FontSize="11" FontWeight="Bold" FontFamily="{StaticResource AppMonospaceFontFamily}" Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,4" />
+                        <TextBlock Text="Analytics &amp; Declarations" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                    </StackPanel>
+                </Border>
+
+                <!-- List of Reports -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <ListBox ItemsSource="{Binding ReportMenuItems}"
+                             SelectedItem="{Binding SelectedReport, Mode=TwoWay}"
+                             Background="Transparent"
+                             BorderThickness="0"
+                             Padding="8"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Padding" Value="12,10" />
+                                <Setter Property="Margin" Value="0,2" />
+                                <Setter Property="Cursor" Value="Hand" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="Bd"
+                                                    Background="{TemplateBinding Background}"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="4"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource HoverBrush}" />
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="Bd" Property="Background" Value="{DynamicResource PrimaryLightBrush}" />
+                                                    <Setter TargetName="Bd" Property="BorderBrush" Value="{DynamicResource PrimaryBrush}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="{Binding Description}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Divider -->
+        <Border Grid.Column="1" Background="{DynamicResource BorderBrush}" />
+
+        <!-- ================= RIGHT REPORT DETAIL AREA ================= -->
+        <Grid Grid.Column="2" Margin="20,16">
+            <Grid.RowDefinitions>
+                <!-- Top Header & Date Presets -->
+                <RowDefinition Height="Auto" />
+                <!-- Dynamic Filters Bar -->
+                <RowDefinition Height="Auto" />
+                <!-- KPI Summary Strip -->
+                <RowDefinition Height="Auto" />
+                <!-- Main Report Data Table / Content -->
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- 1. Header & Actions Bar -->
+            <Grid Grid.Row="0" Margin="0,0,0,16">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: Title & Date Presets -->
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="{Binding SelectedReport.Title, FallbackValue='Report'}"
+                               Style="{DynamicResource PageTitleStyle}" Margin="0,0,0,8" />
+
+                    <!-- Preset Bar -->
+                    <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
+                        <Button Content="Today" Command="{Binding SelectPresetCommand}" CommandParameter="Today"
+                                Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,6,0" Padding="12,6" />
+                        <Button Content="Yesterday" Command="{Binding SelectPresetCommand}" CommandParameter="Yesterday"
+                                Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,6,0" Padding="12,6" />
+                        <Button Content="This Week" Command="{Binding SelectPresetCommand}" CommandParameter="ThisWeek"
+                                Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,6,0" Padding="12,6" />
+                        <Button Content="This Month" Command="{Binding SelectPresetCommand}" CommandParameter="ThisMonth"
+                                Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,6,0" Padding="12,6" />
+                        <Button Content="Last Month" Command="{Binding SelectPresetCommand}" CommandParameter="LastMonth"
+                                Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,6,0" Padding="12,6" />
+                        <Button Content="This Year" Command="{Binding SelectPresetCommand}" CommandParameter="ThisYear"
+                                Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,6,0" Padding="12,6" />
+                        <Button Content="Custom" Command="{Binding SelectPresetCommand}" CommandParameter="Custom"
+                                Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,10,0" Padding="12,6" />
+
+                        <!-- Custom Date Pickers -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="From:" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <DatePicker SelectedDate="{Binding DateFrom, Mode=TwoWay}" Margin="0,0,8,0" IsEnabled="{Binding IsCustomDate}" />
+                            <TextBlock Text="To:" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            <DatePicker SelectedDate="{Binding DateTo, Mode=TwoWay}" Margin="0,0,10,0" IsEnabled="{Binding IsCustomDate}" />
+                            <Button Content="Apply" Command="{Binding LoadReportCommand}" Style="{DynamicResource PrimaryButtonStyle}" Padding="10,6" Visibility="{Binding IsCustomDate, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Right: Export & Preview Actions -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                    <Button Content="Export CSV" Command="{Binding ExportCsvCommand}"
+                            Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,8,0" Padding="12,6" />
+                    <Button Content="Export PDF" Command="{Binding ExportPdfCommand}"
+                            Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,8,0" Padding="12,6" />
+                    <Button Content="Print Preview" Command="{Binding PrintPreviewCommand}"
+                            Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,8,0" Padding="12,6" />
+                    <Button Content="Refresh (F5)" Command="{Binding LoadReportCommand}"
+                            Style="{DynamicResource PrimaryButtonStyle}" Padding="12,6" />
+                </StackPanel>
+            </Grid>
+
+            <!-- 2. Dynamic Report Filters Bar -->
+            <Border Grid.Row="1" Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="12,8" Margin="0,0,0,14">
+                <Grid>
+                    <!-- Sales By Product Filters -->
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='SalesByProduct'}">
+                        <TextBlock Text="Group By:" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" Margin="0,0,6,0" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <ComboBox ItemsSource="{Binding AvailableSalesGroupBy}" SelectedItem="{Binding SelectedSalesGroupBy, Mode=TwoWay}" MinWidth="130" Margin="0,0,16,0" />
+
+                        <TextBlock Text="Top Records:" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" Margin="0,0,6,0" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <ComboBox SelectedValue="{Binding TopN, Mode=TwoWay}" SelectedValuePath="Tag" MinWidth="100">
+                            <ComboBoxItem Content="All Records" Tag="{x:Null}" IsSelected="True" />
+                            <ComboBoxItem Content="Top 5" Tag="5" />
+                            <ComboBoxItem Content="Top 10" Tag="10" />
+                            <ComboBoxItem Content="Top 25" Tag="25" />
+                            <ComboBoxItem Content="Top 50" Tag="50" />
+                            <ComboBoxItem Content="Top 100" Tag="100" />
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Purchases Sub-view -->
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='Purchases'}">
+                        <TextBlock Text="View Mode:" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" Margin="0,0,6,0" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <ComboBox SelectedValue="{Binding PurchasesSubView, Mode=TwoWay}" SelectedValuePath="Tag" MinWidth="160">
+                            <ComboBoxItem Content="By Supplier" Tag="BySupplier" IsSelected="True" />
+                            <ComboBoxItem Content="By Product" Tag="ByProduct" />
+                            <ComboBoxItem Content="By Day" Tag="ByDay" />
+                            <ComboBoxItem Content="Payables Aging" Tag="PayablesAging" />
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Stock Reports Sub-view -->
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='StockReports'}">
+                        <TextBlock Text="Report Category:" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" Margin="0,0,6,0" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <ComboBox SelectedValue="{Binding StockSubView, Mode=TwoWay}" SelectedValuePath="Tag" MinWidth="180" Margin="0,0,16,0">
+                            <ComboBoxItem Content="Movement Summary" Tag="MovementSummary" IsSelected="True" />
+                            <ComboBoxItem Content="Slow Moving / Dead Stock" Tag="SlowMoving" />
+                        </ComboBox>
+
+                        <TextBlock Text="Days Threshold:" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,6,0" />
+                        <TextBox Text="{Binding SlowMovingDays, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="50" Margin="0,0,12,0" />
+                    </StackPanel>
+
+                    <!-- Expenses Sub-view -->
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='Expenses'}">
+                        <TextBlock Text="Group By:" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="12" Margin="0,0,6,0" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <ComboBox SelectedValue="{Binding ExpensesSubView, Mode=TwoWay}" SelectedValuePath="Tag" MinWidth="150">
+                            <ComboBoxItem Content="By Category" Tag="ByCategory" IsSelected="True" />
+                            <ComboBoxItem Content="By Day" Tag="ByDay" />
+                        </ComboBox>
+                    </StackPanel>
+
+                    <!-- Audit Log Filters -->
+                    <StackPanel Orientation="Horizontal" Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='AuditLogs'}">
+                        <TextBlock Text="Entity:" VerticalAlignment="Center" FontSize="12" Margin="0,0,4,0" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <TextBox Text="{Binding AuditEntityFilter, Mode=TwoWay}" Width="120" Margin="0,0,12,0" />
+
+                        <TextBlock Text="Action:" VerticalAlignment="Center" FontSize="12" Margin="0,0,4,0" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <TextBox Text="{Binding AuditActionFilter, Mode=TwoWay}" Width="120" Margin="0,0,12,0" />
+
+                        <Button Content="Filter Logs" Command="{Binding LoadReportCommand}" Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,16,0" Padding="10,4" />
+
+                        <Button Content="&lt; Prev" Command="{Binding PrevAuditPageCommand}" Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,4,0" Padding="8,4" />
+                        <TextBlock Text="{Binding AuditPageNumber, StringFormat='{}Page {0}'}" VerticalAlignment="Center" Margin="4,0" FontSize="12" />
+                        <TextBlock Text="{Binding AuditTotalPages, StringFormat='{}of {0}'}" VerticalAlignment="Center" Margin="0,0,8,0" FontSize="12" />
+                        <Button Content="Next &gt;" Command="{Binding NextAuditPageCommand}" Style="{DynamicResource SecondaryButtonStyle}" Padding="8,4" />
+                    </StackPanel>
+
+                    <!-- Default Label for reports without extra filters -->
+                    <TextBlock Text="All filters applied to selected date period."
+                               FontSize="12" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center"
+                               Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='DailySalesSummary'}" />
+                </Grid>
+            </Border>
+
+            <!-- 3. KPI Summary Strip -->
+            <Border Grid.Row="2" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="12,10" Margin="0,0,0,14">
+                <ItemsControl ItemsSource="{Binding KpiCards}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Rows="1" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border BorderBrush="{DynamicResource ThinRuleBrush}" BorderThickness="0,0,1,0" Padding="12,4">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding Label}" Style="{DynamicResource KpiLabelStyle}" />
+                                    <TextBlock Text="{Binding Value}" Style="{DynamicResource KpiValueStyle}" />
+                                    <TextBlock Text="{Binding Subtext}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}"
+                                               Visibility="{Binding Subtext, Converter={StaticResource StringToVisibilityConverter}}" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Border>
+
+            <!-- 4. Main Report Data Presentation Area -->
+            <Grid Grid.Row="3">
+                <!-- 1. Daily Sales Summary Grid -->
+                <DataGrid ItemsSource="{Binding DailySalesSummary.Rows}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='DailySalesSummary'}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat='{}{0:yyyy-MM-dd (ddd)}'}" Width="130" />
+                        <DataGridTextColumn Header="Sales" Binding="{Binding SalesCount}" Width="70" />
+                        <DataGridTextColumn Header="Gross Sales" Binding="{Binding GrossSales, Converter={StaticResource MoneyConverter}}" Width="110" />
+                        <DataGridTextColumn Header="Discounts" Binding="{Binding Discounts, Converter={StaticResource MoneyConverter}}" Width="95" />
+                        <DataGridTextColumn Header="Tax" Binding="{Binding Tax, Converter={StaticResource MoneyConverter}}" Width="95" />
+                        <DataGridTextColumn Header="Returns" Binding="{Binding Returns, Converter={StaticResource MoneyConverter}}" Width="95" />
+                        <DataGridTextColumn Header="Net Sales" Binding="{Binding NetSales, Converter={StaticResource MoneyConverter}}" FontWeight="Bold" Width="115" />
+                        <DataGridTextColumn Header="Cash" Binding="{Binding CashAmount, Converter={StaticResource MoneyConverter}}" Width="95" />
+                        <DataGridTextColumn Header="Card" Binding="{Binding CardAmount, Converter={StaticResource MoneyConverter}}" Width="95" />
+                        <DataGridTextColumn Header="Mobile Wallet" Binding="{Binding MobileWalletAmount, Converter={StaticResource MoneyConverter}}" Width="105" />
+                        <DataGridTextColumn Header="Bank" Binding="{Binding BankAmount, Converter={StaticResource MoneyConverter}}" Width="95" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- 2. Sales By Product / Category / Brand Grid -->
+                <DataGrid ItemsSource="{Binding SalesByProduct.Rows}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='SalesByProduct'}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Item / Group Name" Binding="{Binding Name}" Width="250" />
+                        <DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="140" />
+                        <DataGridTextColumn Header="Brand" Binding="{Binding BrandName}" Width="120" />
+                        <DataGridTextColumn Header="Quantity" Binding="{Binding QuantitySold, StringFormat='{}{0:N2}'}" Width="90" />
+                        <DataGridTextColumn Header="Net Revenue" Binding="{Binding NetRevenue, Converter={StaticResource MoneyConverter}}" FontWeight="Bold" Width="120" />
+                        <DataGridTextColumn Header="Cost" Binding="{Binding Cost, Converter={StaticResource MoneyConverter}}" Width="110" />
+                        <DataGridTextColumn Header="Profit" Binding="{Binding Profit, Converter={StaticResource MoneyConverter}}" Width="110" />
+                        <DataGridTextColumn Header="Margin %" Binding="{Binding MarginPercent, StringFormat='{}{0:N1}%'}" Width="85" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- 3. Profit & Loss Statement Grid -->
+                <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="20"
+                        Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='ProfitAndLoss'}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <StackPanel MaxWidth="800" HorizontalAlignment="Left">
+                            <!-- Period Comparison Header -->
+                            <Grid Margin="0,0,0,16">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="STATEMENT LINE" FontWeight="Bold" FontSize="12" Foreground="{DynamicResource TextMutedBrush}" />
+                                <TextBlock Grid.Column="1" Text="CURRENT PERIOD" FontWeight="Bold" FontSize="12" TextAlignment="Right" Foreground="{DynamicResource TextMutedBrush}" />
+                                <TextBlock Grid.Column="2" Text="PREVIOUS PERIOD" FontWeight="Bold" FontSize="12" TextAlignment="Right" Foreground="{DynamicResource TextMutedBrush}" />
+                            </Grid>
+                            <Border Height="1" Background="{DynamicResource ThinRuleBrush}" Margin="0,0,0,12" />
+
+                            <!-- Net Sales -->
+                            <Grid Margin="0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="1. Net Sales (Revenue after discounts, excl tax, less returns)" FontWeight="SemiBold" FontSize="13" />
+                                <TextBlock Grid.Column="1" Text="{Binding ProfitAndLoss.CurrentNetSales, Converter={StaticResource MoneyConverter}}" FontWeight="Bold" TextAlignment="Right" />
+                                <TextBlock Grid.Column="2" Text="{Binding ProfitAndLoss.PreviousNetSales, Converter={StaticResource MoneyConverter}}" TextAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Grid>
+
+                            <!-- COGS -->
+                            <Grid Margin="0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="2. Cost of Goods Sold (COGS at original snapshot, less returned)" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Grid.Column="1" Text="{Binding ProfitAndLoss.CurrentCogs, Converter={StaticResource MoneyConverter}}" TextAlignment="Right" />
+                                <TextBlock Grid.Column="2" Text="{Binding ProfitAndLoss.PreviousCogs, Converter={StaticResource MoneyConverter}}" TextAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Grid>
+
+                            <Border Height="1" Background="{DynamicResource ThinRuleBrush}" Margin="0,8" />
+
+                            <!-- Gross Profit -->
+                            <Grid Margin="0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="GROSS PROFIT (Net Sales - COGS)" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Grid.Column="1" Text="{Binding ProfitAndLoss.CurrentGrossProfit, Converter={StaticResource MoneyConverter}}" FontWeight="Bold" FontSize="14" TextAlignment="Right" />
+                                <TextBlock Grid.Column="2" Text="{Binding ProfitAndLoss.PreviousGrossProfit, Converter={StaticResource MoneyConverter}}" FontWeight="Bold" FontSize="14" TextAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Grid>
+
+                            <Border Height="1" Background="{DynamicResource ThinRuleBrush}" Margin="0,8" />
+
+                            <!-- Operating Expenses -->
+                            <Grid Margin="0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="3. Operating Expenses (Shop overheads &amp; operating costs)" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Grid.Column="1" Text="{Binding ProfitAndLoss.CurrentTotalExpenses, Converter={StaticResource MoneyConverter}}" TextAlignment="Right" />
+                                <TextBlock Grid.Column="2" Text="{Binding ProfitAndLoss.PreviousTotalExpenses, Converter={StaticResource MoneyConverter}}" TextAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Grid>
+
+                            <!-- Stock Write-offs -->
+                            <Grid Margin="0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="4. Stock Write-offs (Damaged, Expired, Lost at cost)" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                <TextBlock Grid.Column="1" Text="{Binding ProfitAndLoss.CurrentStockWriteOffs, Converter={StaticResource MoneyConverter}}" TextAlignment="Right" />
+                                <TextBlock Grid.Column="2" Text="{Binding ProfitAndLoss.PreviousStockWriteOffs, Converter={StaticResource MoneyConverter}}" TextAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Grid>
+
+                            <Border Height="2" Background="{DynamicResource BorderBrush}" Margin="0,12" />
+
+                            <!-- NET PROFIT -->
+                            <Grid Margin="0,8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="3*" />
+                                    <ColumnDefinition Width="140" />
+                                    <ColumnDefinition Width="140" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="NET PROFIT (Gross Profit - Expenses - Write-offs)" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Grid.Column="1" Text="{Binding ProfitAndLoss.CurrentNetProfit, Converter={StaticResource MoneyConverter}}" FontWeight="Bold" FontSize="16" TextAlignment="Right" Foreground="{DynamicResource PrimaryBrush}" />
+                                <TextBlock Grid.Column="2" Text="{Binding ProfitAndLoss.PreviousNetProfit, Converter={StaticResource MoneyConverter}}" FontWeight="Bold" FontSize="16" TextAlignment="Right" Foreground="{DynamicResource TextSecondaryBrush}" />
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- 4. Purchases Report Grid -->
+                <DataGrid ItemsSource="{Binding PurchasesReport.BySupplierRows}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='Purchases'}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Supplier Name" Binding="{Binding SupplierName}" Width="250" />
+                        <DataGridTextColumn Header="Bills Count" Binding="{Binding InvoiceCount}" Width="90" />
+                        <DataGridTextColumn Header="Purchases Total" Binding="{Binding GrandTotal, Converter={StaticResource MoneyConverter}}" Width="130" />
+                        <DataGridTextColumn Header="Returns" Binding="{Binding ReturnsTotal, Converter={StaticResource MoneyConverter}}" Width="120" />
+                        <DataGridTextColumn Header="Net Purchases" Binding="{Binding NetPurchases, Converter={StaticResource MoneyConverter}}" FontWeight="Bold" Width="130" />
+                        <DataGridTextColumn Header="Total Paid" Binding="{Binding PaidAmount, Converter={StaticResource MoneyConverter}}" Width="120" />
+                        <DataGridTextColumn Header="Current Balance" Binding="{Binding CurrentBalance, Converter={StaticResource MoneyConverter}}" Width="130" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- 5. Tax Report Grid -->
+                <DataGrid ItemsSource="{Binding TaxReport.OutputTaxRows}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='TaxReport'}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Tax Rate %" Binding="{Binding TaxRatePercent, StringFormat='{}{0:N1}%'}" Width="120" />
+                        <DataGridTextColumn Header="Taxable Sales Revenue" Binding="{Binding TaxableAmount, Converter={StaticResource MoneyConverter}}" Width="180" />
+                        <DataGridTextColumn Header="Output Tax Amount" Binding="{Binding NetTax, Converter={StaticResource MoneyConverter}}" FontWeight="Bold" Width="160" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- 6. Stock Movement Summary Grid -->
+                <DataGrid ItemsSource="{Binding StockReport.MovementSummaryRows}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='StockReports'}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="100" />
+                        <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" Width="240" />
+                        <DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="130" />
+                        <DataGridTextColumn Header="Opening" Binding="{Binding OpeningStock, StringFormat='{}{0:N2}'}" Width="85" />
+                        <DataGridTextColumn Header="Purchased" Binding="{Binding PurchasesIn, StringFormat='{}{0:N2}'}" Width="85" />
+                        <DataGridTextColumn Header="Sold" Binding="{Binding SalesOut, StringFormat='{}{0:N2}'}" Width="80" />
+                        <DataGridTextColumn Header="Returns In" Binding="{Binding ReturnsIn, StringFormat='{}{0:N2}'}" Width="85" />
+                        <DataGridTextColumn Header="Adjustments" Binding="{Binding AdjustmentsNet, StringFormat='{}{0:N2}'}" Width="95" />
+                        <DataGridTextColumn Header="Closing Stock" Binding="{Binding ClosingStock, StringFormat='{}{0:N2}'}" FontWeight="Bold" Width="95" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- 7. Expenses Report Grid -->
+                <DataGrid ItemsSource="{Binding ExpensesReport.ByCategoryRows}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='Expenses'}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Category Name" Binding="{Binding CategoryName}" Width="250" />
+                        <DataGridTextColumn Header="Transactions Count" Binding="{Binding ExpenseCount}" Width="140" />
+                        <DataGridTextColumn Header="Total Spent" Binding="{Binding TotalAmount, Converter={StaticResource MoneyConverter}}" FontWeight="Bold" Width="160" />
+                        <DataGridTextColumn Header="% of Total Expenses" Binding="{Binding PercentOfTotal, StringFormat='{}{0:N1}%'}" Width="150" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- 8. Payment Methods Report Grid -->
+                <DataGrid ItemsSource="{Binding PaymentMethodsReport.Rows}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='PaymentMethods'}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Payment Method" Binding="{Binding MethodName}" Width="160" FontWeight="SemiBold" />
+                        <DataGridTextColumn Header="Sales Collected" Binding="{Binding SalesCollected, Converter={StaticResource MoneyConverter}}" Width="130" />
+                        <DataGridTextColumn Header="Refunds Paid" Binding="{Binding RefundsPaid, Converter={StaticResource MoneyConverter}}" Width="130" />
+                        <DataGridTextColumn Header="Net Money In" Binding="{Binding TotalMoneyIn, Converter={StaticResource MoneyConverter}}" FontWeight="Bold" Width="130" />
+                        <DataGridTextColumn Header="Supplier Paid" Binding="{Binding SupplierPaymentsPaid, Converter={StaticResource MoneyConverter}}" Width="130" />
+                        <DataGridTextColumn Header="Expenses Paid" Binding="{Binding ExpensesPaid, Converter={StaticResource MoneyConverter}}" Width="130" />
+                        <DataGridTextColumn Header="Net Cash Flow" Binding="{Binding NetCashFlow, Converter={StaticResource MoneyConverter}}" FontWeight="Bold" Width="130" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- 9. Audit Log Grid -->
+                <DataGrid ItemsSource="{Binding AuditLogReport.Rows}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='AuditLogs'}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="150" />
+                        <DataGridTextColumn Header="Action" Binding="{Binding Action}" FontWeight="SemiBold" Width="140" />
+                        <DataGridTextColumn Header="Entity" Binding="{Binding EntityName}" Width="110" />
+                        <DataGridTextColumn Header="Record ID" Binding="{Binding EntityId}" Width="80" />
+                        <DataGridTextColumn Header="Details / Changes" Binding="{Binding Details}" Width="*" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- 10. Barcode and Data Quality Grid -->
+                <DataGrid ItemsSource="{Binding BarcodeQualityReport.Issues}"
+                          AutoGenerateColumns="False"
+                          IsReadOnly="True"
+                          SelectionMode="Single"
+                          Visibility="{Binding SelectedReport.Key, Converter={StaticResource StringEqualsToVisibilityConverter}, ConverterParameter='BarcodeQuality'}">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <EventSetter Event="MouseDoubleClick" Handler="DataGridRow_MouseDoubleClick" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Issue Description" Binding="{Binding Description}" FontWeight="Bold" Width="200" />
+                        <DataGridTextColumn Header="Product Name" Binding="{Binding ProductName}" Width="250" />
+                        <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="110" />
+                        <DataGridTextColumn Header="Barcode" Binding="{Binding Barcode}" Width="130" />
+                        <DataGridTextColumn Header="Cost Price" Binding="{Binding CostPrice, Converter={StaticResource MoneyConverter}}" Width="110" />
+                        <DataGridTextColumn Header="Sale Price" Binding="{Binding SalePrice, Converter={StaticResource MoneyConverter}}" Width="110" />
+                        <DataGridTextColumn Header="Stock Quantity" Binding="{Binding CurrentStock, StringFormat='{}{0:N2}'}" Width="110" />
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <!-- Empty State View -->
+                <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource CardBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="40"
+                        HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Visibility="{Binding HasData, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                    <StackPanel HorizontalAlignment="Center">
+                        <TextBlock Text="No report data found for this period" FontSize="16" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" Margin="0,0,0,6" />
+                        <TextBlock Text="Try selecting a wider date preset or clear filters." FontSize="12" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Loading Overlay -->
+                <Border Background="{DynamicResource SurfaceBrush}" Opacity="0.85" Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                        <ProgressBar IsIndeterminate="True" Width="200" Height="4" Margin="0,0,0,12" />
+                        <TextBlock Text="Computing report data..." FontSize="13" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" HorizontalAlignment="Center" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

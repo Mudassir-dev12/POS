@@ -7,11 +7,11 @@ public interface IProductService
 {
     Task<Result<PagedResult<ProductListItemDto>>> GetPagedProductsAsync(ProductSearchQuery query, CancellationToken cancellationToken = default);
     Task<Result<ProductDto>> GetProductByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<Result<ProductDto>> CreateProductAsync(CreateProductDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result<ProductDto>> UpdateProductAsync(UpdateProductDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result> DeactivateProductAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result> DeleteProductAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result<ProductDto>> DuplicateProductAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
+    Task<Result<ProductDto>> CreateProductAsync(CreateProductDto dto, int? userId, CancellationToken cancellationToken = default);
+    Task<Result<ProductDto>> UpdateProductAsync(UpdateProductDto dto, int? userId, CancellationToken cancellationToken = default);
+    Task<Result> DeactivateProductAsync(int id, int? userId, CancellationToken cancellationToken = default);
+    Task<Result> DeleteProductAsync(int id, int? userId, CancellationToken cancellationToken = default);
+    Task<Result<ProductDto>> DuplicateProductAsync(int id, int? userId, CancellationToken cancellationToken = default);
     Task<Result<IReadOnlyList<ProductPriceHistoryDto>>> GetPriceHistoryAsync(int productId, CancellationToken cancellationToken = default);
     Task<Result<string>> GenerateNextSkuAsync(CancellationToken cancellationToken = default);
     Task<Result<string?>> ValidateBarcodeAsync(string barcode, int? excludeProductId = null, CancellationToken cancellationToken = default);
@@ -24,10 +24,10 @@ public interface ICategoryService
 {
     Task<Result<IReadOnlyList<CategoryDto>>> GetCategoryTreeAsync(bool includeInactive = false, CancellationToken cancellationToken = default);
     Task<Result<IReadOnlyList<CategoryDto>>> GetFlatListAsync(bool includeInactive = false, CancellationToken cancellationToken = default);
-    Task<Result<CategoryDto>> CreateCategoryAsync(CreateCategoryDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result<CategoryDto>> UpdateCategoryAsync(UpdateCategoryDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result> DeactivateCategoryAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result> DeleteCategoryAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
+    Task<Result<CategoryDto>> CreateCategoryAsync(CreateCategoryDto dto, int? userId, CancellationToken cancellationToken = default);
+    Task<Result<CategoryDto>> UpdateCategoryAsync(UpdateCategoryDto dto, int? userId, CancellationToken cancellationToken = default);
+    Task<Result> DeactivateCategoryAsync(int id, int? userId, CancellationToken cancellationToken = default);
+    Task<Result> DeleteCategoryAsync(int id, int? userId, CancellationToken cancellationToken = default);
     Task<BulkOperationResult> BulkDeleteAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default);
     Task<BulkOperationResult> BulkDeactivateAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<int>> GetFilteredCategoryIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default);
@@ -37,10 +37,10 @@ public interface IBrandService
 {
     Task<Result<PagedResult<BrandDto>>> GetPagedBrandsAsync(MasterDataSearchQuery query, CancellationToken cancellationToken = default);
     Task<Result<IReadOnlyList<BrandDto>>> GetFlatListAsync(bool includeInactive = false, CancellationToken cancellationToken = default);
-    Task<Result<BrandDto>> CreateBrandAsync(CreateBrandDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result<BrandDto>> UpdateBrandAsync(UpdateBrandDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result> DeleteBrandAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result> DeactivateBrandAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
+    Task<Result<BrandDto>> CreateBrandAsync(CreateBrandDto dto, int? userId, CancellationToken cancellationToken = default);
+    Task<Result<BrandDto>> UpdateBrandAsync(UpdateBrandDto dto, int? userId, CancellationToken cancellationToken = default);
+    Task<Result> DeleteBrandAsync(int id, int? userId, CancellationToken cancellationToken = default);
+    Task<Result> DeactivateBrandAsync(int id, int? userId, CancellationToken cancellationToken = default);
     Task<BulkOperationResult> BulkDeleteAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default);
     Task<BulkOperationResult> BulkDeactivateAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<int>> GetFilteredBrandIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default);
@@ -50,10 +50,10 @@ public interface IUnitService
 {
     Task<Result<PagedResult<UnitDto>>> GetPagedUnitsAsync(MasterDataSearchQuery query, CancellationToken cancellationToken = default);
     Task<Result<IReadOnlyList<UnitDto>>> GetFlatListAsync(bool includeInactive = false, CancellationToken cancellationToken = default);
-    Task<Result<UnitDto>> CreateUnitAsync(CreateUnitDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result<UnitDto>> UpdateUnitAsync(UpdateUnitDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result> DeactivateUnitAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result> DeleteUnitAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
+    Task<Result<UnitDto>> CreateUnitAsync(CreateUnitDto dto, int? userId, CancellationToken cancellationToken = default);
+    Task<Result<UnitDto>> UpdateUnitAsync(UpdateUnitDto dto, int? userId, CancellationToken cancellationToken = default);
+    Task<Result> DeactivateUnitAsync(int id, int? userId, CancellationToken cancellationToken = default);
+    Task<Result> DeleteUnitAsync(int id, int? userId, CancellationToken cancellationToken = default);
     Task<BulkOperationResult> BulkDeleteAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default);
     Task<BulkOperationResult> BulkDeactivateAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<int>> GetFilteredUnitIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default);
@@ -61,12 +61,12 @@ public interface IUnitService
 
 public interface ISupplierService
 {
-    Task<Result<PagedResult<SupplierDto>>> GetPagedSuppliersAsync(MasterDataSearchQuery query, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result<IReadOnlyList<SupplierDto>>> GetFlatListAsync(bool includeInactive = false, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result<SupplierDto>> CreateSupplierAsync(CreateSupplierDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result<SupplierDto>> UpdateSupplierAsync(UpdateSupplierDto dto, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result> DeactivateSupplierAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
-    Task<Result> DeleteSupplierAsync(int id, int? userId, string? userRole = null, CancellationToken cancellationToken = default);
+    Task<Result<PagedResult<SupplierDto>>> GetPagedSuppliersAsync(MasterDataSearchQuery query, CancellationToken cancellationToken = default);
+    Task<Result<IReadOnlyList<SupplierDto>>> GetFlatListAsync(bool includeInactive = false, CancellationToken cancellationToken = default);
+    Task<Result<SupplierDto>> CreateSupplierAsync(CreateSupplierDto dto, int? userId, CancellationToken cancellationToken = default);
+    Task<Result<SupplierDto>> UpdateSupplierAsync(UpdateSupplierDto dto, int? userId, CancellationToken cancellationToken = default);
+    Task<Result> DeactivateSupplierAsync(int id, int? userId, CancellationToken cancellationToken = default);
+    Task<Result> DeleteSupplierAsync(int id, int? userId, CancellationToken cancellationToken = default);
     Task<BulkOperationResult> BulkDeleteAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default);
     Task<BulkOperationResult> BulkDeactivateAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<int>> GetFilteredSupplierIdsAsync(string? searchTerm, bool includeInactive, CancellationToken cancellationToken = default);

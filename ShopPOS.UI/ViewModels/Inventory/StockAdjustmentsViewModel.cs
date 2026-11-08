@@ -74,9 +74,7 @@ public partial class StockAdjustmentsViewModel : ObservableObject
         IsLoading = true;
         ErrorMessage = null;
         try
-        {
-            var userRole = "Owner";
-            var result = await _adjustmentService.GetAdjustmentsAsync(FromDate, ToDate, SelectedStatus, CurrentPage, PageSize, userRole);
+        {            var result = await _adjustmentService.GetAdjustmentsAsync(FromDate, ToDate, SelectedStatus, CurrentPage, PageSize);
             if (result.Success && result.Data != null)
             {
                 Items.Clear();
@@ -89,7 +87,8 @@ public partial class StockAdjustmentsViewModel : ObservableObject
                 TotalPages = Math.Max(1, (int)Math.Ceiling((double)TotalCount / PageSize));
                 int start = TotalCount == 0 ? 0 : ((CurrentPage - 1) * PageSize) + 1;
                 int end = Math.Min(CurrentPage * PageSize, TotalCount);
-                RowCountText = $"Showing {start}-{end} of {TotalCount} adjustments";
+                RowCountText = $"Showing {start}-{end} of {TotalCount} adjustments";
+
                 SyncSelectionState();
             }
             else
@@ -150,9 +149,7 @@ public partial class StockAdjustmentsViewModel : ObservableObject
         try
         {
             var userId = 1;
-            var userRole = "Owner";
-
-            var result = await _adjustmentService.PostAdjustmentAsync(SelectedAdjustment.Id, userId, userRole);
+            var result = await _adjustmentService.PostAdjustmentAsync(SelectedAdjustment.Id, userId);
             if (result.Success)
             {
                 _dialogService.ShowMessage($"Adjustment '{SelectedAdjustment.AdjustmentNumber}' has been posted.", "Success");
@@ -186,9 +183,7 @@ public partial class StockAdjustmentsViewModel : ObservableObject
         try
         {
             var userId = 1;
-            var userRole = "Owner";
-
-            var result = await _adjustmentService.CancelAdjustmentAsync(SelectedAdjustment.Id, reason, userId, userRole);
+            var result = await _adjustmentService.CancelAdjustmentAsync(SelectedAdjustment.Id, reason, userId);
             if (result.Success)
             {
                 _dialogService.ShowMessage($"Adjustment '{SelectedAdjustment.AdjustmentNumber}' has been cancelled.", "Success");
@@ -222,9 +217,7 @@ public partial class StockAdjustmentsViewModel : ObservableObject
         try
         {
             var userId = 1;
-            var userRole = "Owner";
-
-            var result = await _adjustmentService.DeleteAdjustmentDraftAsync(SelectedAdjustment.Id, userId, userRole);
+            var result = await _adjustmentService.DeleteAdjustmentDraftAsync(SelectedAdjustment.Id, userId);
             if (result.Success)
             {
                 await LoadDataAsync();

@@ -99,6 +99,28 @@
                           ItemsSource="{Binding PaymentStatuses}"
                           SelectedItem="{Binding SelectedPaymentStatus}"
                           ToolTip="Filter by Payment Status" />
+
+                <!-- Quick Barcode Scan to Purchase -->
+                <Grid Grid.Column="7" HorizontalAlignment="Right">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="200" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0"
+                             Text="{Binding QuickBarcodeInput, UpdateSourceTrigger=PropertyChanged}"
+                             ToolTip="Scan or enter barcode to create purchase"
+                             Height="32">
+                        <TextBox.InputBindings>
+                            <KeyBinding Key="Enter" Command="{Binding QuickBarcodeScanCommand}" />
+                        </TextBox.InputBindings>
+                    </TextBox>
+                    <Button Grid.Column="1"
+                            Content="Scan Barcode"
+                            Command="{Binding QuickBarcodeScanCommand}"
+                            Style="{StaticResource ToolbarButtonStyle}"
+                            Margin="6,0,0,0"
+                            Height="32" />
+                </Grid>
             </Grid>
         </Border>
 

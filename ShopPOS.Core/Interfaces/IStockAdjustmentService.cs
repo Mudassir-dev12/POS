@@ -6,14 +6,14 @@ namespace ShopPOS.Core.Interfaces;
 
 public interface IStockAdjustmentService
 {
-    Task<Result<PagedResult<StockAdjustmentListDto>>> GetAdjustmentsAsync(DateTime? fromDate, DateTime? toDate, StockAdjustmentStatus? status, int pageNumber, int pageSize, string? userRole, CancellationToken cancellationToken = default);
-    Task<Result<StockAdjustmentDetailDto>> GetAdjustmentByIdAsync(int id, string? userRole, CancellationToken cancellationToken = default);
-    Task<Result<StockAdjustmentDetailDto>> CreateAdjustmentDraftAsync(CreateStockAdjustmentDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default);
-    Task<Result<StockAdjustmentDetailDto>> UpdateAdjustmentDraftAsync(UpdateStockAdjustmentDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default);
-    Task<Result<bool>> DeleteAdjustmentDraftAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default);
-    Task<Result<StockAdjustmentDetailDto>> PostAdjustmentAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default);
-    Task<Result<bool>> CancelAdjustmentAsync(int id, string reason, int? userId, string? userRole, CancellationToken cancellationToken = default);
-    Task<Result<bool>> CreateAndPostSingleAdjustmentAsync(int productId, decimal targetQuantity, string reasonText, StockAdjustmentReason reasonType, int? userId, string? userRole, CancellationToken cancellationToken = default);
+    Task<Result<PagedResult<StockAdjustmentListDto>>> GetAdjustmentsAsync(DateTime? fromDate, DateTime? toDate, StockAdjustmentStatus? status, int pageNumber, int pageSize, CancellationToken cancellationToken = default);
+    Task<Result<StockAdjustmentDetailDto>> GetAdjustmentByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<Result<StockAdjustmentDetailDto>> CreateAdjustmentDraftAsync(CreateStockAdjustmentDto dto, int? userId, CancellationToken cancellationToken = default);
+    Task<Result<StockAdjustmentDetailDto>> UpdateAdjustmentDraftAsync(UpdateStockAdjustmentDto dto, int? userId, CancellationToken cancellationToken = default);
+    Task<Result<bool>> DeleteAdjustmentDraftAsync(int id, int? userId, CancellationToken cancellationToken = default);
+    Task<Result<StockAdjustmentDetailDto>> PostAdjustmentAsync(int id, int? userId, CancellationToken cancellationToken = default);
+    Task<Result<bool>> CancelAdjustmentAsync(int id, string reason, int? userId, CancellationToken cancellationToken = default);
+    Task<Result<bool>> CreateAndPostSingleAdjustmentAsync(int productId, decimal targetQuantity, string reasonText, StockAdjustmentReason reasonType, int? userId, CancellationToken cancellationToken = default);
     Task<BulkOperationResult> BulkDeleteDraftsAsync(IEnumerable<int> ids, int? userId, CancellationToken cancellationToken = default);
     Task<BulkOperationResult> BulkCancelAdjustmentsAsync(IEnumerable<int> ids, string reason, int? userId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<int>> GetFilteredAdjustmentIdsAsync(DateTime? fromDate, DateTime? toDate, StockAdjustmentStatus? status, CancellationToken cancellationToken = default);

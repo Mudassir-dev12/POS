@@ -52,9 +52,7 @@ public partial class ReorderListViewModel : ObservableObject
     public async Task LoadSuppliersAsync()
     {
         try
-        {
-            var userRole = "Owner";
-            var res = await _supplierService.GetFlatListAsync(false, userRole);
+        {            var res = await _supplierService.GetFlatListAsync(false);
             if (res.Success && res.Data != null)
             {
                 Suppliers.Clear();
@@ -80,9 +78,7 @@ public partial class ReorderListViewModel : ObservableObject
         IsLoading = true;
         ErrorMessage = null;
         try
-        {
-            var userRole = "Owner";
-            var result = await _inventoryService.GetReorderListAsync(userRole);
+        {            var result = await _inventoryService.GetReorderListAsync();
             if (result.Success && result.Data != null)
             {
                 Items.Clear();
@@ -160,9 +156,7 @@ public partial class ReorderListViewModel : ObservableObject
             };
 
             var userId = 1;
-            var userRole = "Owner";
-
-            var result = await _inventoryService.CreatePurchaseDraftFromReorderAsync(dto, userId, userRole);
+            var result = await _inventoryService.CreatePurchaseDraftFromReorderAsync(dto, userId);
             if (result.Success && result.Data != null)
             {
                 _dialogService.ShowMessage(

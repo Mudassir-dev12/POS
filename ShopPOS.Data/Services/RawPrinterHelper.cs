@@ -150,6 +150,121 @@ public static class RawPrinterHelper
     }
 
     /// <summary>
+    /// Configures paper size matching driver-defined roll paper sizes or standard fallback.
+    /// </summary>
+    private static void ConfigurePaperSize(PrintDocument printDoc, int paperWidthMm)
+    {
+        int widthHundredths = paperWidthMm <= 58 ? 228 : 315;
+        PaperSize? matched = null;
+
+        try
+        {
+            foreach (PaperSize ps in printDoc.PrinterSettings.PaperSizes)
+            {
+                if (paperWidthMm <= 58)
+                {
+                    if (ps.PaperName.Contains("58", StringComparison.OrdinalIgnoreCase) || Math.Abs(ps.Width - 228) <= 20)
+                    {
+                        matched = ps;
+                        break;
+                    }
+                }
+                else
+                {
+                    if (ps.PaperName.Contains("80", StringComparison.OrdinalIgnoreCase) || Math.Abs(ps.Width - 315) <= 20)
+                    {
+                        matched = ps;
+                        break;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Ignore driver enumeration quirks
+        }
+
+        if (matched != null)
+        {
+            printDoc.DefaultPageSettings.PaperSize = matched;
+        }
+        else
+        {
+            printDoc.DefaultPageSettings.PaperSize = new PaperSize("ThermalRoll", widthHundredths, 1169);
+        }
+
+        printDoc.DefaultPageSettings.Margins = new Margins(5, 5, 5, 5);
+    }
+
+    /// <summary>
+    /// Prints rendered page images (PNG/JPEG) through standard Windows GDI print driver.
+    /// Produces pixel-perfect thermal receipts identical to browser/PDF printing.
+    /// </summary>
+    public static bool PrintImagesViaWindowsDriver(string printerName, IReadOnlyList<byte[]> pageImages, int paperWidthMm, out string? errorMessage)
+    {
+        errorMessage = null;
+
+        if (string.IsNullOrWhiteSpace(printerName))
+        {
+            errorMessage = "No printer name configured.";
+            return false;
+        }
+
+        if (pageImages == null || pageImages.Count == 0)
+        {
+            errorMessage = "No page images to print.";
+            return false;
+        }
+
+        try
+        {
+            using var printDoc = new PrintDocument();
+            printDoc.PrinterSettings.PrinterName = printerName;
+
+            if (!printDoc.PrinterSettings.IsValid)
+            {
+                errorMessage = $"Printer '{printerName}' is not valid or not recognized by Windows.";
+                return false;
+            }
+
+            ConfigurePaperSize(printDoc, paperWidthMm);
+
+            int pageIndex = 0;
+            printDoc.PrintPage += (sender, e) =>
+            {
+                if (pageIndex < pageImages.Count)
+                {
+                    using var ms = new MemoryStream(pageImages[pageIndex]);
+                    using var img = Image.FromStream(ms);
+
+                    float printableWidth = e.MarginBounds.Width > 0 ? e.MarginBounds.Width : (paperWidthMm <= 58 ? 228 : 315);
+                    float scale = printableWidth / img.Width;
+                    float drawHeight = img.Height * scale;
+
+                    e.Graphics!.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                    e.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+                    e.Graphics.DrawImage(img, e.MarginBounds.Left, e.MarginBounds.Top, printableWidth, drawHeight);
+
+                    pageIndex++;
+                    e.HasMorePages = pageIndex < pageImages.Count;
+                }
+                else
+                {
+                    e.HasMorePages = false;
+                }
+            };
+
+            printDoc.Print();
+            return true;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Windows driver image print failed for '{printerName}': {ex.Message}";
+            return false;
+        }
+    }
+
+    /// <summary>
     /// Prints plain text receipt through standard Windows GDI print driver.
     /// </summary>
     public static bool PrintViaWindowsDriver(string printerName, string text, int paperWidthMm, out string? errorMessage)
@@ -173,10 +288,7 @@ public static class RawPrinterHelper
                 return false;
             }
 
-            // Set roll paper width in hundredths of an inch (58mm ~ 228, 80mm ~ 315)
-            int widthHundredths = paperWidthMm <= 58 ? 228 : 315;
-            printDoc.DefaultPageSettings.PaperSize = new PaperSize("ThermalRoll", widthHundredths, 2000);
-            printDoc.DefaultPageSettings.Margins = new Margins(5, 5, 5, 5);
+            ConfigurePaperSize(printDoc, paperWidthMm);
 
             var stringLines = text.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             int currentLine = 0;

@@ -31,7 +31,7 @@ public class PurchaseScreensViewModelTests
     public PurchaseScreensViewModelTests()
     {
 
-        _supplierService.Setup(s => s.GetFlatListAsync(false, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        _supplierService.Setup(s => s.GetFlatListAsync(false, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<IReadOnlyList<SupplierDto>>.Ok(new List<SupplierDto>
             {
                 new() { Id = 1, Name = "Acme Distributing", IsActive = true },
@@ -201,7 +201,7 @@ public class PurchaseScreensViewModelTests
             }
         };
 
-        _purchaseService.Setup(p => p.GetPurchaseByIdAsync(42, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        _purchaseService.Setup(p => p.GetPurchaseByIdAsync(42, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<PurchaseDetailDto>.Ok(postedPurchase));
 
         var vm = new PurchaseEntryViewModel(
@@ -231,7 +231,7 @@ public class PurchaseScreensViewModelTests
             new() { Id = 10, PurchaseNumber = "PUR-000010", GrandTotal = 1000m, PaidAmount = 400m }
         };
 
-        _purchaseService.Setup(p => p.GetPurchasesAsync(It.Is<PurchaseSearchQuery>(q => q.SupplierId == 7), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        _purchaseService.Setup(p => p.GetPurchasesAsync(It.Is<PurchaseSearchQuery>(q => q.SupplierId == 7), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<PagedResult<PurchaseListDto>>.Ok(new PagedResult<PurchaseListDto>(invoices, 1, 1, 100)));
 
         var vm = new SupplierPaymentDialogViewModel(
@@ -272,10 +272,10 @@ public class PurchaseScreensViewModelTests
             }
         };
 
-        _purchaseService.Setup(p => p.GetPurchaseByIdAsync(20, It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        _purchaseService.Setup(p => p.GetPurchaseByIdAsync(20, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<PurchaseDetailDto>.Ok(invoice));
 
-        _purchaseService.Setup(p => p.GetPurchasesAsync(It.Is<PurchaseSearchQuery>(q => q.SupplierId == 3), It.IsAny<string?>(), It.IsAny<CancellationToken>()))
+        _purchaseService.Setup(p => p.GetPurchasesAsync(It.Is<PurchaseSearchQuery>(q => q.SupplierId == 3), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<PagedResult<PurchaseListDto>>.Ok(new PagedResult<PurchaseListDto>(new List<PurchaseListDto>
             {
                 new() { Id = 20, PurchaseNumber = "PUR-000020", SupplierId = 3 }
@@ -296,7 +296,7 @@ public class PurchaseScreensViewModelTests
 
         // Assert: Failed validation, return service not called
         vm.ErrorMessage.Should().Contain("exceeds returnable amount");
-        _returnService.Verify(r => r.PostReturnAsync(It.IsAny<CreatePurchaseReturnDto>(), It.IsAny<int?>(), It.IsAny<string?>(), It.IsAny<CancellationToken>()), Times.Never);
+        _returnService.Verify(r => r.PostReturnAsync(It.IsAny<CreatePurchaseReturnDto>(), It.IsAny<int?>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

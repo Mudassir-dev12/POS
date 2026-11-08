@@ -41,7 +41,7 @@ public class StockAdjustmentService : IStockAdjustmentService
         _updateValidator = updateValidator;
     }
 
-    public async Task<Result<PagedResult<StockAdjustmentListDto>>> GetAdjustmentsAsync(DateTime? fromDate, DateTime? toDate, StockAdjustmentStatus? status, int pageNumber, int pageSize, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PagedResult<StockAdjustmentListDto>>> GetAdjustmentsAsync(DateTime? fromDate, DateTime? toDate, StockAdjustmentStatus? status, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -49,7 +49,7 @@ public class StockAdjustmentService : IStockAdjustmentService
         return Result<PagedResult<StockAdjustmentListDto>>.Ok(result);
     }
 
-    public async Task<Result<StockAdjustmentDetailDto>> GetAdjustmentByIdAsync(int id, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<StockAdjustmentDetailDto>> GetAdjustmentByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -62,7 +62,7 @@ public class StockAdjustmentService : IStockAdjustmentService
         return Result<StockAdjustmentDetailDto>.Ok(detail);
     }
 
-    public async Task<Result<StockAdjustmentDetailDto>> CreateAdjustmentDraftAsync(CreateStockAdjustmentDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<StockAdjustmentDetailDto>> CreateAdjustmentDraftAsync(CreateStockAdjustmentDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -119,7 +119,7 @@ public class StockAdjustmentService : IStockAdjustmentService
         return Result<StockAdjustmentDetailDto>.Ok(detail!);
     }
 
-    public async Task<Result<StockAdjustmentDetailDto>> UpdateAdjustmentDraftAsync(UpdateStockAdjustmentDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<StockAdjustmentDetailDto>> UpdateAdjustmentDraftAsync(UpdateStockAdjustmentDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -187,7 +187,7 @@ public class StockAdjustmentService : IStockAdjustmentService
         return Result<StockAdjustmentDetailDto>.Ok(detail!);
     }
 
-    public async Task<Result<bool>> DeleteAdjustmentDraftAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<bool>> DeleteAdjustmentDraftAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -207,7 +207,7 @@ public class StockAdjustmentService : IStockAdjustmentService
         return Result<bool>.Ok(true);
     }
 
-    public async Task<Result<StockAdjustmentDetailDto>> PostAdjustmentAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<StockAdjustmentDetailDto>> PostAdjustmentAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -287,7 +287,7 @@ public class StockAdjustmentService : IStockAdjustmentService
         }
     }
 
-    public async Task<Result<bool>> CancelAdjustmentAsync(int id, string reason, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<bool>> CancelAdjustmentAsync(int id, string reason, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -365,7 +365,7 @@ public class StockAdjustmentService : IStockAdjustmentService
         }
     }
 
-    public async Task<Result<bool>> CreateAndPostSingleAdjustmentAsync(int productId, decimal targetQuantity, string reasonText, StockAdjustmentReason reasonType, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<bool>> CreateAndPostSingleAdjustmentAsync(int productId, decimal targetQuantity, string reasonText, StockAdjustmentReason reasonType, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -408,7 +408,7 @@ public class StockAdjustmentService : IStockAdjustmentService
 
         await _adjustmentRepo.CreateAdjustmentAsync(adjustment, cancellationToken);
 
-        var postResult = await PostAdjustmentAsync(adjustment.Id, userId, userRole, cancellationToken);
+        var postResult = await PostAdjustmentAsync(adjustment.Id, userId, cancellationToken);
         if (!postResult.Success)
         {
             return Result<bool>.Failure(postResult.ErrorMessage ?? "Failed to post single stock adjustment.");
@@ -436,7 +436,7 @@ public class StockAdjustmentService : IStockAdjustmentService
                 continue;
             }
 
-            var delRes = await DeleteAdjustmentDraftAsync(id, userId, null, cancellationToken);
+            var delRes = await DeleteAdjustmentDraftAsync(id, userId, cancellationToken);
             if (delRes.Success)
             {
                 result.Items.Add(new BulkItemResult { Id = id, Identifier = adj.AdjustmentNumber, Success = true });
@@ -464,7 +464,7 @@ public class StockAdjustmentService : IStockAdjustmentService
                 continue;
             }
 
-            var cancelRes = await CancelAdjustmentAsync(id, reason, userId, null, cancellationToken);
+            var cancelRes = await CancelAdjustmentAsync(id, reason, userId, cancellationToken);
             if (cancelRes.Success)
             {
                 result.Items.Add(new BulkItemResult { Id = id, Identifier = adj.AdjustmentNumber, Success = true });

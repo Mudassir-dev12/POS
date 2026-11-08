@@ -26,12 +26,12 @@ public class Repository<T> : IRepository<T> where T : BaseEntity
 
     public virtual async Task<IReadOnlyList<T>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await DbSet.ToListAsync(cancellationToken);
+        return await DbSet.AsNoTracking().ToListAsync(cancellationToken);
     }
 
     public virtual async Task<IReadOnlyList<T>> FindAsync(Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default)
     {
-        return await DbSet.Where(predicate).ToListAsync(cancellationToken);
+        return await DbSet.AsNoTracking().Where(predicate).ToListAsync(cancellationToken);
     }
 
     public virtual async Task<T> AddAsync(T entity, CancellationToken cancellationToken = default)

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using ShopPOS.Core.Interfaces;
 using ShopPOS.Core.Services;
 
@@ -11,6 +12,8 @@ public static class CoreServiceRegistration
 {
     public static IServiceCollection AddCoreServices(this IServiceCollection services)
     {
+        services.TryAddSingleton<IAppPaths, AppPaths>();
+        services.AddSingleton<IUserSettingsService, UserSettingsService>();
         services.AddSingleton<ICurrentUserProvider, CurrentUserProvider>();
         services.AddSingleton<IMoneyFormatter>(MoneyFormatter.Instance);
         services.AddScoped<IAuditLogService, AuditLogService>();

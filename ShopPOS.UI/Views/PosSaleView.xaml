@@ -42,6 +42,7 @@
 
                             <TextBox x:Name="ScanBox" Grid.Column="0" Text="{Binding ScanInput, UpdateSourceTrigger=PropertyChanged}"
                                      FontSize="15" FontWeight="SemiBold" Height="38"
+                                     Tag="Scan barcode or type product name / SKU (Press Enter)..."
                                      Style="{StaticResource InputTextBoxStyle}">
                                 <TextBox.InputBindings>
                                     <KeyBinding Key="Enter" Command="{Binding ProcessScanInputCommand}" />
@@ -51,17 +52,21 @@
                             <!-- High-speed Autocomplete suggestions popup -->
                             <Popup Grid.Column="0" IsOpen="{Binding ShowSuggestions, Mode=TwoWay}" StaysOpen="False"
                                    PlacementTarget="{Binding ElementName=ScanBox}" Placement="Bottom"
-                                   MaxHeight="320" Width="520" Focusable="False">
-                                <Border Background="{DynamicResource SurfaceCardBrush}"
-                                        BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+                                   MaxHeight="340" Width="520" Focusable="False"
+                                   AllowsTransparency="True">
+                                <Border Background="{DynamicResource CardBackgroundBrush}"
+                                        BorderBrush="{DynamicResource CardBorderBrush}"
                                         BorderThickness="1" CornerRadius="6"
                                         Padding="4">
-                                    <Grid>
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="12" ShadowDepth="3" Direction="270" Opacity="0.18" />
+                                    </Border.Effect>
+                                    <Grid Background="{DynamicResource CardBackgroundBrush}">
                                         <!-- Active suggestions list -->
                                         <ListBox x:Name="SuggestionsList"
                                                  ItemsSource="{Binding Suggestions}"
                                                  SelectedItem="{Binding SelectedSuggestion, Mode=TwoWay}"
-                                                 BorderThickness="0" Background="Transparent"
+                                                 BorderThickness="0" Background="{DynamicResource CardBackgroundBrush}"
                                                  MaxHeight="300"
                                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                                  Visibility="{Binding HasSuggestions, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -69,6 +74,24 @@
                                                 <Style TargetType="ListBoxItem">
                                                     <Setter Property="Padding" Value="6,4" />
                                                     <Setter Property="Cursor" Value="Hand" />
+                                                    <Setter Property="Background" Value="Transparent" />
+                                                    <Setter Property="Template">
+                                                        <Setter.Value>
+                                                            <ControlTemplate TargetType="ListBoxItem">
+                                                                <Border x:Name="Bd" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="4">
+                                                                    <ContentPresenter />
+                                                                </Border>
+                                                                <ControlTemplate.Triggers>
+                                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource TableRowHoverBackgroundBrush}" />
+                                                                    </Trigger>
+                                                                    <Trigger Property="IsSelected" Value="True">
+                                                                        <Setter TargetName="Bd" Property="Background" Value="{DynamicResource TableRowSelectedBackgroundBrush}" />
+                                                                    </Trigger>
+                                                                </ControlTemplate.Triggers>
+                                                            </ControlTemplate>
+                                                        </Setter.Value>
+                                                    </Setter>
                                                 </Style>
                                             </ListBox.ItemContainerStyle>
                                             <ListBox.ItemTemplate>
@@ -102,7 +125,7 @@
                                                                             <Setter Property="Background" Value="{DynamicResource DangerBackgroundBrush}" />
                                                                         </DataTrigger>
                                                                         <DataTrigger Binding="{Binding StockStatus}" Value="{x:Static enums:StockStatus.NotTracked}">
-                                                                            <Setter Property="Background" Value="{DynamicResource SurfaceCardSubtleBrush}" />
+                                                                            <Setter Property="Background" Value="{DynamicResource SecondaryBackgroundBrush}" />
                                                                         </DataTrigger>
                                                                     </Style.Triggers>
                                                                 </Style>
@@ -139,6 +162,7 @@
 
                                         <!-- Neutral "No match" line -->
                                         <Border Visibility="{Binding HasSuggestions, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
+                                                Background="{DynamicResource CardBackgroundBrush}"
                                                 Padding="16,12" HorizontalAlignment="Center">
                                             <TextBlock Text="No match" Foreground="{DynamicResource TextMutedBrush}" FontStyle="Italic" FontSize="12" />
                                         </Border>
@@ -168,98 +192,231 @@
                     <ColumnDefinition Width="1.4*" MinWidth="320" />
                 </Grid.ColumnDefinitions>
 
-                <!-- LEFT: CART ITEMS DATA GRID -->
-                <Border Grid.Column="0" Style="{StaticResource TableContainerBorderStyle}">
-                    <DataGrid ItemsSource="{Binding CartItems}"
-                              SelectedItem="{Binding SelectedCartItem, Mode=TwoWay}"
-                              Style="{StaticResource AppDataGridStyle}"
-                              CanUserAddRows="False"
-                              CanUserDeleteRows="False"
-                              RowHeight="44">
-                        <DataGrid.Columns>
-                            <!-- Line # -->
-                            <DataGridTextColumn Header="#" Binding="{Binding LineNo}" Width="45" IsReadOnly="True"
-                                                ElementStyle="{StaticResource MonospaceNumericCell}" />
+                <!-- LEFT: WORKSPACE AREA (CART & PRODUCT CATALOG) -->
+                <Grid Grid.Column="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
 
-                            <!-- Product Info -->
-                            <DataGridTemplateColumn Header="Product / Item" Width="*">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <StackPanel VerticalAlignment="Center" Margin="6,0">
-                                            <TextBlock Text="{Binding ProductName}" FontWeight="SemiBold" FontSize="13" />
-                                            <TextBlock Text="{Binding Sku, StringFormat='SKU: {0}'}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
+                    <!-- Workspace Switcher Banner (Visible when items are in cart to allow toggling) -->
+                    <Border Grid.Row="0" Margin="0,0,0,8" Visibility="{Binding HasCartItems, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal">
+                            <RadioButton Content="{Binding CartItems.Count, StringFormat='Current Sale Cart ({0} items)'}"
+                                         IsChecked="{Binding ActiveWorkspaceTab, Converter={StaticResource EqualityToBooleanConverter}, ConverterParameter=0}"
+                                         FontWeight="Bold" FontSize="12" Margin="0,0,16,0" />
+                            <RadioButton Content="{Binding CatalogProducts.Count, StringFormat='Browse Product Catalog ({0})'}"
+                                         IsChecked="{Binding ActiveWorkspaceTab, Converter={StaticResource EqualityToBooleanConverter}, ConverterParameter=1}"
+                                         FontWeight="Bold" FontSize="12" />
+                        </StackPanel>
+                    </Border>
 
-                            <!-- Stock Status Badge -->
-                            <DataGridTemplateColumn Header="Stock" Width="85">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Border CornerRadius="4" Padding="6,2" VerticalAlignment="Center" HorizontalAlignment="Left">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="{DynamicResource SuccessBackgroundBrush}" />
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding StockStatus}" Value="{x:Static enums:StockStatus.Low}">
-                                                            <Setter Property="Background" Value="{DynamicResource WarningBackgroundBrush}" />
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding StockStatus}" Value="{x:Static enums:StockStatus.OutOfStock}">
-                                                            <Setter Property="Background" Value="{DynamicResource DangerBackgroundBrush}" />
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock Text="{Binding StockStatus}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" />
-                                        </Border>
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
+                    <!-- VIEW 1: CART DATA GRID (Shown when HasCartItems == true AND ActiveWorkspaceTab == 0) -->
+                    <Border Grid.Row="1">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource TableContainerBorderStyle}">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasCartItems}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding ActiveWorkspaceTab}" Value="1">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <DataGrid ItemsSource="{Binding CartItems}"
+                                  SelectedItem="{Binding SelectedCartItem, Mode=TwoWay}"
+                                  Style="{StaticResource AppDataGridStyle}"
+                                  CanUserAddRows="False"
+                                  CanUserDeleteRows="False"
+                                  RowHeight="44">
+                            <DataGrid.Columns>
+                                <!-- Line # -->
+                                <DataGridTextColumn Header="#" Binding="{Binding LineNo}" Width="45" IsReadOnly="True"
+                                                    ElementStyle="{StaticResource MonospaceNumericCell}" />
 
-                            <!-- Quantity -->
-                            <DataGridTemplateColumn Header="Qty" Width="90">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBox Text="{Binding Quantity, StringFormat='{}{0:0.##}', UpdateSourceTrigger=LostFocus}"
-                                                 VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
-                                                 FontWeight="Bold" Height="28" Margin="4,0"
-                                                 Style="{StaticResource InputTextBoxStyle}" />
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
+                                <!-- Product Info -->
+                                <DataGridTemplateColumn Header="Product / Item" Width="*">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel VerticalAlignment="Center" Margin="6,0">
+                                                <TextBlock Text="{Binding ProductName}" FontWeight="SemiBold" FontSize="13" />
+                                                <TextBlock Text="{Binding Sku, StringFormat='SKU: {0}'}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" />
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
-                            <!-- Unit Price -->
-                            <DataGridTemplateColumn Header="Price" Width="100">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <TextBox Text="{Binding UnitPrice, StringFormat='{}{0:N2}', UpdateSourceTrigger=LostFocus}"
-                                                 VerticalContentAlignment="Center" HorizontalContentAlignment="Right"
-                                                 Height="28" Margin="4,0"
-                                                 Style="{StaticResource InputTextBoxStyle}" />
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
+                                <!-- Stock Status Badge -->
+                                <DataGridTemplateColumn Header="Stock" Width="85">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="4" Padding="6,2" VerticalAlignment="Center" HorizontalAlignment="Left">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{DynamicResource SuccessBackgroundBrush}" />
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding StockStatus}" Value="{x:Static enums:StockStatus.Low}">
+                                                                <Setter Property="Background" Value="{DynamicResource WarningBackgroundBrush}" />
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding StockStatus}" Value="{x:Static enums:StockStatus.OutOfStock}">
+                                                                <Setter Property="Background" Value="{DynamicResource DangerBackgroundBrush}" />
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding StockStatus}" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
-                            <!-- Line Total -->
-                            <DataGridTextColumn Header="Total" Binding="{Binding LineTotal, Converter={StaticResource MoneyConverter}}" Width="110" IsReadOnly="True"
-                                                ElementStyle="{StaticResource MonospaceNumericCell}" />
+                                <!-- Quantity -->
+                                <DataGridTemplateColumn Header="Qty" Width="90">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding Quantity, StringFormat='{}{0:0.##}', UpdateSourceTrigger=LostFocus}"
+                                                     VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
+                                                     Padding="4,0" Tag="1"
+                                                     FontWeight="Bold" Height="32" Margin="2,0"
+                                                     Style="{StaticResource InputTextBoxStyle}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
 
-                            <!-- Actions -->
-                            <DataGridTemplateColumn Width="50">
-                                <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
-                                        <Button Content="X" Command="{Binding DataContext.RemoveCartLineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
-                                                CommandParameter="{Binding}"
-                                                Style="{StaticResource GhostButtonStyle}"
-                                                Foreground="{DynamicResource DangerBrush}"
-                                                FontWeight="Bold" />
-                                    </DataTemplate>
-                                </DataGridTemplateColumn.CellTemplate>
-                            </DataGridTemplateColumn>
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Border>
+                                <!-- Unit Price -->
+                                <DataGridTemplateColumn Header="Price" Width="135">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBox Text="{Binding UnitPrice, StringFormat='{}{0:N2}', UpdateSourceTrigger=LostFocus}"
+                                                     VerticalContentAlignment="Center" HorizontalContentAlignment="Right"
+                                                     Padding="8,0" Tag="0.00"
+                                                     Height="32" Margin="2,0"
+                                                     Style="{StaticResource InputTextBoxStyle}" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+
+                                <!-- Line Total -->
+                                <DataGridTextColumn Header="Total" Binding="{Binding LineTotal, Converter={StaticResource MoneyConverter}}" Width="110" IsReadOnly="True"
+                                                    ElementStyle="{StaticResource MonospaceNumericCell}" />
+
+                                <!-- Actions -->
+                                <DataGridTemplateColumn Width="50">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Content="X" Command="{Binding DataContext.RemoveCartLineCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                    CommandParameter="{Binding}"
+                                                    Style="{StaticResource GhostButtonStyle}"
+                                                    Foreground="{DynamicResource DangerBrush}"
+                                                    FontWeight="Bold" />
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Border>
+
+                    <!-- VIEW 2: PRODUCT CATALOG (Shown in empty space when HasCartItems == false OR when ActiveWorkspaceTab == 1) -->
+                    <Border Grid.Row="1">
+                        <Border.Style>
+                            <Style TargetType="Border" BasedOn="{StaticResource TableContainerBorderStyle}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasCartItems}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding ActiveWorkspaceTab}" Value="1">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <!-- Catalog Header Banner -->
+                            <Border Grid.Row="0" Background="{DynamicResource CardHeaderBackgroundBrush}" Padding="14,10" BorderThickness="0,0,0,1" BorderBrush="{DynamicResource TableBorderBrush}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Available Products (Click any product row or '+ Add' to ring up)" Style="{StaticResource SectionHeaderStyle}" />
+                                        <TextBlock Text="Select items from catalog below, or scan barcode above to ring up sales." Style="{StaticResource SubTitleStyle}" Margin="0,2,0,0" />
+                                    </StackPanel>
+                                    <TextBlock Grid.Column="1" Text="{Binding CatalogProducts.Count, StringFormat='{}{0} products available'}"
+                                               FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" VerticalAlignment="Center" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Catalog Products DataGrid -->
+                            <DataGrid Grid.Row="1" ItemsSource="{Binding CatalogProducts}"
+                                      SelectedItem="{Binding SelectedCatalogProduct, Mode=TwoWay}"
+                                      Style="{StaticResource AppDataGridStyle}"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      CanUserAddRows="False"
+                                      CanUserDeleteRows="False"
+                                      RowHeight="44">
+                                <DataGrid.Columns>
+                                    <!-- Product Name -->
+                                    <DataGridTextColumn Header="Product / Item" Binding="{Binding Name}" Width="*" FontWeight="SemiBold" />
+
+                                    <!-- SKU / Model -->
+                                    <DataGridTextColumn Header="SKU / Model" Binding="{Binding Sku}" Width="140" ElementStyle="{StaticResource MonospaceTextStyle}" />
+
+                                    <!-- Stock -->
+                                    <DataGridTemplateColumn Header="Stock" Width="100">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Border CornerRadius="4" Padding="6,2" VerticalAlignment="Center" HorizontalAlignment="Left">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="{DynamicResource SuccessBackgroundBrush}" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding StockStatus}" Value="{x:Static enums:StockStatus.Low}">
+                                                                    <Setter Property="Background" Value="{DynamicResource WarningBackgroundBrush}" />
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding StockStatus}" Value="{x:Static enums:StockStatus.OutOfStock}">
+                                                                    <Setter Property="Background" Value="{DynamicResource DangerBackgroundBrush}" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding CurrentStock, StringFormat='{}{0:0.##}'}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                                </Border>
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+
+                                    <!-- Unit Price -->
+                                    <DataGridTextColumn Header="Sale Price" Binding="{Binding SalePrice, Converter={StaticResource MoneyConverter}}" Width="120"
+                                                        ElementStyle="{StaticResource MonospaceNumericCell}" FontWeight="Bold" />
+
+                                    <!-- Add Button -->
+                                    <DataGridTemplateColumn Width="90">
+                                        <DataGridTemplateColumn.CellTemplate>
+                                            <DataTemplate>
+                                                <Button Content="+ Add"
+                                                        Command="{Binding DataContext.AddCatalogProductCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                        CommandParameter="{Binding}"
+                                                        Style="{StaticResource PrimaryButtonStyle}"
+                                                        Height="28" Padding="12,0" Margin="4,2" />
+                                            </DataTemplate>
+                                        </DataGridTemplateColumn.CellTemplate>
+                                    </DataGridTemplateColumn>
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </Border>
+                </Grid>
 
                 <!-- RIGHT: PRICE LEVEL, SUMMARY & CHECKOUT BUTTON -->
                 <Grid Grid.Column="2">
@@ -276,7 +433,7 @@
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
                             <TextBlock Text="PRICE LEVEL" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                            <ComboBox Grid.Row="1" ItemsSource="{Binding PriceLevels}" SelectedItem="{Binding SelectedPriceLevel, Mode=TwoWay}"
+                            <ComboBox Grid.Row="1" ItemsSource="{Binding DisplayPriceLevels}" SelectedItem="{Binding SelectedPriceLevel, Mode=TwoWay}"
                                       DisplayMemberPath="Name" Style="{StaticResource InputComboBoxStyle}" Height="34" />
                         </Grid>
                     </Border>
@@ -332,6 +489,23 @@
                                 </Grid>
 
                                 <Separator Margin="0,10" Background="{DynamicResource SeparatorBorderBrush}" />
+
+                                <!-- Customer Details (Optional) -->
+                                <Grid Margin="0,0,0,8">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="6" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <StackPanel Grid.Column="0">
+                                        <TextBlock Text="Customer Name" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,2" />
+                                        <TextBox Text="{Binding CustomerName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" Height="30" />
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2">
+                                        <TextBlock Text="Contact No" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="0,0,0,2" />
+                                        <TextBox Text="{Binding CustomerPhone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" Height="30" />
+                                    </StackPanel>
+                                </Grid>
 
                                 <!-- Action Buttons: Discounts, Park/Hold, Clear -->
                                 <Grid Margin="0,2">

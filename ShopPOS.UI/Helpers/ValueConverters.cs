@@ -1,4 +1,5 @@
-using ShopPOS.Core.Services;
+using ShopPOS.Core.Services;
+
 using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
@@ -513,3 +514,65 @@ public class DateTimeDisplayConverter : IValueConverter
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
 }
+public class StringEqualsToVisibilityConverter : IValueConverter
+{
+    public static readonly StringEqualsToVisibilityConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value == null || parameter == null) return Visibility.Collapsed;
+        bool equals = string.Equals(value.ToString(), parameter.ToString(), StringComparison.OrdinalIgnoreCase);
+        return equals ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class BooleanToYesNoConverter : IValueConverter
+{
+    public static readonly BooleanToYesNoConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value is true ? "Yes" : "No";
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+}
+
+public class EncryptButtonTextConverter : IValueConverter
+{
+    public static readonly EncryptButtonTextConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        return value is true ? "Change / Disable Password" : "Set Password & Enable";
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) => throw new NotSupportedException();
+
+}
+
+
+
+public class EqualityToBooleanConverter : IValueConverter
+{
+    public static readonly EqualityToBooleanConverter Instance = new();
+
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value == null || parameter == null) return false;
+        return string.Equals(value.ToString(), parameter.ToString(), StringComparison.OrdinalIgnoreCase);
+    }
+
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+    {
+        if (value is bool b && b && parameter != null)
+        {
+            if (int.TryParse(parameter.ToString(), out int intVal)) return intVal;
+            return parameter;
+        }
+        return Binding.DoNothing;
+    }
+}
+

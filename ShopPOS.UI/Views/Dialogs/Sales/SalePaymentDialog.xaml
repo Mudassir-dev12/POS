@@ -6,14 +6,15 @@
         xmlns:enums="clr-namespace:ShopPOS.Core.Enums;assembly=ShopPOS.Core"
         mc:Ignorable="d"
         Title="Tender &amp; Payment"
-        Height="540"
-        Width="640"
+        Height="600"
+        Width="660"
         Style="{DynamicResource DialogWindowStyle}"
         WindowStartupLocation="CenterOwner"
         ResizeMode="NoResize">
 
     <Grid Margin="24">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -42,8 +43,27 @@
             </Grid>
         </Border>
 
+        <!-- Customer Information -->
+        <Border Grid.Row="1" Style="{DynamicResource CardBorderStyle}" Padding="12,8" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="12" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0">
+                    <TextBlock Text="Customer Name (optional)" Style="{DynamicResource FormLabelStyle}" Margin="0,0,0,2" />
+                    <TextBox Text="{Binding CustomerName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource InputTextBoxStyle}" Height="30" />
+                </StackPanel>
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Contact No / Phone" Style="{DynamicResource FormLabelStyle}" Margin="0,0,0,2" />
+                    <TextBox Text="{Binding CustomerPhone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource InputTextBoxStyle}" Height="30" />
+                </StackPanel>
+            </Grid>
+        </Border>
+
         <!-- Quick Cash Buttons -->
-        <StackPanel Grid.Row="1" Margin="0,0,0,14">
+        <StackPanel Grid.Row="2" Margin="0,0,0,14">
             <TextBlock Text="Quick Cash (Exact / Common Notes):" Style="{DynamicResource FormLabelStyle}" />
             <ItemsControl ItemsSource="{Binding QuickCashNotes}">
                 <ItemsControl.ItemsPanel>
@@ -64,7 +84,7 @@
         </StackPanel>
 
         <!-- Split Tenders / Payment Lines List -->
-        <Border Grid.Row="2" Style="{DynamicResource CardBorderStyle}" Padding="12" Margin="0,0,0,12">
+        <Border Grid.Row="3" Style="{DynamicResource CardBorderStyle}" Padding="14,12" Margin="0,0,0,12">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -72,23 +92,24 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <TextBlock Text="Payment Lines / Multi-Tender:" Style="{DynamicResource SectionHeaderStyle}" FontSize="13" Margin="0,0,0,8" />
+                <TextBlock Grid.Row="0" Text="Payment Lines / Multi-Tender:" Style="{DynamicResource SectionHeaderStyle}" FontSize="13" Margin="0,0,0,10" />
 
-                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" MaxHeight="135" Margin="0,0,0,6">
                     <ItemsControl ItemsSource="{Binding Payments}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,0,0,8">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="130" />
+                                        <ColumnDefinition Width="135" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="40" />
                                     </Grid.ColumnDefinitions>
 
                                     <!-- Method Dropdown -->
                                     <ComboBox Grid.Column="0" SelectedItem="{Binding Method, Mode=TwoWay}"
-                                              Height="34" Margin="0,0,8,0">
+                                              Height="36" Margin="0,0,8,0" VerticalContentAlignment="Center"
+                                              Style="{StaticResource InputComboBoxStyle}">
                                         <enums:PaymentMethod>Cash</enums:PaymentMethod>
                                         <enums:PaymentMethod>Card</enums:PaymentMethod>
                                         <enums:PaymentMethod>Bank</enums:PaymentMethod>
@@ -98,20 +119,24 @@
 
                                     <!-- Amount -->
                                     <TextBox Grid.Column="1" Text="{Binding Amount, StringFormat='{}{0:N2}', UpdateSourceTrigger=PropertyChanged}"
-                                             Height="34" Margin="0,0,8,0" FontWeight="Bold" FontSize="14" HorizontalContentAlignment="Right" VerticalContentAlignment="Center" />
+                                             Height="36" Margin="0,0,8,0" FontWeight="Bold" FontSize="14"
+                                             HorizontalContentAlignment="Right" VerticalContentAlignment="Center"
+                                             Style="{StaticResource InputTextBoxStyle}" />
 
                                     <!-- Reference for non-cash -->
                                     <TextBox Grid.Column="2" Text="{Binding Reference, UpdateSourceTrigger=PropertyChanged}"
-                                             Height="34" Margin="0,0,8,0" VerticalContentAlignment="Center"
+                                             Height="36" Margin="0,0,8,0" VerticalContentAlignment="Center"
                                              IsEnabled="{Binding IsNonCash}"
+                                             Style="{StaticResource InputTextBoxStyle}"
+                                             Tag="Ref / Transaction ID"
                                              ToolTip="Optional reference or transaction ID for Card/Bank/Mobile" />
 
                                     <!-- Remove -->
                                     <Button Grid.Column="3" Content="X"
                                             Command="{Binding DataContext.RemovePaymentLineCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                             CommandParameter="{Binding}"
-                                            Style="{DynamicResource DangerOutlineButtonStyle}"
-                                            Height="34" />
+                                            Style="{DynamicResource DangerButtonStyle}"
+                                            Height="36" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -119,13 +144,13 @@
                 </ScrollViewer>
 
                 <Button Grid.Row="2" Content="+ Add Split Tender Method" Command="{Binding AddPaymentLineCommand}"
-                        Style="{DynamicResource GhostButtonStyle}"
-                        HorizontalAlignment="Left" Height="30" Margin="0,6,0,0" />
+                        Style="{DynamicResource SecondaryButtonStyle}"
+                        HorizontalAlignment="Left" Height="32" Padding="14,4" Margin="0,4,0,0" />
             </Grid>
         </Border>
 
         <!-- Summary & Validation Row -->
-        <Grid Grid.Row="3" Margin="0,0,0,10">
+        <Grid Grid.Row="4" Margin="0,0,0,10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
@@ -148,7 +173,7 @@
         </Grid>
 
         <!-- Footer Buttons -->
-        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+        <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Content="Cancel (Esc)" Command="{Binding CancelCommand}"
                     Style="{DynamicResource SecondaryButtonStyle}"
                     MinWidth="110" Height="38" Margin="0,0,10,0" />

@@ -1,0 +1,161 @@
+<Window x:Class="ShopPOS.UI.Views.Dialogs.GitHubCopyRepoDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Dialogs"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance vm:GitHubCopyRepoDialogViewModel}"
+        Title="{Binding Title}"
+        Width="700"
+        Height="580"
+        Style="{DynamicResource DialogWindowStyle}"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="CanResizeWithGrip">
+
+    <Border Padding="20" Style="{DynamicResource SurfaceCardStyle}" Margin="10">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Header -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                <TextBlock Text="{Binding Title}" Style="{DynamicResource SectionHeaderStyle}" />
+                <TextBlock Text="Migrate all backup releases and assets to a new GitHub repository, or copy from a folder of downloaded files."
+                           Style="{DynamicResource SubTitleStyle}" Margin="0,2,0,0" />
+            </StackPanel>
+
+            <!-- Config Form -->
+            <StackPanel Grid.Row="1" Margin="0,0,0,10">
+                <!-- Mode Toggle -->
+                <TextBlock Text="MIGRATION SOURCE" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,4" />
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <RadioButton Content="From Another GitHub Repository"
+                                 IsChecked="{Binding IsFromRepoMode, Mode=TwoWay}"
+                                 Margin="0,0,20,0" />
+                    <RadioButton Content="From Local Folder of Downloaded Files"
+                                 IsChecked="{Binding IsFromRepoMode, Converter={StaticResource InverseBooleanConverter}, Mode=OneWay}"
+                                 Checked="LocalFolderRadio_Checked" />
+                </StackPanel>
+
+                <!-- Source Repo Inputs -->
+                <StackPanel Visibility="{Binding IsFromRepoMode, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBlock Text="Source Owner / Org" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,2" />
+                            <TextBox Text="{Binding SourceAccount, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource InputTextBoxStyle}" />
+                        </StackPanel>
+                        <StackPanel Grid.Column="2">
+                            <TextBlock Text="Source Repository" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,2" />
+                            <TextBox Text="{Binding SourceRepo, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource InputTextBoxStyle}" />
+                        </StackPanel>
+                    </Grid>
+                    <TextBlock Text="Source Personal Access Token (leave empty to use stored token)" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,2" />
+                    <TextBox Text="{Binding SourceToken, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource InputTextBoxStyle}" Margin="0,0,0,8" />
+                </StackPanel>
+
+                <!-- Local Folder Inputs -->
+                <StackPanel Visibility="{Binding IsFromRepoMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                    <TextBlock Text="Source Folder Path" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,2" />
+                    <Grid Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="10" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding SourceLocalFolder, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource InputTextBoxStyle}" />
+                        <Button Grid.Column="2" Content="Browse..." Command="{Binding BrowseLocalFolderCommand}" Style="{DynamicResource SecondaryButtonStyle}" Width="80" />
+                    </Grid>
+                </StackPanel>
+
+                <!-- Destination Inputs -->
+                <TextBlock Text="DESTINATION REPOSITORY" Style="{DynamicResource MutedLabelStyle}" Margin="0,4,0,4" />
+                <Grid Margin="0,0,0,6">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="10" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Destination Owner / Org" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,2" />
+                        <TextBox Text="{Binding DestAccount, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource InputTextBoxStyle}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Destination Repository" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,2" />
+                        <TextBox Text="{Binding DestRepo, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource InputTextBoxStyle}" />
+                    </StackPanel>
+                </Grid>
+                <TextBlock Text="Destination Personal Access Token" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,2" />
+                <TextBox Text="{Binding DestToken, UpdateSourceTrigger=PropertyChanged}" Style="{DynamicResource InputTextBoxStyle}" Margin="0,0,0,4" />
+            </StackPanel>
+
+            <!-- Activity Log -->
+            <Border Grid.Row="2" Background="{DynamicResource DarkBackgroundBrush}" CornerRadius="4" Padding="8" BorderThickness="1" BorderBrush="{DynamicResource BorderBrush}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl ItemsSource="{Binding LogMessages}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontFamily="Consolas" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="0,1" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </Border>
+
+            <!-- Progress & Messages -->
+            <StackPanel Grid.Row="3" Margin="0,10,0,0">
+                <ProgressBar Height="4"
+                             Value="{Binding ProgressPercent}"
+                             Maximum="100"
+                             Foreground="{DynamicResource AccentBrush}"
+                             Margin="0,0,0,4"
+                             Visibility="{Binding IsCopying, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                <TextBlock Text="{Binding StatusMessage}" Style="{DynamicResource MutedLabelStyle}" Visibility="{Binding StatusMessage, Converter={StaticResource StringToVisibilityConverter}}" />
+
+                <Border Background="{DynamicResource DangerBackgroundBrush}"
+                        BorderBrush="{DynamicResource DangerBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="6"
+                        Margin="0,4,0,0"
+                        Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerBrush}" FontSize="12" TextWrapping="Wrap" />
+                </Border>
+            </StackPanel>
+
+            <!-- Action Buttons -->
+            <Grid Grid.Row="4" Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <Button Content="Start Copying"
+                            Command="{Binding StartCopyCommand}"
+                            IsEnabled="{Binding IsCopying, Converter={StaticResource InverseBooleanConverter}}"
+                            Style="{DynamicResource PrimaryButtonStyle}"
+                            Padding="16,6"
+                            Margin="0,0,10,0" />
+
+                    <Button Content="Close"
+                            Click="Close_Click"
+                            Style="{DynamicResource SecondaryButtonStyle}"
+                            Width="80" />
+                </StackPanel>
+            </Grid>
+        </Grid>
+    </Border>
+</Window>
+

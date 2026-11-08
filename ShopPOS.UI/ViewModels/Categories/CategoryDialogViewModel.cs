@@ -11,8 +11,7 @@ public partial class CategoryDialogViewModel : ObservableObject
 {
     private readonly ICategoryService _categoryService;
     private readonly int? _currentUserId;
-    private readonly string? _currentUserRole;
-
+    
     [ObservableProperty]
     private string _dialogTitle = "Add Category";
 
@@ -43,13 +42,10 @@ public partial class CategoryDialogViewModel : ObservableObject
 
     public CategoryDialogViewModel(
         ICategoryService categoryService,
-        int? currentUserId,
-        string? currentUserRole)
+        int? currentUserId)
     {
         _categoryService = categoryService;
-        _currentUserId = currentUserId;
-        _currentUserRole = currentUserRole;
-    }
+        _currentUserId = currentUserId;    }
 
     public async Task InitializeAsync(int? categoryId = null, int? preselectedParentId = null)
     {
@@ -105,7 +101,7 @@ public partial class CategoryDialogViewModel : ObservableObject
                 ParentCategoryId = parentId
             };
 
-            var res = await _categoryService.CreateCategoryAsync(createDto, _currentUserId, _currentUserRole);
+            var res = await _categoryService.CreateCategoryAsync(createDto, _currentUserId);
             if (!res.Success)
             {
                 ApplyErrors(res);
@@ -122,7 +118,7 @@ public partial class CategoryDialogViewModel : ObservableObject
                 IsActive = IsActive
             };
 
-            var res = await _categoryService.UpdateCategoryAsync(updateDto, _currentUserId, _currentUserRole);
+            var res = await _categoryService.UpdateCategoryAsync(updateDto, _currentUserId);
             if (!res.Success)
             {
                 ApplyErrors(res);

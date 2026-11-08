@@ -20,6 +20,7 @@ public class SaleReturnConfiguration : IEntityTypeConfiguration<SaleReturn>
             .IsUnique();
 
         builder.HasIndex(r => r.SaleId);
+        builder.HasIndex(r => new { r.Status, r.ReturnDate });
 
         builder.Property(r => r.SubTotal).HasConversion<MoneyConverter>();
         builder.Property(r => r.TaxAmount).HasConversion<MoneyConverter>();

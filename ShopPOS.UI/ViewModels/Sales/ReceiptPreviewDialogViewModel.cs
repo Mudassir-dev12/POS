@@ -33,6 +33,11 @@ public partial class ReceiptPreviewDialogViewModel : ObservableObject
     [ObservableProperty]
     private string? _statusMessage;
 
+    [ObservableProperty]
+    private string? _selectedPrinter;
+
+    public ObservableCollection<string> AvailablePrinters { get; } = new();
+
     public ObservableCollection<BitmapSource> PageImages { get; } = new();
 
     public ReceiptDocument? Document { get; private set; }
@@ -57,6 +62,38 @@ public partial class ReceiptPreviewDialogViewModel : ObservableObject
         Subtitle = $"Paper: {(doc.PaperWidthMm > 100 ? "A4 Corporate Invoice" : $"{doc.PaperWidthMm}mm Thermal")}";
 
         LoadPageImages();
+        _ = LoadPrintersAsync();
+    }
+
+    private async Task LoadPrintersAsync()
+    {
+        if (_receiptPrinterService == null || _shopSettingService == null) return;
+        try
+        {
+            var settings = await _shopSettingService.GetSettingsAsync();
+            var printers = await _receiptPrinterService.GetInstalledPrintersAsync();
+
+            AvailablePrinters.Clear();
+            foreach (var p in printers)
+            {
+                AvailablePrinters.Add(p);
+            }
+
+            if (!string.IsNullOrWhiteSpace(settings.ReceiptPrinterName) && AvailablePrinters.Contains(settings.ReceiptPrinterName))
+            {
+                SelectedPrinter = settings.ReceiptPrinterName;
+            }
+            else
+            {
+                var candidate = AvailablePrinters.FirstOrDefault(p => p.Contains("TM-T88", StringComparison.OrdinalIgnoreCase) || p.Contains("Receipt", StringComparison.OrdinalIgnoreCase))
+                                ?? AvailablePrinters.FirstOrDefault();
+                SelectedPrinter = candidate;
+            }
+        }
+        catch
+        {
+            // Ignore printer enumeration quirks
+        }
     }
 
     // Parameterless constructor for DI and smoke tests
@@ -105,8 +142,13 @@ public partial class ReceiptPreviewDialogViewModel : ObservableObject
         {
             var settings = await _shopSettingService.GetSettingsAsync();
 
+            if (!string.IsNullOrWhiteSpace(SelectedPrinter))
+            {
+                settings.ReceiptPrinterName = SelectedPrinter;
+            }
+
             // When user explicitly clicks Print from the preview window, route to WindowsDriver if in PdfPreview mode
-            if (settings.PrinterMode == Core.Enums.PrinterMode.PdfPreview && !string.IsNullOrWhiteSpace(settings.ReceiptPrinterName))
+            if (settings.PrinterMode == Core.Enums.PrinterMode.PdfPreview)
             {
                 settings.PrinterMode = Core.Enums.PrinterMode.WindowsDriver;
             }

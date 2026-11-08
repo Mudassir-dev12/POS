@@ -30,6 +30,9 @@ using ShopPOS.UI.ViewModels.SupplierPayments;
 using ShopPOS.UI.ViewModels.Suppliers;
 using ShopPOS.UI.ViewModels.Units;
 using ShopPOS.UI.ViewModels.Dashboard;
+using ShopPOS.UI.ViewModels.Reports;
+using ShopPOS.UI.ViewModels.Dialogs;
+using ShopPOS.UI.ViewModels.BackupRestore;
 using ShopPOS.UI.Views;
 using ShopPOS.UI.Views.Dialogs;
 using ShopPOS.UI.Views.Dialogs.Sales;
@@ -39,54 +42,14 @@ namespace ShopPOS.Tests;
 
 public class UiSmokeTests
 {
-    private static void RunOnSta(Action action)
-    {
-        if (Application.Current != null && Application.Current.Dispatcher != null)
-        {
-            if (Application.Current.Dispatcher.CheckAccess())
-            {
-                action();
-            }
-            else
-            {
-                Application.Current.Dispatcher.Invoke(action);
-            }
-            return;
-        }
-
-        Exception? threadEx = null;
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                action();
-            }
-            catch (Exception ex)
-            {
-                threadEx = ex;
-            }
-        });
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        thread.Join();
-
-        if (threadEx != null)
-        {
-            ExceptionDispatchInfo.Capture(threadEx).Throw();
-        }
-    }
+    private static void RunOnSta(Action action) => StaTestHelper.RunOnSta(action);
 
     [Fact]
     public void AllViewsAndDialogs_MustLoadXamlAndBindSuccessfully_InLightAndDarkThemes()
     {
         RunOnSta(() =>
         {
-            // 1. Ensure WPF Application and App.xaml resources (converters, themes, styles) are loaded
-            if (Application.Current == null)
-            {
-                var app = new App();
-                app.InitializeComponent();
-            }
+            // 1. WPF Application and App.xaml resources are initialized via StaTestHelper
 
             // 2. Build real DI container using temporary SQLite database
             string tempDbPath = Path.Combine(Path.GetTempPath(), $"ShopPOS_UiSmoke_{Guid.NewGuid():N}.db");
@@ -115,8 +78,7 @@ public class UiSmokeTests
 
                 var windowTests = new (Type ViewType, Type ViewModelType)[]
                 {
-                    (typeof(MainWindow), typeof(MainWindowViewModel)),
-                    (typeof(PurchaseEntryWindow), typeof(PurchaseEntryViewModel)),
+                                        (typeof(PurchaseEntryWindow), typeof(PurchaseEntryViewModel)),
                     (typeof(SupplierPaymentDialog), typeof(SupplierPaymentDialogViewModel)),
                     (typeof(PurchaseReturnDialog), typeof(PurchaseReturnDialogViewModel)),
                     (typeof(ProductSearchDialog), typeof(ProductSearchDialogViewModel)),
@@ -142,6 +104,15 @@ public class UiSmokeTests
                     (typeof(CartExitPromptDialog), typeof(CartExitPromptDialogViewModel)),
                     (typeof(PrinterSettingsDialog), typeof(PrinterSettingsDialogViewModel)),
                     (typeof(ReceiptPreviewDialog), typeof(ReceiptPreviewDialogViewModel)),
+                    (typeof(ReportPreviewDialog), typeof(ReportPreviewDialogViewModel)),
+                    (typeof(DataResetConfirmDialog), typeof(DataResetConfirmDialogViewModel)),
+                    (typeof(DataToolResultDialog), typeof(DataToolResultDialogViewModel)),
+                    (typeof(RestoreConfirmDialog), typeof(RestoreConfirmDialogViewModel)),
+                    (typeof(BackupPasswordDialog), typeof(BackupPasswordDialogViewModel)),
+                    (typeof(AppCloseBackupDialog), typeof(AppCloseBackupDialogViewModel)),
+                    (typeof(DriveConnectProgressDialog), typeof(DriveConnectProgressDialogViewModel)),
+                    (typeof(DriveBackupsDialog), typeof(DriveBackupsDialogViewModel)),
+                    (typeof(ShopPOS.UI.Views.Setup.SetupWizardWindow), typeof(ShopPOS.UI.ViewModels.Setup.SetupWizardViewModel)),
                 };
 
                 var userControlTests = new (Type ViewType, Type ViewModelType)[]
@@ -168,6 +139,8 @@ public class UiSmokeTests
                     (typeof(PosSaleView), typeof(PosSaleViewModel)),
                     (typeof(SalesView), typeof(SalesViewModel)),
                     (typeof(SaleReturnsView), typeof(SaleReturnsViewModel)),
+                    (typeof(ReportsView), typeof(ReportsViewModel)),
+                    (typeof(BackupRestoreView), typeof(BackupRestoreViewModel)),
                 };
 
                 // Test under both Light and Dark themes
@@ -179,14 +152,18 @@ public class UiSmokeTests
                     // 4. Test all Windows & Dialogs
                     foreach (var (viewType, vmType) in windowTests)
                     {
+                        Console.WriteLine($"[SMOKE TEST] Instantiating Window: {viewType.Name}, App={Application.Current != null}");
                         var vm = serviceProvider.GetRequiredService(vmType);
+                        Console.WriteLine($"[SMOKE TEST] Resolved VM for {viewType.Name}, App={Application.Current != null}");
                         var window = (Window)serviceProvider.GetRequiredService(viewType);
+                        Console.WriteLine($"[SMOKE TEST] Resolved Window for {viewType.Name}, App={Application.Current != null}");
                         window.DataContext = vm;
-
-                        // Force XAML load, layout, and rendering
                         window.Show();
+                        Console.WriteLine($"[SMOKE TEST] After Show for {viewType.Name}, App={Application.Current != null}");
                         Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
-                        window.Close();
+                        Console.WriteLine($"[SMOKE TEST] After Render for {viewType.Name}, App={Application.Current != null}");
+                        window.Hide();
+                        Console.WriteLine($"[SMOKE TEST] After Hide for {viewType.Name}, App={Application.Current != null}");
                     }
 
                     // ConfirmActionDialog (non-VM custom dialog)
@@ -207,9 +184,24 @@ public class UiSmokeTests
                     Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
                     bulkSummary.Close();
 
+                    // UnhandledExceptionDialog
+                    var unhandledExDialog = new UnhandledExceptionDialog("Test Exception Message", "at ShopPOS.Test.Mock() in C:\\test.cs:line 12");
+                    unhandledExDialog.Show();
+                    Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
+                    unhandledExDialog.Close();
+
+                    // MainWindow shell test
+                    var mainVm = serviceProvider.GetRequiredService<MainWindowViewModel>();
+                    var mainWin = (MainWindow)serviceProvider.GetRequiredService(typeof(MainWindow));
+                    mainWin.DataContext = mainVm;
+                    mainWin.Show();
+                    Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Render);
+                    mainWin.Hide();
+
                     // 5. Test all UserControls (Views) hosted inside a temporary test window
                     foreach (var (viewType, vmType) in userControlTests)
                     {
+                        Console.WriteLine($"[SMOKE TEST] Instantiating View: {viewType.Name}");
                         var vm = serviceProvider.GetRequiredService(vmType);
                         var view = (FrameworkElement)serviceProvider.GetRequiredService(viewType);
                         view.DataContext = vm;

@@ -19,7 +19,9 @@
             <RowDefinition Height="Auto" />
             <!-- Filter Bar -->
             <RowDefinition Height="Auto" />
-            <!-- Returns Grid -->
+            <!-- Workspace Tabs -->
+            <RowDefinition Height="Auto" />
+            <!-- Content Area (Sales or Returns) -->
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -41,33 +43,101 @@
         </Grid>
 
         <!-- FILTER BAR -->
-        <Border Grid.Row="1" Style="{StaticResource FilterBarStyle}">
+        <Border Grid.Row="1" Style="{StaticResource FilterBarStyle}" Margin="0,0,0,12">
             <WrapPanel VerticalAlignment="Center">
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="Search:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
-                    <TextBox Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="180" Style="{StaticResource InputTextBoxStyle}">
+                    <TextBlock Text="Search:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200" Height="36"
+                             Style="{StaticResource InputTextBoxStyle}"
+                             Tag="Search Sale #, Customer...">
                         <TextBox.InputBindings>
-                            <KeyBinding Key="Return" Command="{Binding LoadReturnsCommand}" />
+                            <KeyBinding Key="Return" Command="{Binding RefreshAllCommand}" />
                         </TextBox.InputBindings>
                     </TextBox>
                 </StackPanel>
 
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="From Date:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
-                    <DatePicker SelectedDate="{Binding DateFrom, Mode=TwoWay}" Width="120" Height="30" />
+                    <TextBlock Text="From Date:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                    <DatePicker SelectedDate="{Binding DateFrom, Mode=TwoWay}" Width="145" Height="36" Style="{StaticResource InputDatePickerStyle}" />
                 </StackPanel>
 
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="To Date:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
-                    <DatePicker SelectedDate="{Binding DateTo, Mode=TwoWay}" Width="120" Height="30" />
+                    <TextBlock Text="To Date:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                    <DatePicker SelectedDate="{Binding DateTo, Mode=TwoWay}" Width="145" Height="36" Style="{StaticResource InputDatePickerStyle}" />
                 </StackPanel>
 
-                <Button Content="Filter / Refresh (F5)" Command="{Binding LoadReturnsCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,16,0,0" />
+                <Button Content="Filter / Refresh (F5)" Command="{Binding RefreshAllCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Height="36" Padding="16,0"
+                        Margin="0,17,0,0" VerticalAlignment="Bottom" />
             </WrapPanel>
         </Border>
 
-        <!-- RETURNS GRID -->
-        <Grid Grid.Row="2">
+        <!-- WORKSPACE TABS -->
+        <Border Grid.Row="2" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal">
+                <RadioButton Content="{Binding RecentSales.Count, StringFormat='Recent Customer Purchases ({0})'}"
+                             IsChecked="{Binding ActiveTab, Converter={StaticResource EqualityToBooleanConverter}, ConverterParameter=0}"
+                             FontWeight="Bold" FontSize="13" Margin="0,0,16,0" />
+                <RadioButton Content="{Binding Items.Count, StringFormat='Processed Returns History ({0})'}"
+                             IsChecked="{Binding ActiveTab, Converter={StaticResource EqualityToBooleanConverter}, ConverterParameter=1}"
+                             FontWeight="Bold" FontSize="13" />
+            </StackPanel>
+        </Border>
+
+        <!-- TAB 0: RECENT CUSTOMER PURCHASES (FOR DIRECT RETURN) -->
+        <Border Grid.Row="3">
+            <Border.Style>
+                <Style TargetType="Border" BasedOn="{StaticResource TableContainerBorderStyle}">
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ActiveTab}" Value="1">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <DataGrid ItemsSource="{Binding RecentSales}" SelectedItem="{Binding SelectedSale, Mode=TwoWay}"
+                      Style="{StaticResource AppDataGridStyle}">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Sale #" Binding="{Binding SaleNumber}" Width="140"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
+                    <DataGridTextColumn Header="Date &amp; Time" Binding="{Binding SaleDate, StringFormat='{}{0:yyyy-MM-dd HH:mm}'}" Width="150" />
+                    <DataGridTextColumn Header="Customer" Binding="{Binding CustomerName, TargetNullValue='Walk-in'}" Width="*" />
+                    <DataGridTextColumn Header="Contact No" Binding="{Binding CustomerPhone, TargetNullValue='-'}" Width="140" />
+                    <DataGridTextColumn Header="Items" Binding="{Binding ItemCount}" Width="75"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
+                    <DataGridTextColumn Header="Total" Binding="{Binding GrandTotal, Converter={StaticResource MoneyConverter}}" Width="130"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
+                    <DataGridTextColumn Header="Paid" Binding="{Binding PaidAmount, Converter={StaticResource MoneyConverter}}" Width="130"
+                                        ElementStyle="{StaticResource MonospaceNumericCell}" />
+                    <DataGridTemplateColumn Width="140" Header="Action">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="+ Return Items"
+                                        Command="{Binding DataContext.ReturnSaleCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource PrimaryButtonStyle}"
+                                        Height="26" Padding="8,2" FontSize="12" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Border>
+
+        <!-- TAB 1: PROCESSED RETURNS HISTORY -->
+        <Grid Grid.Row="3">
+            <Grid.Style>
+                <Style TargetType="Grid">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding ActiveTab}" Value="1">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Grid.Style>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />

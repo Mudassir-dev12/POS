@@ -151,7 +151,7 @@ public partial class PurchaseEntryViewModel : ObservableObject
         try
         {
             // 1. Load active suppliers
-            var supRes = await _supplierService.GetFlatListAsync(false, "Owner");
+            var supRes = await _supplierService.GetFlatListAsync(false);
             if (supRes.Success && supRes.Data != null)
             {
                 Suppliers.Clear();
@@ -164,7 +164,7 @@ public partial class PurchaseEntryViewModel : ObservableObject
             // 2. Load existing purchase or initialize empty draft
             if (purchaseId.HasValue)
             {
-                var pRes = await _purchaseService.GetPurchaseByIdAsync(purchaseId.Value, "Owner");
+                var pRes = await _purchaseService.GetPurchaseByIdAsync(purchaseId.Value);
                 if (pRes.Success && pRes.Data != null)
                 {
                     LoadFromDetail(pRes.Data);
@@ -435,8 +435,6 @@ public partial class PurchaseEntryViewModel : ObservableObject
         }
 
         int? userId = 1;
-        string? userRole = "Owner";
-
         IsLoading = true;
         try
         {
@@ -462,7 +460,7 @@ public partial class PurchaseEntryViewModel : ObservableObject
                     }).ToList()
                 };
 
-                var updateRes = await _purchaseService.UpdatePurchaseDraftAsync(updateDto, userId, userRole);
+                var updateRes = await _purchaseService.UpdatePurchaseDraftAsync(updateDto, userId);
                 if (!updateRes.Success)
                 {
                     ErrorMessage = updateRes.ErrorMessage;
@@ -494,7 +492,7 @@ public partial class PurchaseEntryViewModel : ObservableObject
                     }).ToList()
                 };
 
-                var createRes = await _purchaseService.CreatePurchaseDraftAsync(createDto, userId, userRole);
+                var createRes = await _purchaseService.CreatePurchaseDraftAsync(createDto, userId);
                 if (!createRes.Success)
                 {
                     ErrorMessage = createRes.ErrorMessage;
@@ -533,12 +531,10 @@ public partial class PurchaseEntryViewModel : ObservableObject
         try
         {
             int? userId = 1;
-            string? userRole = "Owner";
-
             decimal? payAmount = PayNowEnabled ? PayNowAmount : null;
             PaymentMethod? payMethod = PayNowEnabled ? PayNowMethod : null;
 
-            var postRes = await _purchaseService.PostPurchaseAsync(_purchaseId.Value, payAmount, payMethod, userId, userRole);
+            var postRes = await _purchaseService.PostPurchaseAsync(_purchaseId.Value, payAmount, payMethod, userId);
             if (!postRes.Success)
             {
                 ErrorMessage = postRes.ErrorMessage;

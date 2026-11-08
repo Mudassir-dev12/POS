@@ -4,13 +4,13 @@
         Title="Confirm Bulk Action"
         Width="480"
         SizeToContent="Height"
-        Style="{StaticResource DialogWindowStyle}"
+        Style="{DynamicResource DialogWindowStyle}"
         ResizeMode="NoResize">
 
-    <Border Padding="24" Style="{StaticResource SurfaceCardStyle}" Margin="12">
+    <Border Padding="24" Style="{DynamicResource SurfaceCardStyle}" Margin="12">
         <StackPanel>
-            <TextBlock x:Name="TitleText" Text="Confirm Action" Style="{StaticResource SectionHeaderStyle}" />
-            <TextBlock x:Name="MessageText" Text="Are you sure you want to perform this action?" TextWrapping="Wrap" Style="{StaticResource SubTitleStyle}" Margin="0,10,0,0" LineHeight="20" />
+            <TextBlock x:Name="TitleText" Text="Confirm Action" Style="{DynamicResource SectionHeaderStyle}" />
+            <TextBlock x:Name="MessageText" Text="Are you sure you want to perform this action?" TextWrapping="Wrap" Style="{DynamicResource SubTitleStyle}" Margin="0,10,0,0" LineHeight="20" />
 
             <!-- Typed Confirmation Section (when > 50 items or all results selected) -->
             <StackPanel x:Name="TypedConfirmationSection" Visibility="Collapsed" Margin="0,16,0,0">
@@ -18,14 +18,14 @@
                     <TextBlock x:Name="WarningText" Text="This affects a large number of items. Type DELETE to confirm."
                                FontWeight="SemiBold" Foreground="{DynamicResource DangerBrush}" FontSize="12" TextWrapping="Wrap" />
                 </Border>
-                <TextBlock Text="TYPE CONFIRMATION WORD BELOW:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                <TextBox x:Name="ConfirmationInput" Style="{StaticResource InputTextBoxStyle}" FontSize="14" FontWeight="Bold" TextChanged="ConfirmationInput_TextChanged" />
+                <TextBlock Text="TYPE CONFIRMATION WORD BELOW:" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,4" />
+                <TextBox x:Name="ConfirmationInput" Style="{DynamicResource InputTextBoxStyle}" FontSize="14" FontWeight="Bold" TextChanged="ConfirmationInput_TextChanged" />
             </StackPanel>
 
             <!-- Buttons -->
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,24,0,0">
-                <Button Content="Cancel" Click="Cancel_Click" Style="{StaticResource SecondaryButtonStyle}" Width="90" Height="34" Margin="0,0,10,0" />
-                <Button x:Name="ConfirmBtn" Content="Confirm" Click="Confirm_Click" Style="{StaticResource DangerButtonStyle}" Width="130" Height="34" />
+                <Button Content="Cancel" Click="Cancel_Click" Style="{DynamicResource SecondaryButtonStyle}" Width="90" Height="34" Margin="0,0,10,0" />
+                <Button x:Name="ConfirmBtn" Content="Confirm" Click="Confirm_Click" Style="{DynamicResource DangerButtonStyle}" Width="130" Height="34" />
             </StackPanel>
         </StackPanel>
     </Border>

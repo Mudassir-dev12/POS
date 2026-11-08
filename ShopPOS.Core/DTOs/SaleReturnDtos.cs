@@ -20,6 +20,7 @@ public class CreateSaleReturnDto
     public PaymentMethod RefundMethod { get; set; } = PaymentMethod.Cash;
     public string? Reason { get; set; }
     public List<CreateSaleReturnItemDto> Items { get; set; } = new();
+    public DateTime? ReturnDateOverride { get; set; }
 }
 
 public class ReturnableLineDto

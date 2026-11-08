@@ -95,9 +95,7 @@ public partial class StockAdjustmentDialogViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         if (AdjustmentId.HasValue && AdjustmentId.Value > 0)
-        {
-            var userRole = "Owner";
-            var result = await _adjustmentService.GetAdjustmentByIdAsync(AdjustmentId.Value, userRole);
+        {            var result = await _adjustmentService.GetAdjustmentByIdAsync(AdjustmentId.Value);
             if (result.Success && result.Data != null)
             {
                 var d = result.Data;
@@ -292,8 +290,6 @@ public partial class StockAdjustmentDialogViewModel : ObservableObject
         try
         {
             var userId = 1;
-            var userRole = "Owner";
-
             int savedAdjustmentId;
 
             if (AdjustmentId.HasValue && AdjustmentId.Value > 0)
@@ -312,7 +308,7 @@ public partial class StockAdjustmentDialogViewModel : ObservableObject
                     }).ToList()
                 };
 
-                var updateResult = await _adjustmentService.UpdateAdjustmentDraftAsync(updateDto, userId, userRole);
+                var updateResult = await _adjustmentService.UpdateAdjustmentDraftAsync(updateDto, userId);
                 if (!updateResult.Success)
                 {
                     ErrorMessage = updateResult.ErrorMessage ?? "Failed to update adjustment.";
@@ -335,7 +331,7 @@ public partial class StockAdjustmentDialogViewModel : ObservableObject
                     }).ToList()
                 };
 
-                var createResult = await _adjustmentService.CreateAdjustmentDraftAsync(createDto, userId, userRole);
+                var createResult = await _adjustmentService.CreateAdjustmentDraftAsync(createDto, userId);
                 if (!createResult.Success)
                 {
                     ErrorMessage = createResult.ErrorMessage ?? "Failed to create adjustment.";
@@ -346,7 +342,7 @@ public partial class StockAdjustmentDialogViewModel : ObservableObject
 
             if (andPost)
             {
-                var postResult = await _adjustmentService.PostAdjustmentAsync(savedAdjustmentId, userId, userRole);
+                var postResult = await _adjustmentService.PostAdjustmentAsync(savedAdjustmentId, userId);
                 if (!postResult.Success)
                 {
                     ErrorMessage = $"Adjustment saved as Draft, but posting failed: {postResult.ErrorMessage}";

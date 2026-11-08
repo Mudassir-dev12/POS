@@ -81,7 +81,7 @@ public partial class CategoriesViewModel : BaseCrudViewModel<CategoryDto>
     {
         if (!CanAdd) return;
 
-        var dialogVm = new CategoryDialogViewModel(_categoryService, GetCurrentUserId(), GetCurrentRole());
+        var dialogVm = new CategoryDialogViewModel(_categoryService, GetCurrentUserId());
         await dialogVm.InitializeAsync(null, parentId);
 
         if (_dialogService.ShowCategoryDialog(dialogVm) == true)
@@ -94,7 +94,7 @@ public partial class CategoriesViewModel : BaseCrudViewModel<CategoryDto>
     {
         if (!CanEdit || SelectedItem == null) return;
 
-        var dialogVm = new CategoryDialogViewModel(_categoryService, GetCurrentUserId(), GetCurrentRole());
+        var dialogVm = new CategoryDialogViewModel(_categoryService, GetCurrentUserId());
         await dialogVm.InitializeAsync(SelectedItem.Id);
 
         if (_dialogService.ShowCategoryDialog(dialogVm) == true)
@@ -110,7 +110,7 @@ public partial class CategoriesViewModel : BaseCrudViewModel<CategoryDto>
         int id = SelectedItem.Id;
         string name = SelectedItem.Name;
 
-        var delRes = await _categoryService.DeleteCategoryAsync(id, GetCurrentUserId(), GetCurrentRole());
+        var delRes = await _categoryService.DeleteCategoryAsync(id, GetCurrentUserId());
         if (delRes.Success)
         {
             await LoadDataAsync();
@@ -126,7 +126,7 @@ public partial class CategoriesViewModel : BaseCrudViewModel<CategoryDto>
 
             if (result == ConfirmActionResult.Deactivate)
             {
-                await _categoryService.DeactivateCategoryAsync(id, GetCurrentUserId(), GetCurrentRole());
+                await _categoryService.DeactivateCategoryAsync(id, GetCurrentUserId());
                 await LoadDataAsync();
             }
         }

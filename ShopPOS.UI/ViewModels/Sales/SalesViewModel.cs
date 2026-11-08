@@ -34,6 +34,15 @@ public partial class SalesViewModel : ObservableObject
     [ObservableProperty]
     private SaleStatus? _selectedStatus;
 
+    public record SaleStatusOption(string Display, SaleStatus? Value);
+
+    public ObservableCollection<SaleStatusOption> StatusOptions { get; } = new()
+    {
+        new("All Statuses", null),
+        new("Completed", SaleStatus.Completed),
+        new("Cancelled", SaleStatus.Cancelled)
+    };
+
     [ObservableProperty]
     private bool _withDueOnly;
 

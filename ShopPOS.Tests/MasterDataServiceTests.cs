@@ -116,7 +116,7 @@ public class MasterDataServiceTests : IDisposable
         };
 
         // Act
-        var result = await _productService.CreateProductAsync(dto, 1, RoleDefaults.Admin);
+        var result = await _productService.CreateProductAsync(dto, 1);
 
         // Assert
         result.Success.Should().BeTrue();
@@ -134,7 +134,7 @@ public class MasterDataServiceTests : IDisposable
             SalePrice = 4.00m
         };
 
-        var result2 = await _productService.CreateProductAsync(dto2, 1, RoleDefaults.Admin);
+        var result2 = await _productService.CreateProductAsync(dto2, 1);
         result2.Success.Should().BeTrue();
         result2.Data!.Sku.Should().Be("P000002");
     }
@@ -153,7 +153,7 @@ public class MasterDataServiceTests : IDisposable
             CostPrice = 1.00m,
             SalePrice = 1.50m
         };
-        var firstRes = await _productService.CreateProductAsync(firstDto, 1, RoleDefaults.Admin);
+        var firstRes = await _productService.CreateProductAsync(firstDto, 1);
         firstRes.Success.Should().BeTrue();
 
         // Act: Try creating another product with the same primary barcode
@@ -167,7 +167,7 @@ public class MasterDataServiceTests : IDisposable
             CostPrice = 1.00m,
             SalePrice = 1.50m
         };
-        var dupRes = await _productService.CreateProductAsync(duplicateDto, 1, RoleDefaults.Admin);
+        var dupRes = await _productService.CreateProductAsync(duplicateDto, 1);
 
         // Assert
         dupRes.Success.Should().BeFalse();
@@ -192,7 +192,7 @@ public class MasterDataServiceTests : IDisposable
         };
 
         // Act
-        var res = await _productService.CreateProductAsync(dto, 1, RoleDefaults.Admin);
+        var res = await _productService.CreateProductAsync(dto, 1);
 
         // Assert
         res.Success.Should().BeTrue();
@@ -223,7 +223,7 @@ public class MasterDataServiceTests : IDisposable
         };
 
         // Act
-        var res = await _productService.CreateProductAsync(dto, 1, RoleDefaults.Admin);
+        var res = await _productService.CreateProductAsync(dto, 1);
 
         // Assert
         res.Success.Should().BeFalse();
@@ -243,7 +243,7 @@ public class MasterDataServiceTests : IDisposable
             CostPrice = 10.00m,
             SalePrice = 15.00m
         };
-        var createRes = await _productService.CreateProductAsync(dto, 1, RoleDefaults.Admin);
+        var createRes = await _productService.CreateProductAsync(dto, 1);
         createRes.Success.Should().BeTrue();
         int prodId = createRes.Data!.Id;
 
@@ -259,7 +259,7 @@ public class MasterDataServiceTests : IDisposable
             SalePrice = 17.00m, // Changed
             IsActive = true
         };
-        var updateRes = await _productService.UpdateProductAsync(updateDto, _testUser.Id, RoleDefaults.Admin);
+        var updateRes = await _productService.UpdateProductAsync(updateDto, _testUser.Id);
         updateRes.Success.Should().BeTrue();
 
         // Assert
@@ -285,7 +285,7 @@ public class MasterDataServiceTests : IDisposable
             CostPrice = 6.00m,
             SalePrice = 9.00m
         };
-        var createRes = await _productService.CreateProductAsync(dto, 1, RoleDefaults.Admin);
+        var createRes = await _productService.CreateProductAsync(dto, 1);
         createRes.Success.Should().BeTrue();
         int prodId = createRes.Data!.Id;
 
@@ -301,7 +301,7 @@ public class MasterDataServiceTests : IDisposable
             SalePrice = 10.50m,
             IsActive = true
         };
-        var updateRes = await _productService.UpdateProductAsync(updateDto, null, RoleDefaults.Admin);
+        var updateRes = await _productService.UpdateProductAsync(updateDto, null);
         updateRes.Success.Should().BeTrue();
 
         // Assert: Price history was recorded and ChangedByUserId is null
@@ -324,17 +324,17 @@ public class MasterDataServiceTests : IDisposable
             SalePrice = 4.50m,
             OpeningQuantity = 10m
         };
-        var prod = await _productService.CreateProductAsync(dto, 1, RoleDefaults.Admin);
+        var prod = await _productService.CreateProductAsync(dto, 1);
 
         // Act: Delete
-        var delRes = await _productService.DeleteProductAsync(prod.Data!.Id, 1, RoleDefaults.Admin);
+        var delRes = await _productService.DeleteProductAsync(prod.Data!.Id, 1);
 
         // Assert
         delRes.Success.Should().BeFalse();
         delRes.ErrorMessage.Should().Be("REFERENCED_CANNOT_DELETE");
 
         // Act: Deactivate instead
-        var deactRes = await _productService.DeactivateProductAsync(prod.Data!.Id, 1, RoleDefaults.Admin);
+        var deactRes = await _productService.DeactivateProductAsync(prod.Data!.Id, 1);
         deactRes.Success.Should().BeTrue();
 
         var refreshed = await _productRepo.GetByIdAsync(prod.Data!.Id);
@@ -346,9 +346,9 @@ public class MasterDataServiceTests : IDisposable
     public async Task CategoryHierarchy_CyclePrevention_ShouldPreventSelfOrDescendantAsParent()
     {
         // Arrange: Root -> Child -> Grandchild
-        var rootRes = await _categoryService.CreateCategoryAsync(new CreateCategoryDto { Name = "Food" }, 1, RoleDefaults.Admin);
-        var childRes = await _categoryService.CreateCategoryAsync(new CreateCategoryDto { Name = "Snacks", ParentCategoryId = rootRes.Data!.Id }, 1, RoleDefaults.Admin);
-        var grandRes = await _categoryService.CreateCategoryAsync(new CreateCategoryDto { Name = "Chips", ParentCategoryId = childRes.Data!.Id }, 1, RoleDefaults.Admin);
+        var rootRes = await _categoryService.CreateCategoryAsync(new CreateCategoryDto { Name = "Food" }, 1);
+        var childRes = await _categoryService.CreateCategoryAsync(new CreateCategoryDto { Name = "Snacks", ParentCategoryId = rootRes.Data!.Id }, 1);
+        var grandRes = await _categoryService.CreateCategoryAsync(new CreateCategoryDto { Name = "Chips", ParentCategoryId = childRes.Data!.Id }, 1);
 
         // Act: Attempt to set Root's parent to Grandchild (creating a cycle)
         var cycleRes = await _categoryService.UpdateCategoryAsync(new UpdateCategoryDto
@@ -356,7 +356,7 @@ public class MasterDataServiceTests : IDisposable
             Id = rootRes.Data!.Id,
             Name = "Food",
             ParentCategoryId = grandRes.Data!.Id
-        }, 1, RoleDefaults.Admin);
+        }, 1);
 
         // Assert
         cycleRes.Success.Should().BeFalse();
@@ -372,11 +372,11 @@ public class MasterDataServiceTests : IDisposable
             Name = "Authorized Product",
             CategoryId = _defaultCategory.Id,
             UnitId = _defaultUnit.Id
-        }, 1, "Owner");
+        }, 1);
         prodRes.Success.Should().BeTrue();
 
         // 2. User can access suppliers
-        var suppRes = await _supplierService.GetPagedSuppliersAsync(new MasterDataSearchQuery(), "Owner");
+        var suppRes = await _supplierService.GetPagedSuppliersAsync(new MasterDataSearchQuery());
         suppRes.Success.Should().BeTrue();
 
 

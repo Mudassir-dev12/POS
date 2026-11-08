@@ -22,6 +22,7 @@ public class SalePaymentConfiguration : IEntityTypeConfiguration<SalePayment>
             .HasMaxLength(100);
 
         builder.HasIndex(p => p.SaleId);
+        builder.HasIndex(p => new { p.Method, p.PaidAt });
     }
 }
 

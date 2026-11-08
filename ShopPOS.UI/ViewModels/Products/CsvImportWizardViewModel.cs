@@ -13,8 +13,7 @@ public partial class CsvImportWizardViewModel : ObservableObject
     private readonly ICsvProductService _csvProductService;
     private readonly IDialogService _dialogService;
     private readonly int? _currentUserId;
-    private readonly string? _currentUserRole;
-
+    
     private CancellationTokenSource? _importCts;
 
     [ObservableProperty]
@@ -32,7 +31,7 @@ public partial class CsvImportWizardViewModel : ObservableObject
     [ObservableProperty]
     private string? _statusMessage;
 
-    // Step 2: Preview
+    // Step 2: Preview & Column Mapping
     [ObservableProperty]
     private int _previewRowCount = 0;
 
@@ -50,6 +49,41 @@ public partial class CsvImportWizardViewModel : ObservableObject
 
     public ObservableCollection<string> Headers { get; } = new();
     public ObservableCollection<Dictionary<string, string>> PreviewRows { get; } = new();
+    public ObservableCollection<string> AvailableColumns { get; } = new();
+
+    // User Column Mappings
+    [ObservableProperty]
+    private string? _selectedProductNameColumn;
+
+    [ObservableProperty]
+    private string? _selectedSkuColumn;
+
+    [ObservableProperty]
+    private string? _selectedBarcodeColumn;
+
+    [ObservableProperty]
+    private string? _selectedCostPriceColumn;
+
+    [ObservableProperty]
+    private string? _selectedSalePriceColumn;
+
+    [ObservableProperty]
+    private string? _selectedStockQuantityColumn;
+
+    [ObservableProperty]
+    private string? _selectedCategoryColumn;
+
+    [ObservableProperty]
+    private string? _selectedBrandColumn;
+
+    [ObservableProperty]
+    private string? _selectedUnitColumn;
+
+    [ObservableProperty]
+    private string? _selectedTaxPercentColumn;
+
+    [ObservableProperty]
+    private string? _selectedMinSalePriceColumn;
 
     // Step 3: Validation
     [ObservableProperty]
@@ -84,14 +118,11 @@ public partial class CsvImportWizardViewModel : ObservableObject
     public CsvImportWizardViewModel(
         ICsvProductService csvProductService,
         IDialogService dialogService,
-        int? currentUserId,
-        string? currentUserRole)
+        int? currentUserId)
     {
         _csvProductService = csvProductService;
         _dialogService = dialogService;
-        _currentUserId = currentUserId;
-        _currentUserRole = currentUserRole;
-    }
+        _currentUserId = currentUserId;    }
 
     [RelayCommand]
     public void BrowseFile()
@@ -251,6 +282,27 @@ public partial class CsvImportWizardViewModel : ObservableObject
                     DetectedNameColumn = previewRes.Data.DetectedNameColumn;
                     IsNameColumnDetected = !string.IsNullOrWhiteSpace(DetectedNameColumn);
 
+                    // Populate mapping dropdowns
+                    AvailableColumns.Clear();
+                    AvailableColumns.Add("(None / Skip)");
+                    foreach (var h in previewRes.Data.Headers)
+                    {
+                        AvailableColumns.Add(h);
+                    }
+
+                    // Auto-select best matches
+                    SelectedProductNameColumn = FindBestMatch(previewRes.Data.Headers, "name", "item", "product", "title");
+                    SelectedSkuColumn = FindBestMatch(previewRes.Data.Headers, "sku", "model", "serial", "itemcode", "code");
+                    SelectedBarcodeColumn = FindBestMatch(previewRes.Data.Headers, "barcode", "upc", "ean");
+                    SelectedCostPriceColumn = FindBestMatch(previewRes.Data.Headers, "actual", "cost", "purchase", "unitcost", "buy");
+                    SelectedSalePriceColumn = FindBestMatch(previewRes.Data.Headers, "sale", "price", "retail", "selling");
+                    SelectedStockQuantityColumn = FindBestMatch(previewRes.Data.Headers, "qty", "quantity", "stock", "onhand");
+                    SelectedCategoryColumn = FindBestMatch(previewRes.Data.Headers, "category", "dept", "group");
+                    SelectedBrandColumn = FindBestMatch(previewRes.Data.Headers, "brand", "make", "manufacturer");
+                    SelectedUnitColumn = FindBestMatch(previewRes.Data.Headers, "unit", "uom");
+                    SelectedTaxPercentColumn = FindBestMatch(previewRes.Data.Headers, "tax", "vat", "gst");
+                    SelectedMinSalePriceColumn = FindBestMatch(previewRes.Data.Headers, "minsale", "floor", "minprice");
+
                     CurrentStep = 2;
                 }
                 else
@@ -269,12 +321,19 @@ public partial class CsvImportWizardViewModel : ObservableObject
         }
         else if (CurrentStep == 2)
         {
+            if (string.IsNullOrWhiteSpace(SelectedProductNameColumn) || SelectedProductNameColumn == "(None / Skip)")
+            {
+                ErrorMessage = "Please map the 'Product Name' field before continuing.";
+                return;
+            }
+
             // Run validation
             IsLoading = true;
             try
             {
+                var mapping = BuildColumnMapping();
                 using var stream = File.OpenRead(SelectedFilePath);
-                var reportRes = await _csvProductService.ValidateCsvAsync(stream);
+                var reportRes = await _csvProductService.ValidateCsvAsync(stream, mapping);
                 if (reportRes.Success && reportRes.Data != null)
                 {
                     TotalValidatedRows = reportRes.Data.TotalRows;
@@ -335,8 +394,7 @@ public partial class CsvImportWizardViewModel : ObservableObject
             var options = new CsvImportOptions
             {
                 UpdateExisting = UpdateExisting,
-                UserId = _currentUserId,
-                UserRole = _currentUserRole
+                UserId = _currentUserId,                ColumnMapping = BuildColumnMapping()
             };
 
             var progressHandler = new Progress<int>(pct =>
@@ -388,5 +446,47 @@ public partial class CsvImportWizardViewModel : ObservableObject
     public void Close(bool success)
     {
         RequestClose?.Invoke(success);
+    }
+
+    private CsvColumnMapping BuildColumnMapping()
+    {
+        return new CsvColumnMapping
+        {
+            ProductNameColumn = CleanColumn(SelectedProductNameColumn),
+            SkuColumn = CleanColumn(SelectedSkuColumn),
+            BarcodeColumn = CleanColumn(SelectedBarcodeColumn),
+            CostPriceColumn = CleanColumn(SelectedCostPriceColumn),
+            SalePriceColumn = CleanColumn(SelectedSalePriceColumn),
+            StockQuantityColumn = CleanColumn(SelectedStockQuantityColumn),
+            CategoryColumn = CleanColumn(SelectedCategoryColumn),
+            BrandColumn = CleanColumn(SelectedBrandColumn),
+            UnitColumn = CleanColumn(SelectedUnitColumn),
+            TaxPercentColumn = CleanColumn(SelectedTaxPercentColumn),
+            MinSalePriceColumn = CleanColumn(SelectedMinSalePriceColumn)
+        };
+    }
+
+    private static string? CleanColumn(string? col)
+    {
+        if (string.IsNullOrWhiteSpace(col) || col == "(None / Skip)") return null;
+        return col.Trim();
+    }
+
+    private static string FindBestMatch(IEnumerable<string> headers, params string[] candidates)
+    {
+        var list = headers.ToList();
+        // 1. Exact match (case insensitive)
+        foreach (var c in candidates)
+        {
+            var m = list.FirstOrDefault(h => h.Equals(c, StringComparison.OrdinalIgnoreCase));
+            if (m != null) return m;
+        }
+        // 2. Contains match
+        foreach (var c in candidates)
+        {
+            var m = list.FirstOrDefault(h => h.IndexOf(c, StringComparison.OrdinalIgnoreCase) >= 0);
+            if (m != null) return m;
+        }
+        return "(None / Skip)";
     }
 }

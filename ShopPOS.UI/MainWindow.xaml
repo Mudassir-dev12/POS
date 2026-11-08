@@ -17,9 +17,11 @@
         xmlns:vmInv="clr-namespace:ShopPOS.UI.ViewModels.Inventory"
         xmlns:vmDash="clr-namespace:ShopPOS.UI.ViewModels.Dashboard"
         xmlns:vmSales="clr-namespace:ShopPOS.UI.ViewModels.Sales"
+        xmlns:vmRep="clr-namespace:ShopPOS.UI.ViewModels.Reports"
         xmlns:views="clr-namespace:ShopPOS.UI.Views"
+        xmlns:vmBackup="clr-namespace:ShopPOS.UI.ViewModels.BackupRestore"
         mc:Ignorable="d"
-        Title="Shop POS"
+        Title="ShopPOS"
         Height="768"
         Width="1366"
         MinHeight="720"
@@ -89,206 +91,16 @@
         <DataTemplate DataType="{x:Type vmSales:SaleReturnsViewModel}">
             <views:SaleReturnsView />
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vmRep:ReportsViewModel}">
+            <views:ReportsView />
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vmBackup:BackupRestoreViewModel}">
+            <views:BackupRestoreView />
+        </DataTemplate>
     </Window.Resources>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <!-- Top Bar -->
-            <RowDefinition Height="54" />
-            <!-- Main Content Area -->
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <!-- ================= TOP BAR ================= -->
-        <Border Grid.Row="0"
-                Background="{DynamicResource CardBackgroundBrush}"
-                BorderBrush="{DynamicResource ThinRuleBrush}"
-                BorderThickness="0,0,0,1"
-                Padding="16,0">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <!-- Global Search -->
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <!-- Right Controls (Theme Toggle, User Profile) -->
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-
-                <!-- Global Search Box -->
-                <Grid Grid.Column="0" VerticalAlignment="Center">
-                    <Border Background="{DynamicResource InputBackgroundBrush}"
-                            BorderBrush="{DynamicResource InputBorderBrush}"
-                            BorderThickness="1"
-                            CornerRadius="4"
-                            Width="360"
-                            Height="34">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="32" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="32" />
-                            </Grid.ColumnDefinitions>
-
-                            <!-- Magnifying Glass Icon -->
-                            <Path Grid.Column="0"
-                                  Data="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                                  Fill="{DynamicResource TextMutedBrush}"
-                                  Stretch="Uniform"
-                                  Width="14"
-                                  Height="14"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center" />
-
-                            <TextBox x:Name="GlobalSearchTextBox"
-                                     Grid.Column="1"
-                                     Text="{Binding GlobalSearchText, UpdateSourceTrigger=PropertyChanged}"
-                                     BorderThickness="0"
-                                     Background="Transparent"
-                                     Foreground="{DynamicResource InputTextBrush}"
-                                     VerticalAlignment="Center"
-                                     Padding="0,2"
-                                     FontSize="12" />
-
-                            <!-- "/" Shortcut Hint Badge -->
-                            <Border Grid.Column="2"
-                                    Background="{DynamicResource SecondaryBackgroundBrush}"
-                                    BorderBrush="{DynamicResource SecondaryBorderBrush}"
-                                    BorderThickness="1"
-                                    CornerRadius="3"
-                                    Width="18"
-                                    Height="18"
-                                    HorizontalAlignment="Center"
-                                    VerticalAlignment="Center">
-                                <TextBlock Text="/"
-                                           FontFamily="{StaticResource AppMonospaceFontFamily}"
-                                           FontSize="10"
-                                           FontWeight="Bold"
-                                           Foreground="{DynamicResource TextMutedBrush}"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center" />
-                            </Border>
-                        </Grid>
-                    </Border>
-
-                    <!-- Global Search Results Popup -->
-                    <Popup x:Name="GlobalSearchPopup"
-                           IsOpen="{Binding IsSearchOpen, Mode=TwoWay}"
-                           PlacementTarget="{Binding ElementName=GlobalSearchTextBox}"
-                           Placement="Bottom"
-                           StaysOpen="False"
-                           AllowsTransparency="True">
-                        <Border Background="{DynamicResource CardBackgroundBrush}"
-                                BorderBrush="{DynamicResource ThinRuleBrush}"
-                                BorderThickness="1"
-                                CornerRadius="4"
-                                Width="360"
-                                MaxHeight="380"
-                                Margin="0,4,0,0">
-                            <ListBox ItemsSource="{Binding SearchResults}"
-                                     Background="Transparent"
-                                     BorderThickness="0"
-                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                     ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type vm:GlobalSearchResultItem}">
-                                        <Border Padding="10,8"
-                                                BorderBrush="{DynamicResource ThinRuleBrush}"
-                                                BorderThickness="0,0,0,1"
-                                                Cursor="Hand">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <StackPanel Grid.Column="0">
-                                                    <TextBlock Text="{Binding Title}"
-                                                               FontWeight="SemiBold"
-                                                               FontSize="12"
-                                                               Foreground="{DynamicResource TextPrimaryBrush}" />
-                                                    <TextBlock Text="{Binding Subtitle}"
-                                                               FontSize="11"
-                                                               Foreground="{DynamicResource TextMutedBrush}"
-                                                               Margin="0,2,0,0" />
-                                                </StackPanel>
-                                                <Border Grid.Column="1"
-                                                        Background="{DynamicResource TableHeaderBackgroundBrush}"
-                                                        BorderBrush="{DynamicResource ThinRuleBrush}"
-                                                        BorderThickness="1"
-                                                        CornerRadius="3"
-                                                        Padding="6,2"
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Group}"
-                                                               FontSize="10"
-                                                               FontWeight="SemiBold"
-                                                               Foreground="{DynamicResource TextSecondaryBrush}" />
-                                                </Border>
-                                            </Grid>
-                                            <Border.InputBindings>
-                                                <MouseBinding Gesture="LeftClick"
-                                                              Command="{Binding DataContext.SelectSearchResultCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                              CommandParameter="{Binding}" />
-                                            </Border.InputBindings>
-                                        </Border>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </Border>
-                    </Popup>
-                </Grid>
-
-                <!-- Right Controls: Theme Toggle & Owner Profile -->
-                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Sun / Moon Theme Toggle Button -->
-                    <Button Command="{Binding ToggleThemeCommand}"
-                            Style="{StaticResource GhostButtonStyle}"
-                            ToolTip="Toggle Light / Dark Theme"
-                            Width="36"
-                            Height="34"
-                            Margin="0,0,12,0">
-                        <Grid>
-                            <!-- Sun Icon (shown in Dark theme) -->
-                            <Path Data="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0s-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41s-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"
-                                  Fill="{DynamicResource TextPrimaryBrush}"
-                                  Stretch="Uniform"
-                                  Width="16"
-                                  Height="16" />
-                        </Grid>
-                    </Button>
-
-                    <!-- Thin Divider -->
-                    <Border Width="1" Height="20" Background="{DynamicResource ThinRuleBrush}" Margin="0,0,12,0" />
-
-                    <!-- User Identity Avatar -->
-                    <Border Width="30"
-                            Height="30"
-                            CornerRadius="15"
-                            Background="{DynamicResource PrimaryBrush}"
-                            Margin="0,0,8,0">
-                        <TextBlock Text="O"
-                                   FontSize="13"
-                                   FontWeight="Bold"
-                                   Foreground="{DynamicResource PrimaryTextBrush}"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center" />
-                    </Border>
-
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{Binding CurrentUserName}"
-                                   FontSize="12"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource TextPrimaryBrush}" />
-                        <TextBlock Text="OFFLINE TERMINAL"
-                                   FontFamily="{StaticResource AppMonospaceFontFamily}"
-                                   FontSize="9"
-                                   Foreground="{DynamicResource TextMutedBrush}" />
-                    </StackPanel>
-                </StackPanel>
-            </Grid>
-        </Border>
-
-        <!-- ================= MAIN BODY ================= -->
-        <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions>
+        <Grid.ColumnDefinitions>
                 <!-- Left Navigation Sidebar -->
                 <ColumnDefinition Width="230" />
                 <!-- Content Area -->
@@ -455,6 +267,5 @@
                             HorizontalContentAlignment="Stretch"
                             VerticalContentAlignment="Stretch"
                             Margin="16" />
-        </Grid>
     </Grid>
 </Window>

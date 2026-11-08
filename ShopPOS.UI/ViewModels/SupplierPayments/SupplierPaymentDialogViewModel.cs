@@ -65,7 +65,7 @@ public partial class SupplierPaymentDialogViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var supRes = await _supplierService.GetFlatListAsync(false, "Owner");
+            var supRes = await _supplierService.GetFlatListAsync(false);
             if (supRes.Success && supRes.Data != null)
             {
                 Suppliers.Clear();
@@ -113,7 +113,7 @@ public partial class SupplierPaymentDialogViewModel : ObservableObject
             Status = PurchaseStatus.Posted,
             PageNumber = 1,
             PageSize = 100
-        }, "Owner");
+        });
 
         if (res.Success && res.Data != null)
         {
@@ -171,9 +171,7 @@ public partial class SupplierPaymentDialogViewModel : ObservableObject
             };
 
             int? userId = 1;
-            string? userRole = "Owner";
-
-            var res = await _paymentService.RecordPaymentAsync(dto, userId, userRole);
+            var res = await _paymentService.RecordPaymentAsync(dto, userId);
             if (res.Success)
             {
                 RequestClose?.Invoke(true);

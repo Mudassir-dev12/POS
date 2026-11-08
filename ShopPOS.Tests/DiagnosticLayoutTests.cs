@@ -22,42 +22,7 @@ public class DiagnosticLayoutTests
         _output = output;
     }
 
-    private static void RunOnSta(Action action)
-    {
-        if (Application.Current != null && Application.Current.Dispatcher != null)
-        {
-            if (Application.Current.Dispatcher.CheckAccess())
-            {
-                action();
-            }
-            else
-            {
-                Application.Current.Dispatcher.Invoke(action);
-            }
-            return;
-        }
-
-        Exception? threadEx = null;
-        var thread = new Thread(() =>
-        {
-            try
-            {
-                action();
-            }
-            catch (Exception ex)
-            {
-                threadEx = ex;
-            }
-        });
-        thread.SetApartmentState(ApartmentState.STA);
-        thread.Start();
-        thread.Join();
-
-        if (threadEx != null)
-        {
-            ExceptionDispatchInfo.Capture(threadEx).Throw();
-        }
-    }
+    private static void RunOnSta(Action action) => StaTestHelper.RunOnSta(action);
 
     private static T? FindVisualChild<T>(DependencyObject parent, string? name = null) where T : DependencyObject
     {
@@ -87,11 +52,7 @@ public class DiagnosticLayoutTests
     {
         RunOnSta(() =>
         {
-            if (Application.Current == null)
-            {
-                var app = new App();
-                app.InitializeComponent();
-            }
+            // App resources initialized via StaTestHelper
 
             var window = new Window
             {
@@ -203,13 +164,13 @@ public class DiagnosticLayoutTests
                 _output.WriteLine("--- DatePicker ---");
                 _output.WriteLine($"  ActualHeight:         {datePicker.ActualHeight:F2} px");
                 _output.WriteLine($"  Explicit Height:      {(double.IsNaN(datePicker.Height) ? "Auto" : datePicker.Height.ToString("F2"))}");
-                _output.WriteLine($"  MinHeight:            {datePicker.MinHeight:F2} px");
-                _output.WriteLine($"  Padding:              {datePicker.Padding}");
-                _output.WriteLine($"  BorderThickness:      {datePicker.BorderThickness}");
-                _output.WriteLine($"  Margin:               {datePicker.Margin}");
-                _output.WriteLine($"  FontFamily:           {datePicker.FontFamily.Source}");
-                _output.WriteLine($"  FontSize:             {datePicker.FontSize:F2} pt");
-                _output.WriteLine($"  Font LineSpacing:     {datePicker.FontFamily.LineSpacing:F4}");
+                try { _output.WriteLine($"  MinHeight:            {datePicker.MinHeight:F2} px"); } catch { }
+                try { _output.WriteLine($"  Padding:              {datePicker.Padding}"); } catch { }
+                try { _output.WriteLine($"  BorderThickness:      {datePicker.BorderThickness}"); } catch { }
+                try { _output.WriteLine($"  Margin:               {datePicker.Margin}"); } catch { }
+                try { _output.WriteLine($"  FontFamily:           {datePicker.FontFamily.Source}"); } catch { }
+                try { _output.WriteLine($"  FontSize:             {datePicker.FontSize:F2} pt"); } catch { }
+                try { _output.WriteLine($"  Font LineSpacing:     {datePicker.FontFamily.LineSpacing:F4}"); } catch { }
                 _output.WriteLine($"  Required Line Height: {requiredLineHeight:F2} px");
                 _output.WriteLine($"  Inner TextBox Height: {contentHeight:F2} px");
                 _output.WriteLine("");

@@ -65,7 +65,7 @@ public partial class PurchasesViewModel : BaseCrudViewModel<PurchaseListDto>
 
         try
         {
-            var supRes = await _supplierService.GetFlatListAsync(false, GetCurrentRole());
+            var supRes = await _supplierService.GetFlatListAsync(false);
             if (supRes.Success && supRes.Data != null)
             {
                 Suppliers.Clear();
@@ -100,7 +100,7 @@ public partial class PurchasesViewModel : BaseCrudViewModel<PurchaseListDto>
                 PageSize = PageSize
             };
 
-            var res = await _purchaseService.GetPurchasesAsync(query, GetCurrentRole(), cancellationToken);
+            var res = await _purchaseService.GetPurchasesAsync(query, cancellationToken);
             if (res.Success && res.Data != null)
             {
                 Items.Clear();
@@ -180,7 +180,7 @@ public partial class PurchasesViewModel : BaseCrudViewModel<PurchaseListDto>
         IsLoading = true;
         try
         {
-            var res = await _purchaseService.PostPurchaseAsync(SelectedItem.Id, null, null, GetCurrentUserId(), GetCurrentRole());
+            var res = await _purchaseService.PostPurchaseAsync(SelectedItem.Id, null, null, GetCurrentUserId());
             if (res.Success)
             {
                 await LoadDataAsync();
@@ -215,7 +215,7 @@ public partial class PurchasesViewModel : BaseCrudViewModel<PurchaseListDto>
         IsLoading = true;
         try
         {
-            var res = await _purchaseService.CancelPurchaseAsync(SelectedItem.Id, reason, GetCurrentUserId(), GetCurrentRole());
+            var res = await _purchaseService.CancelPurchaseAsync(SelectedItem.Id, reason, GetCurrentUserId());
             if (res.Success)
             {
                 await LoadDataAsync();
@@ -243,7 +243,7 @@ public partial class PurchasesViewModel : BaseCrudViewModel<PurchaseListDto>
         IsLoading = true;
         try
         {
-            var res = await _purchaseService.ExportPurchasePdfAsync(SelectedItem.Id, GetCurrentRole());
+            var res = await _purchaseService.ExportPurchasePdfAsync(SelectedItem.Id);
             if (res.Success && res.Data != null)
             {
                 await File.WriteAllBytesAsync(targetPath, res.Data);
@@ -285,6 +285,28 @@ public partial class PurchasesViewModel : BaseCrudViewModel<PurchaseListDto>
     protected override async Task<BulkOperationResult> ExecuteBulkCancelAsync(IReadOnlyList<int> ids, string reason)
     {
         return await _purchaseService.BulkCancelPurchasesAsync(ids, reason, GetCurrentUserId());
+    }
+
+
+    [ObservableProperty]
+    private string _quickBarcodeInput = string.Empty;
+
+    [RelayCommand]
+    public async Task QuickBarcodeScanAsync()
+    {
+        if (string.IsNullOrWhiteSpace(QuickBarcodeInput)) return;
+        string barcode = QuickBarcodeInput.Trim();
+        QuickBarcodeInput = string.Empty;
+
+        var entryVm = _serviceProvider.GetRequiredService<PurchaseEntryViewModel>();
+        await entryVm.InitializeAsync(null);
+        entryVm.BarcodeInput = barcode;
+        await entryVm.AddScannedProductAsync();
+
+        if (_dialogService.ShowPurchaseEntryDialog(entryVm) == true)
+        {
+            await LoadDataAsync();
+        }
     }
 
 }

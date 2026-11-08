@@ -135,7 +135,7 @@ public partial class StockOverviewViewModel : ObservableObject
                 PageSize = PageSize
             };
 
-            var pagedResult = await _inventoryService.GetStockOverviewAsync(query, "Owner");
+            var pagedResult = await _inventoryService.GetStockOverviewAsync(query);
             if (pagedResult.Success && pagedResult.Data != null)
             {
                 Items.Clear();
@@ -155,7 +155,7 @@ public partial class StockOverviewViewModel : ObservableObject
                 ErrorMessage = pagedResult.ErrorMessage ?? "Failed to load stock overview.";
             }
 
-            var sumResult = await _inventoryService.GetStockOverviewSummaryAsync("Owner");
+            var sumResult = await _inventoryService.GetStockOverviewSummaryAsync();
             if (sumResult.Success)
             {
                 Summary = sumResult.Data;
@@ -235,7 +235,7 @@ public partial class StockOverviewViewModel : ObservableObject
                 IncludeNonTracked = IncludeNonTracked
             };
 
-            var csvRes = await _inventoryService.ExportStockOverviewCsvAsync(query, "Owner");
+            var csvRes = await _inventoryService.ExportStockOverviewCsvAsync(query);
             if (csvRes.Success && csvRes.Data != null)
             {
                 await File.WriteAllBytesAsync(filePath, csvRes.Data);
@@ -270,7 +270,7 @@ public partial class StockOverviewViewModel : ObservableObject
                 IncludeNonTracked = IncludeNonTracked
             };
 
-            var pdfRes = await _inventoryService.ExportStockOverviewPdfAsync(query, "Owner");
+            var pdfRes = await _inventoryService.ExportStockOverviewPdfAsync(query);
             if (pdfRes.Success && pdfRes.Data != null)
             {
                 await File.WriteAllBytesAsync(filePath, pdfRes.Data);

@@ -52,7 +52,7 @@ public partial class PurchaseReturnsViewModel : BaseCrudViewModel<PurchaseReturn
 
         try
         {
-            var supRes = await _supplierService.GetFlatListAsync(false, GetCurrentRole());
+            var supRes = await _supplierService.GetFlatListAsync(false);
             if (supRes.Success && supRes.Data != null)
             {
                 Suppliers.Clear();
@@ -75,7 +75,7 @@ public partial class PurchaseReturnsViewModel : BaseCrudViewModel<PurchaseReturn
 
         try
         {
-            var res = await _returnService.GetReturnsAsync(SelectedSupplierId, CurrentPage, PageSize, GetCurrentRole(), cancellationToken);
+            var res = await _returnService.GetReturnsAsync(SelectedSupplierId, CurrentPage, PageSize, cancellationToken);
             if (res.Success && res.Data != null)
             {
                 Items.Clear();
@@ -138,7 +138,7 @@ public partial class PurchaseReturnsViewModel : BaseCrudViewModel<PurchaseReturn
         IsLoading = true;
         try
         {
-            var res = await _returnService.CancelPurchaseReturnAsync(selected.Id, reason, GetCurrentUserId(), GetCurrentRole());
+            var res = await _returnService.CancelPurchaseReturnAsync(selected.Id, reason, GetCurrentUserId());
             if (res.Success)
             {
                 await LoadDataAsync();

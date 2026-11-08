@@ -301,7 +301,7 @@ public class BarcodeScannerIntegrationTests
         _productService.Setup(p => p.GetPagedProductsAsync(It.IsAny<ProductSearchQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<PagedResult<ProductListItemDto>>.Ok(pagedResult));
 
-        mockSupplierService.Setup(s => s.GetFlatListAsync(false, "Owner", It.IsAny<CancellationToken>()))
+        mockSupplierService.Setup(s => s.GetFlatListAsync(false, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<IReadOnlyList<SupplierDto>>.Ok(new List<SupplierDto>()));
 
         var vm = new PurchaseEntryViewModel(

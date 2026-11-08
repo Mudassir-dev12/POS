@@ -25,6 +25,7 @@ public class StockAdjustmentConfiguration : IEntityTypeConfiguration<StockAdjust
 
         // Required indexes
         builder.HasIndex(a => new { a.Status, a.AdjustmentDate });
+        builder.HasIndex(a => new { a.Status, a.Reason, a.AdjustmentDate });
 
         builder.HasMany(a => a.Items)
             .WithOne(i => i.StockAdjustment)

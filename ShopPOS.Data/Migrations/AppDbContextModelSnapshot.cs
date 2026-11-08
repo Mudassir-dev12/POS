@@ -25,6 +25,7 @@ namespace ShopPOS.Data.Migrations
 
                     b.Property<string>("Action")
                         .IsRequired()
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -34,12 +35,14 @@ namespace ShopPOS.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Details")
+                        .HasMaxLength(4000)
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("EntityId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("EntityName")
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsDeleted")
@@ -58,7 +61,138 @@ namespace ShopPOS.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AuditLogs");
+                    b.HasIndex("Timestamp", "EntityName", "Action");
+
+                    b.ToTable("AuditLogs", (string)null);
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.BackupRecord", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("AppVersion")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("DriveAttempts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DriveFileId")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DriveLastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DriveMd5Checksum")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DriveNextAttemptAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DriveStatus")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DriveUploadSessionUri")
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DriveUploadedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("GitHubAttempts")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("GitHubFileSha")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GitHubLastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("GitHubNextAttemptAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("GitHubStatus")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("GitHubUploadedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeletedLocally")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsEncrypted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SchemaVersion")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Sha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("VerifiedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("VerifyStatus")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("FileName");
+
+                    b.HasIndex("GitHubStatus");
+
+                    b.HasIndex("Kind");
+
+                    b.ToTable("BackupRecords");
                 });
 
             modelBuilder.Entity("ShopPOS.Core.Entities.Brand", b =>
@@ -140,6 +274,106 @@ namespace ShopPOS.Data.Migrations
                         .HasFilter("IsDeleted = 0");
 
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.Expense", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(250)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ExpenseCategoryId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("ExpenseDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ExpenseNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsCancelled")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Method")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Payee")
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpenseCategoryId");
+
+                    b.HasIndex("ExpenseDate");
+
+                    b.HasIndex("IsCancelled", "ExpenseDate", "ExpenseCategoryId");
+
+                    b.ToTable("Expenses");
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.ExpenseCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("ExpenseCategories");
                 });
 
             modelBuilder.Entity("ShopPOS.Core.Entities.NumberSequence", b =>
@@ -519,6 +753,8 @@ namespace ShopPOS.Data.Migrations
 
                     b.HasIndex("SupplierId");
 
+                    b.HasIndex("Status", "PurchaseDate");
+
                     b.HasIndex("SupplierId", "SupplierInvoiceNo")
                         .IsUnique()
                         .HasFilter("[SupplierInvoiceNo] IS NOT NULL AND [SupplierInvoiceNo] <> ''");
@@ -773,6 +1009,14 @@ namespace ShopPOS.Data.Migrations
                     b.Property<int?>("CreatedByUserId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("CustomerName")
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CustomerPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
                     b.Property<long>("DueAmount")
                         .HasColumnType("INTEGER");
 
@@ -957,6 +1201,8 @@ namespace ShopPOS.Data.Migrations
 
                     b.HasIndex("SaleId");
 
+                    b.HasIndex("Method", "PaidAt");
+
                     b.ToTable("SalePayments", (string)null);
                 });
 
@@ -1021,6 +1267,8 @@ namespace ShopPOS.Data.Migrations
                         .IsUnique();
 
                     b.HasIndex("SaleId");
+
+                    b.HasIndex("Status", "ReturnDate");
 
                     b.ToTable("SaleReturns", (string)null);
                 });
@@ -1127,6 +1375,23 @@ namespace ShopPOS.Data.Migrations
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(true);
 
+                    b.Property<bool>("BackupEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("BackupOnAppClose")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("BackupTime")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("22:00");
+
                     b.Property<decimal>("CashRoundingStep")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(5, 2)
@@ -1164,8 +1429,141 @@ namespace ShopPOS.Data.Migrations
                         .HasPrecision(5, 2)
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("EncryptBackups")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("EncryptionKeyCheck")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EncryptionSalt")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GitHubBranch")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("main");
+
+                    b.Property<bool>("GitHubEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("GitHubExcludeImages")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<bool>("GitHubFileTooLarge")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("GitHubOwner")
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("GitHubReconnectNeeded")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("GitHubRepo")
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("GitHubRepoIsPublic")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("GoogleDriveAccountEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("GoogleDriveDeleteToTrash")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("GoogleDriveEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("GoogleDriveFolderId")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("GoogleDriveIsFull")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<bool>("GoogleDriveReconnectNeeded")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("GoogleDriveSubFolderId")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("INTEGER");
+
+                    b.Property<int>("KeepDaily")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(7);
+
+                    b.Property<bool>("KeepManualBackupsOnDrive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<int>("KeepMonthly")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(6);
+
+                    b.Property<int>("KeepWeekly")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(4);
+
+                    b.Property<string>("LastBackupError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastDriveUploadError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastGitHubSquashAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LastGitHubUploadError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastSuccessfulBackupAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastSuccessfulDriveUploadAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastSuccessfulGitHubUploadAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("LogoImagePath")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("OpenCashDrawerOnCashSale")
                         .ValueGeneratedOnAdd()
@@ -1204,9 +1602,21 @@ namespace ShopPOS.Data.Migrations
                     b.Property<int?>("SaleReturnWindowDays")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("SecondFolderPath")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SecondaryPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("ShopName")
                         .IsRequired()
                         .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StorePolicy")
+                        .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("TaxNumber")
@@ -1282,6 +1692,8 @@ namespace ShopPOS.Data.Migrations
                     b.HasIndex("PostedByUserId");
 
                     b.HasIndex("Status", "AdjustmentDate");
+
+                    b.HasIndex("Status", "Reason", "AdjustmentDate");
 
                     b.ToTable("StockAdjustments");
                 });
@@ -1538,6 +1950,8 @@ namespace ShopPOS.Data.Migrations
 
                     b.HasIndex("SupplierId");
 
+                    b.HasIndex("IsCancelled", "PaymentDate", "Method");
+
                     b.ToTable("SupplierPayments", (string)null);
                 });
 
@@ -1647,7 +2061,8 @@ namespace ShopPOS.Data.Migrations
                 {
                     b.HasOne("ShopPOS.Core.Entities.User", "User")
                         .WithMany()
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("User");
                 });
@@ -1660,6 +2075,17 @@ namespace ShopPOS.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("ParentCategory");
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.Expense", b =>
+                {
+                    b.HasOne("ShopPOS.Core.Entities.ExpenseCategory", "ExpenseCategory")
+                        .WithMany("Expenses")
+                        .HasForeignKey("ExpenseCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ExpenseCategory");
                 });
 
             modelBuilder.Entity("ShopPOS.Core.Entities.Product", b =>
@@ -2000,6 +2426,11 @@ namespace ShopPOS.Data.Migrations
                     b.Navigation("Products");
 
                     b.Navigation("SubCategories");
+                });
+
+            modelBuilder.Entity("ShopPOS.Core.Entities.ExpenseCategory", b =>
+                {
+                    b.Navigation("Expenses");
                 });
 
             modelBuilder.Entity("ShopPOS.Core.Entities.PriceLevel", b =>

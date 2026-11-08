@@ -81,9 +81,7 @@ public partial class StockMovementHistoryViewModel : ObservableObject
         IsLoading = true;
         ErrorMessage = null;
         try
-        {
-            var userRole = "Owner";
-            var query = new MovementHistoryFilterQuery
+        {            var query = new MovementHistoryFilterQuery
             {
                 ProductId = SelectedProductId,
                 MovementType = SelectedMovementType,
@@ -96,7 +94,7 @@ public partial class StockMovementHistoryViewModel : ObservableObject
 
             ShowRunningBalance = SelectedProductId.HasValue && SelectedProductId.Value > 0;
 
-            var result = await _inventoryService.GetMovementHistoryAsync(query, userRole);
+            var result = await _inventoryService.GetMovementHistoryAsync(query);
             if (result.Success && result.Data != null)
             {
                 Items.Clear();
@@ -195,10 +193,7 @@ public partial class StockMovementHistoryViewModel : ObservableObject
         try
         {
             var filePath = _dialogService.ShowSaveFileDialog("CSV Files (*.csv)|*.csv", $"MovementHistory_{DateTime.Now:yyyyMMdd_HHmm}.csv");
-            if (string.IsNullOrWhiteSpace(filePath)) return;
-
-            var userRole = "Owner";
-            var query = new MovementHistoryFilterQuery
+            if (string.IsNullOrWhiteSpace(filePath)) return;            var query = new MovementHistoryFilterQuery
             {
                 ProductId = SelectedProductId,
                 MovementType = SelectedMovementType,
@@ -209,7 +204,7 @@ public partial class StockMovementHistoryViewModel : ObservableObject
                 PageSize = 10000
             };
 
-            var exportResult = await _inventoryService.ExportMovementHistoryCsvAsync(query, userRole);
+            var exportResult = await _inventoryService.ExportMovementHistoryCsvAsync(query);
             if (exportResult.Success && exportResult.Data != null)
             {
                 await File.WriteAllBytesAsync(filePath, exportResult.Data);

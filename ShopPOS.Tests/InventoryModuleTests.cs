@@ -151,7 +151,7 @@ public class InventoryModuleTests : IDisposable
         {
             Id = 1,
             Username = "owner",
-            FullName = "Owner",
+            FullName = "Shop Owner",
             RoleId = ownerRole.Id,
             IsActive = true,
             MustChangePassword = false
@@ -260,7 +260,7 @@ public class InventoryModuleTests : IDisposable
             }
         };
 
-        var result = await _adjustmentService.CreateAdjustmentDraftAsync(dto, _ownerUser.Id, "Owner");
+        var result = await _adjustmentService.CreateAdjustmentDraftAsync(dto, _ownerUser.Id);
 
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeNull();
@@ -285,12 +285,12 @@ public class InventoryModuleTests : IDisposable
                 new() { ProductId = _productA.Id, NewQuantity = 12m }, // +2
                 new() { ProductId = _productB.Id, NewQuantity = 2m }   // 0 diff!
             }
-        }, _ownerUser.Id, "Owner");
+        }, _ownerUser.Id);
 
         createResult.Success.Should().BeTrue();
         int adjId = createResult.Data!.Id;
 
-        var postResult = await _adjustmentService.PostAdjustmentAsync(adjId, _ownerUser.Id, "Owner");
+        var postResult = await _adjustmentService.PostAdjustmentAsync(adjId, _ownerUser.Id);
         postResult.Success.Should().BeTrue();
         postResult.Data!.Status.Should().Be(StockAdjustmentStatus.Posted);
 
@@ -328,11 +328,11 @@ public class InventoryModuleTests : IDisposable
             {
                 new() { ProductId = _productA.Id, NewQuantity = -5m }
             }
-        }, _ownerUser.Id, "Owner");
+        }, _ownerUser.Id);
 
         draft.Success.Should().BeTrue();
 
-        var postResult = await _adjustmentService.PostAdjustmentAsync(draft.Data!.Id, _ownerUser.Id, "Owner");
+        var postResult = await _adjustmentService.PostAdjustmentAsync(draft.Data!.Id, _ownerUser.Id);
         postResult.Success.Should().BeFalse();
         postResult.ErrorMessage.Should().ContainEquivalentOf("negative stock");
 
@@ -353,19 +353,19 @@ public class InventoryModuleTests : IDisposable
             {
                 new() { ProductId = _productA.Id, NewQuantity = 15m }
             }
-        }, _ownerUser.Id, "Owner");
+        }, _ownerUser.Id);
         int adjId = createResult.Data!.Id;
-        await _adjustmentService.PostAdjustmentAsync(adjId, _ownerUser.Id, "Owner");
+        await _adjustmentService.PostAdjustmentAsync(adjId, _ownerUser.Id);
 
         (await _stockLedgerQuery.GetCurrentStockAsync(_productA.Id)).Should().Be(15m);
 
         // 2. Cancel without reason -> Fails
-        var failCancel = await _adjustmentService.CancelAdjustmentAsync(adjId, " ", _ownerUser.Id, "Owner");
+        var failCancel = await _adjustmentService.CancelAdjustmentAsync(adjId, " ", _ownerUser.Id);
         failCancel.Success.Should().BeFalse();
         failCancel.ErrorMessage.Should().ContainEquivalentOf("cancellation reason is required");
 
         // 3. Cancel with valid reason -> Reverses movement (-5)
-        var cancelResult = await _adjustmentService.CancelAdjustmentAsync(adjId, "Found stock was miscounted", _ownerUser.Id, "Owner");
+        var cancelResult = await _adjustmentService.CancelAdjustmentAsync(adjId, "Found stock was miscounted", _ownerUser.Id);
         cancelResult.Success.Should().BeTrue();
 
         // Ledger stock restored to 10
@@ -386,8 +386,7 @@ public class InventoryModuleTests : IDisposable
             25m,
             "Physical re-count in shop",
             StockAdjustmentReason.CountCorrection,
-            _ownerUser.Id,
-            "Owner");
+            _ownerUser.Id);
 
         result.Success.Should().BeTrue();
 
@@ -485,7 +484,7 @@ public class InventoryModuleTests : IDisposable
         await _context.SaveChangesAsync();
 
         // 1. Verify StockOverview query for each item
-        var overview = await _inventoryService.GetStockOverviewAsync(new StockOverviewFilterQuery { PageSize = 100, IncludeNonTracked = true }, "Owner");
+        var overview = await _inventoryService.GetStockOverviewAsync(new StockOverviewFilterQuery { PageSize = 100, IncludeNonTracked = true });
         overview.Success.Should().BeTrue();
         var items = overview.Data!.Items;
 
@@ -510,28 +509,28 @@ public class InventoryModuleTests : IDisposable
 
         // 2. Status filters offer them separately:
         // Filter Low only -> Should contain prodLow, but NOT prodZero or prodNeg!
-        var lowFilter = await _inventoryService.GetStockOverviewAsync(new StockOverviewFilterQuery { Status = StockStatus.Low, PageSize = 100 }, "Owner");
+        var lowFilter = await _inventoryService.GetStockOverviewAsync(new StockOverviewFilterQuery { Status = StockStatus.Low, PageSize = 100 });
         lowFilter.Data!.Items.Should().Contain(i => i.ProductId == prodLow.Id);
         lowFilter.Data!.Items.Should().NotContain(i => i.ProductId == prodZero.Id);
         lowFilter.Data!.Items.Should().NotContain(i => i.ProductId == prodNeg.Id);
 
         // Filter OutOfStock only -> Should contain prodZero, but NOT prodLow
-        var zeroFilter = await _inventoryService.GetStockOverviewAsync(new StockOverviewFilterQuery { Status = StockStatus.OutOfStock, PageSize = 100 }, "Owner");
+        var zeroFilter = await _inventoryService.GetStockOverviewAsync(new StockOverviewFilterQuery { Status = StockStatus.OutOfStock, PageSize = 100 });
         zeroFilter.Data!.Items.Should().Contain(i => i.ProductId == prodZero.Id);
         zeroFilter.Data!.Items.Should().NotContain(i => i.ProductId == prodLow.Id);
 
         // Filter Negative only -> Should contain prodNeg
-        var negFilter = await _inventoryService.GetStockOverviewAsync(new StockOverviewFilterQuery { Status = StockStatus.Negative, PageSize = 100 }, "Owner");
+        var negFilter = await _inventoryService.GetStockOverviewAsync(new StockOverviewFilterQuery { Status = StockStatus.Negative, PageSize = 100 });
         negFilter.Data!.Items.Should().Contain(i => i.ProductId == prodNeg.Id);
         negFilter.Data!.Items.Should().NotContain(i => i.ProductId == prodZero.Id);
 
         // Filter NotTracked only -> Should contain untracked product
-        var notTrackedFilter = await _inventoryService.GetStockOverviewAsync(new StockOverviewFilterQuery { Status = StockStatus.NotTracked, PageSize = 100 }, "Owner");
+        var notTrackedFilter = await _inventoryService.GetStockOverviewAsync(new StockOverviewFilterQuery { Status = StockStatus.NotTracked, PageSize = 100 });
         notTrackedFilter.Data!.Items.Should().Contain(i => i.ProductId == _productC.Id);
         notTrackedFilter.Data!.Items.Should().NotContain(i => i.ProductId == prodLow.Id);
 
         // 3. Reorder list includes both Low and OutOfStock (and Negative), showing exact status
-        var reorderList = await _inventoryService.GetReorderListAsync("Owner");
+        var reorderList = await _inventoryService.GetReorderListAsync();
         reorderList.Success.Should().BeTrue();
         var reorderItems = reorderList.Data!;
 
@@ -621,14 +620,14 @@ public class InventoryModuleTests : IDisposable
             {
                 new() { ProductId = _productA.Id, Quantity = 4m, UnitCost = 10m }
             }
-        }, _ownerUser.Id, "Owner");
+        }, _ownerUser.Id);
         purchaseResult.Success.Should().BeTrue();
 
-        var postPoResult = await _purchaseService.PostPurchaseAsync(purchaseResult.Data!.Id, null, null, _ownerUser.Id, "Owner");
+        var postPoResult = await _purchaseService.PostPurchaseAsync(purchaseResult.Data!.Id, null, null, _ownerUser.Id);
         postPoResult.Success.Should().BeTrue();
 
         var adjResult = await _adjustmentService.CreateAndPostSingleAdjustmentAsync(
-            _productA.Id, 20m, "Adjustment with timestamp", StockAdjustmentReason.Found, _ownerUser.Id, "Owner");
+            _productA.Id, 20m, "Adjustment with timestamp", StockAdjustmentReason.Found, _ownerUser.Id);
         adjResult.Success.Should().BeTrue();
 
         // 2. Query movements and verify non-midnight timestamps
@@ -650,7 +649,7 @@ public class InventoryModuleTests : IDisposable
         var csvResult = await _inventoryService.ExportMovementHistoryCsvAsync(new MovementHistoryFilterQuery
         {
             ProductId = _productA.Id
-        }, "Owner");
+        });
         csvResult.Success.Should().BeTrue();
         var csvBytes = csvResult.Data!;
         csvBytes.Should().NotBeEmpty();
@@ -663,12 +662,12 @@ public class InventoryModuleTests : IDisposable
     {
         // Adjust Product A down to 4 units
         await _adjustmentService.CreateAndPostSingleAdjustmentAsync(
-            _productA.Id, 4m, "Reduce stock for reorder test", StockAdjustmentReason.Damaged, _ownerUser.Id, "Owner");
+            _productA.Id, 4m, "Reduce stock for reorder test", StockAdjustmentReason.Damaged, _ownerUser.Id);
 
         // Product A has ReorderLevel = 10, CurrentStock = 4
         // DefaultReorderMultiplier is 2.0
         // Formula: Math.Max(1, Math.Ceiling(10 * 2.0 - 4)) = Math.Ceiling(20 - 4) = 16 units
-        var reorderResult = await _inventoryService.GetReorderListAsync("Owner");
+        var reorderResult = await _inventoryService.GetReorderListAsync();
         reorderResult.Success.Should().BeTrue();
 
         var reorderA = reorderResult.Data!.FirstOrDefault(r => r.ProductId == _productA.Id);
@@ -685,7 +684,7 @@ public class InventoryModuleTests : IDisposable
             {
                 new() { ProductId = _productA.Id, Quantity = reorderA.SuggestedQuantity, UnitCost = reorderA.CostPrice }
             }
-        }, _ownerUser.Id, "Owner");
+        }, _ownerUser.Id);
 
         createPoResult.Success.Should().BeTrue();
         createPoResult.Data.Should().NotBeNull();
@@ -698,7 +697,7 @@ public class InventoryModuleTests : IDisposable
     [Fact]
     public async Task InventoryService_ValuationByCategory_CalculatesAggregatesCorrectly()
     {
-        var result = await _inventoryService.GetCategoryValuationsAsync("Owner");
+        var result = await _inventoryService.GetCategoryValuationsAsync();
         result.Success.Should().BeTrue();
         result.Data.Should().NotBeEmpty();
 

@@ -48,9 +48,7 @@ public partial class StockValuationViewModel : ObservableObject
         IsLoading = true;
         ErrorMessage = null;
         try
-        {
-            var userRole = "Owner";
-            var result = await _inventoryService.GetCategoryValuationsAsync(userRole);
+        {            var result = await _inventoryService.GetCategoryValuationsAsync();
             if (result.Success && result.Data != null)
             {
                 Valuations.Clear();
@@ -87,10 +85,7 @@ public partial class StockValuationViewModel : ObservableObject
         try
         {
             var filePath = _dialogService.ShowSaveFileDialog("PDF Files (*.pdf)|*.pdf", $"StockValuation_{DateTime.Now:yyyyMMdd_HHmm}.pdf");
-            if (string.IsNullOrWhiteSpace(filePath)) return;
-
-            var userRole = "Owner";
-            var exportResult = await _inventoryService.ExportValuationPdfAsync(userRole);
+            if (string.IsNullOrWhiteSpace(filePath)) return;            var exportResult = await _inventoryService.ExportValuationPdfAsync();
             if (exportResult.Success && exportResult.Data != null)
             {
                 await File.WriteAllBytesAsync(filePath, exportResult.Data);
@@ -113,10 +108,7 @@ public partial class StockValuationViewModel : ObservableObject
         try
         {
             var filePath = _dialogService.ShowSaveFileDialog("CSV Files (*.csv)|*.csv", $"StockValuation_{DateTime.Now:yyyyMMdd_HHmm}.csv");
-            if (string.IsNullOrWhiteSpace(filePath)) return;
-
-            var userRole = "Owner";
-            var exportResult = await _inventoryService.ExportValuationCsvAsync(userRole);
+            if (string.IsNullOrWhiteSpace(filePath)) return;            var exportResult = await _inventoryService.ExportValuationCsvAsync();
             if (exportResult.Success && exportResult.Data != null)
             {
                 await File.WriteAllBytesAsync(filePath, exportResult.Data);

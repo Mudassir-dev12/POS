@@ -18,6 +18,21 @@ public class CsvPreviewResult
     public string? DetectedNameColumn { get; set; }
 }
 
+public class CsvColumnMapping
+{
+    public string? ProductNameColumn { get; set; }
+    public string? SkuColumn { get; set; }
+    public string? BarcodeColumn { get; set; }
+    public string? CostPriceColumn { get; set; }
+    public string? SalePriceColumn { get; set; }
+    public string? StockQuantityColumn { get; set; }
+    public string? CategoryColumn { get; set; }
+    public string? BrandColumn { get; set; }
+    public string? UnitColumn { get; set; }
+    public string? TaxPercentColumn { get; set; }
+    public string? MinSalePriceColumn { get; set; }
+}
+
 public class CsvValidationReport
 {
     public int TotalRows { get; set; }
@@ -31,6 +46,7 @@ public class CsvImportOptions
     public bool UpdateExisting { get; set; } = true;
     public int? UserId { get; set; }
     public string? UserRole { get; set; }
+    public CsvColumnMapping? ColumnMapping { get; set; }
 }
 
 public class CsvImportResult
@@ -50,6 +66,6 @@ public interface ICsvProductService
     byte[] GetSampleCsvTemplate();
     byte[] GetSampleExcelTemplate();
     Task<Result<CsvPreviewResult>> PreviewCsvAsync(Stream stream, CancellationToken cancellationToken = default);
-    Task<Result<CsvValidationReport>> ValidateCsvAsync(Stream stream, CancellationToken cancellationToken = default);
+    Task<Result<CsvValidationReport>> ValidateCsvAsync(Stream stream, CsvColumnMapping? columnMapping = null, CancellationToken cancellationToken = default);
     Task<Result<CsvImportResult>> ImportCsvAsync(Stream stream, CsvImportOptions options, IProgress<int>? progress = null, CancellationToken cancellationToken = default);
 }

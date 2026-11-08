@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
@@ -10,43 +11,102 @@ namespace ShopPOS.UI;
 public partial class MainWindow : Window
 {
     public MainWindowViewModel ViewModel { get; }
+    private readonly ShopPOS.Core.Interfaces.IUserSettingsService? _userSettingsService;
+    private readonly System.Text.StringBuilder _barcodeBuffer = new();
+    private DateTime _lastBarcodeTime = DateTime.MinValue;
 
-    public MainWindow(MainWindowViewModel viewModel)
+    public MainWindow(MainWindowViewModel viewModel, ShopPOS.Core.Interfaces.IUserSettingsService? userSettingsService = null)
     {
         InitializeComponent();
         ViewModel = viewModel;
+        _userSettingsService = userSettingsService;
         DataContext = viewModel;
 
-        Loaded += async (_, _) => await ViewModel.InitializeAsync();
+        Loaded += async (_, _) =>
+        {
+            RestoreWindowSettings();
+            await ViewModel.InitializeAsync();
+        };
+
+        Closing += (_, _) => SaveWindowSettings();
         PreviewKeyDown += MainWindow_PreviewKeyDown;
+        PreviewTextInput += MainWindow_PreviewTextInput;
+    }
+
+    private void RestoreWindowSettings()
+    {
+        if (_userSettingsService == null) return;
+        try
+        {
+            var ws = _userSettingsService.Load().Window;
+            if (ws != null)
+            {
+                if (ws.Width >= MinWidth) Width = ws.Width;
+                if (ws.Height >= MinHeight) Height = ws.Height;
+
+                if (ws.Left >= SystemParameters.VirtualScreenLeft &&
+                    ws.Left + ws.Width <= SystemParameters.VirtualScreenLeft + SystemParameters.VirtualScreenWidth)
+                {
+                    Left = ws.Left;
+                }
+
+                if (ws.Top >= SystemParameters.VirtualScreenTop &&
+                    ws.Top + ws.Height <= SystemParameters.VirtualScreenTop + SystemParameters.VirtualScreenHeight)
+                {
+                    Top = ws.Top;
+                }
+
+                if (ws.WindowState == (int)WindowState.Maximized)
+                {
+                    WindowState = WindowState.Maximized;
+                }
+
+                ViewModel.IsSidebarCollapsed = ws.IsSidebarCollapsed;
+            }
+        }
+        catch { }
+    }
+
+    private void SaveWindowSettings()
+    {
+        if (_userSettingsService == null) return;
+        try
+        {
+            var settings = _userSettingsService.Load();
+            settings.Window = new ShopPOS.Core.Models.WindowSettings
+            {
+                Width = RestoreBounds.Width > 0 ? RestoreBounds.Width : Width,
+                Height = RestoreBounds.Height > 0 ? RestoreBounds.Height : Height,
+                Left = RestoreBounds.Left > 0 ? RestoreBounds.Left : Left,
+                Top = RestoreBounds.Top > 0 ? RestoreBounds.Top : Top,
+                WindowState = (int)WindowState,
+                IsSidebarCollapsed = ViewModel.IsSidebarCollapsed
+            };
+            _userSettingsService.Save(settings);
+        }
+        catch { }
     }
 
     private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
     {
-        // 1. Global '/' shortcut to focus global search (unless currently typing in a text field)
-        if (e.Key == Key.OemQuestion || e.Key == Key.Divide)
+        // Barcode Scanner detection (rapid characters ending in Enter outside POS)
+        if (e.Key == Key.Enter)
         {
-            if (Keyboard.FocusedElement is not TextBoxBase)
+            if (ViewModel.CurrentView is not PosSaleViewModel && _barcodeBuffer.Length >= 2)
             {
-                GlobalSearchTextBox.Focus();
-                GlobalSearchTextBox.SelectAll();
-                e.Handled = true;
-                return;
+                string barcode = _barcodeBuffer.ToString().Trim();
+                _barcodeBuffer.Clear();
+                if (!string.IsNullOrEmpty(barcode))
+                {
+                    e.Handled = true;
+                    _ = ViewModel.HandleGlobalBarcodeScanAsync(barcode);
+                    return;
+                }
             }
+            _barcodeBuffer.Clear();
         }
 
-        // 2. Global Escape closes search popup if open
-        if (e.Key == Key.Escape)
-        {
-            if (ViewModel.IsSearchOpen)
-            {
-                ViewModel.CloseSearch();
-                e.Handled = true;
-                return;
-            }
-        }
-
-        // 3. Global F2 shortcut: Opens Sales (POS) from anywhere, EXCEPT inside POS where F2 opens product search
+        // 1. Global F2 shortcut: Opens Sales (POS) from anywhere, EXCEPT inside POS where F2 opens product search
         if (e.Key == Key.F2)
         {
             if (ViewModel.CurrentView is not PosSaleViewModel)
@@ -61,10 +121,9 @@ public partial class MainWindow : Window
             }
         }
 
-        // 4. Global F5 shortcut: Refresh current view if supported
+        // 2. Global F5 shortcut: Refresh current view if supported
         if (e.Key == Key.F5)
         {
-            // If current view model has a Refresh or Load command
             if (ViewModel.CurrentView != null)
             {
                 var viewType = ViewModel.CurrentView.GetType();
@@ -78,4 +137,28 @@ public partial class MainWindow : Window
             }
         }
     }
+    private void MainWindow_PreviewTextInput(object sender, TextCompositionEventArgs e)
+    {
+        // When in POS, POS has its own ScanBox and scanner handling
+        if (ViewModel.CurrentView is PosSaleViewModel) return;
+
+        // If focus is inside a TextBox and user is typing slowly (> 120ms between keys), don't buffer as barcode
+        if (Keyboard.FocusedElement is TextBoxBase)
+        {
+            var interval = (DateTime.UtcNow - _lastBarcodeTime).TotalMilliseconds;
+            if (interval > 120 && _barcodeBuffer.Length == 0)
+            {
+                return;
+            }
+        }
+
+        var now = DateTime.UtcNow;
+        if ((now - _lastBarcodeTime).TotalMilliseconds > 250)
+        {
+            _barcodeBuffer.Clear();
+        }
+        _lastBarcodeTime = now;
+        _barcodeBuffer.Append(e.Text);
+    }
+
 }

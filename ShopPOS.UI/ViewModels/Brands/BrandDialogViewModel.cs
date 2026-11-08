@@ -10,8 +10,7 @@ public partial class BrandDialogViewModel : ObservableObject
 {
     private readonly IBrandService _brandService;
     private readonly int? _currentUserId;
-    private readonly string? _currentUserRole;
-
+    
     [ObservableProperty]
     private string _dialogTitle = "Add Brand";
 
@@ -38,12 +37,10 @@ public partial class BrandDialogViewModel : ObservableObject
 
     public event Action<bool>? RequestClose;
 
-    public BrandDialogViewModel(IBrandService brandService, int? currentUserId, string? currentUserRole)
+    public BrandDialogViewModel(IBrandService brandService, int? currentUserId)
     {
         _brandService = brandService;
-        _currentUserId = currentUserId;
-        _currentUserRole = currentUserRole;
-    }
+        _currentUserId = currentUserId;    }
 
     public void Initialize(BrandDto? brand = null)
     {
@@ -76,7 +73,7 @@ public partial class BrandDialogViewModel : ObservableObject
             {
                 Name = Name,
                 Description = Description
-            }, _currentUserId, _currentUserRole);
+            }, _currentUserId);
 
             if (!res.Success)
             {
@@ -92,7 +89,7 @@ public partial class BrandDialogViewModel : ObservableObject
                 Name = Name,
                 Description = Description,
                 IsActive = IsActive
-            }, _currentUserId, _currentUserRole);
+            }, _currentUserId);
 
             if (!res.Success)
             {

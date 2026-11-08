@@ -1,304 +1,1306 @@
 <UserControl x:Class="ShopPOS.UI.Views.SettingsView"
+
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+
              xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Settings"
+
              mc:Ignorable="d"
+
              d:DataContext="{d:DesignInstance vm:SettingsViewModel}"
+
              Background="{DynamicResource PageBackgroundBrush}"
+
              FontFamily="{StaticResource AppFontFamily}"
+
              Loaded="UserControl_Loaded">
 
+
+
     <UserControl.InputBindings>
+
         <KeyBinding Key="S" Modifiers="Ctrl" Command="{Binding SaveCommand}" />
+
     </UserControl.InputBindings>
 
+
+
     <Grid Margin="24">
+
         <Grid.RowDefinitions>
+
             <!-- Header Bar -->
+
             <RowDefinition Height="Auto" />
+
             <!-- Settings Form Cards -->
+
             <RowDefinition Height="*" />
+
         </Grid.RowDefinitions>
 
+
+
         <!-- ================= 1. HEADER ================= -->
+
         <Grid Grid.Row="0" Margin="0,0,0,16">
+
             <Grid.ColumnDefinitions>
+
                 <ColumnDefinition Width="*" />
+
                 <ColumnDefinition Width="Auto" />
+
             </Grid.ColumnDefinitions>
 
+
+
             <StackPanel Grid.Column="0">
+
                 <TextBlock Text="Store, POS &amp; Inventory Settings" Style="{StaticResource PageTitleStyle}" />
+
                 <TextBlock Text="Configure store profile, POS cashier rules, thermal receipt formatting, and valuation." Style="{StaticResource SubTitleStyle}" />
+
             </StackPanel>
+
+
 
             <StackPanel Grid.Column="1" Orientation="Horizontal">
+
                 <Button Content="Save Settings (Ctrl+S)"
+
                         Command="{Binding SaveCommand}"
+
                         Style="{StaticResource PrimaryButtonStyle}" />
+
             </StackPanel>
+
         </Grid>
 
+
+
         <!-- ================= 2. SETTINGS CARDS ================= -->
+
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+
             <StackPanel MaxWidth="820" HorizontalAlignment="Left">
+
                 <!-- Notifications -->
+
                 <Border Background="{DynamicResource DangerBackgroundBrush}"
+
                         BorderBrush="{DynamicResource DangerBrush}"
+
                         BorderThickness="1"
+
                         CornerRadius="6"
+
                         Padding="12,8"
+
                         Margin="0,0,0,12"
+
                         Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+
                     <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerBrush}" FontWeight="Bold" />
+
                 </Border>
+
+
 
                 <Border Background="{DynamicResource SuccessBackgroundBrush}"
+
                         BorderBrush="{DynamicResource SuccessBrush}"
+
                         BorderThickness="1"
+
                         CornerRadius="6"
+
                         Padding="12,8"
+
                         Margin="0,0,0,12"
+
                         Visibility="{Binding SuccessMessage, Converter={StaticResource StringToVisibilityConverter}}">
+
                     <TextBlock Text="{Binding SuccessMessage}" Foreground="{DynamicResource SuccessTextBrush}" FontWeight="Bold" />
+
                 </Border>
+
+
 
                 <!-- SECTION 1: Store Profile & Currency -->
+
                 <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,16">
+
                     <StackPanel>
+
                         <TextBlock Text="Store Profile &amp; Currency" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14" />
 
+
+
                         <!-- Store Name & Currency -->
+
                         <Grid Margin="0,0,0,12">
+
                             <Grid.ColumnDefinitions>
+
                                 <ColumnDefinition Width="2*" />
+
                                 <ColumnDefinition Width="14" />
+
                                 <ColumnDefinition Width="1*" />
+
                                 <ColumnDefinition Width="14" />
+
                                 <ColumnDefinition Width="1*" />
+
                                 <ColumnDefinition Width="14" />
+
                                 <ColumnDefinition Width="1.5*" />
+
                             </Grid.ColumnDefinitions>
 
+
+
                             <StackPanel Grid.Column="0">
+
                                 <TextBlock Text="STORE NAME *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
                                 <TextBox Text="{Binding ShopName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+
                             </StackPanel>
+
+
 
                             <StackPanel Grid.Column="2">
+
                                 <TextBlock Text="CURRENCY SYMBOL *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
                                 <TextBox Text="{Binding CurrencySymbol, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+
                             </StackPanel>
 
+
+
                             <StackPanel Grid.Column="4">
+
                                 <TextBlock Text="DECIMALS" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
                                 <ComboBox ItemsSource="{Binding AllowedDecimals}" SelectedItem="{Binding CurrencyDecimals, Mode=TwoWay}" Style="{StaticResource InputComboBoxStyle}" />
+
                             </StackPanel>
+
+
 
                             <StackPanel Grid.Column="6">
+
                                 <TextBlock Text="LIVE PREVIEW" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
                                 <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,6">
+
                                     <TextBlock Text="{Binding CurrencyPreview}" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" FontSize="13" VerticalAlignment="Center" />
+
                                 </Border>
+
                             </StackPanel>
+
                         </Grid>
+
+
 
                         <!-- Address -->
+
                         <StackPanel Margin="0,0,0,12">
+
                             <TextBlock Text="PHYSICAL STORE ADDRESS" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
                             <TextBox Text="{Binding Address, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+
                         </StackPanel>
 
-                        <!-- Phone & Tax Number -->
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="14" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
 
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="CONTACT PHONE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding Phone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
-                            </StackPanel>
 
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="TAX / VAT REGISTRATION #" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding TaxNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
-                            </StackPanel>
-                        </Grid>
-                    </StackPanel>
-                </Border>
+                        <!-- Phone 1, Phone 2 & Tax Number -->
 
-                <!-- SECTION 2: Appearance & Theme -->
-                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,16">
-                    <StackPanel>
-                        <TextBlock Text="Appearance &amp; Theme" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14" />
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="220" />
-                                <ColumnDefinition Width="14" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="COLOR THEME" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                                <ComboBox ItemsSource="{Binding AvailableThemes}"
-                                          SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
-                                          Style="{StaticResource InputComboBoxStyle}" />
-                            </StackPanel>
-
-                            <Button Grid.Column="2"
-                                    Content="Toggle Theme"
-                                    Command="{Binding ToggleThemeCommand}"
-                                    Style="{StaticResource SecondaryButtonStyle}"
-                                    VerticalAlignment="Bottom" />
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <!-- SECTION 3: POS & Sales Policy -->
-                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,16">
-                    <StackPanel>
-                        <TextBlock Text="POS Checkout &amp; Sales Policies" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,4,4" />
-                        <TextBlock Text="Controls cash register constraints, discounts, and pricing." Style="{StaticResource SubTitleStyle}" Margin="0,0,0,14" />
-
-                        <!-- Toggles -->
-                        <CheckBox Content="Allow selling below product minimum sale price" IsChecked="{Binding AllowSellingBelowMinPrice, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
-                        <CheckBox Content="Selling prices in product catalog already include tax / VAT" IsChecked="{Binding PricesIncludeTax, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
-                        <CheckBox Content="Allow customer returns without original invoice receipt" IsChecked="{Binding AllowReturnWithoutReceipt, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,14" />
-
-                        <!-- Rounding & Return Window -->
-                        <Grid Margin="0,0,0,10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="14" />
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-
-                            <StackPanel Grid.Column="0">
-                                <TextBlock Text="CASH ROUNDING STEP (0 = DISABLED)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding CashRoundingStep, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
-                            </StackPanel>
-
-                            <StackPanel Grid.Column="2">
-                                <TextBlock Text="RETURN WINDOW (DAYS, EMPTY = UNLIMITED)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding SaleReturnWindowDays, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
-                            </StackPanel>
-                        </Grid>
-                    </StackPanel>
-                </Border>
-
-                <!-- SECTION 4: Inventory & Costing -->
-                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,16">
-                    <StackPanel>
-                        <TextBlock Text="Inventory Costing &amp; Control" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,4" />
-                        <TextBlock Text="These critical parameters dictate accounting valuation and stock validation across purchases and POS checkout."
-                                   Style="{StaticResource SubTitleStyle}" Margin="0,0,0,16" />
-
-                        <!-- Costing Method -->
-                        <StackPanel Margin="0,0,0,16">
-                            <TextBlock Text="INVENTORY COSTING METHOD" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                            <ComboBox ItemsSource="{Binding AvailableCostingMethods}"
-                                      SelectedItem="{Binding CostingMethod, Mode=TwoWay}"
-                                      IsEnabled="{Binding IsAdmin}"
-                                      Style="{StaticResource InputComboBoxStyle}"
-                                      Width="280"
-                                      HorizontalAlignment="Left" />
-                        </StackPanel>
-
-                        <!-- Allow Negative Stock -->
-                        <StackPanel Margin="0,0,0,8">
-                            <CheckBox Content="Allow inventory levels to drop into negative quantities"
-                                      IsChecked="{Binding AllowNegativeStock, Mode=TwoWay}"
-                                      IsEnabled="{Binding IsAdmin}"
-                                      FontWeight="Bold"
-                                      FontSize="13" />
-                        </StackPanel>
-                    </StackPanel>
-                </Border>
-
-                <!-- SECTION 5: Receipt Printing & Hardware -->
-                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,24">
-                    <StackPanel>
-                        <TextBlock Text="Receipt Printing &amp; Cash Drawer" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14" />
-
-                        <!-- Printing Mode -->
-                        <StackPanel Margin="0,0,0,14">
-                            <TextBlock Text="PRINTING MODE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                            <ComboBox ItemsSource="{Binding AvailablePrinterModes}"
-                                      SelectedItem="{Binding PrinterMode, Mode=TwoWay}"
-                                      Style="{StaticResource InputComboBoxStyle}"
-                                      Width="320" HorizontalAlignment="Left" />
-                        </StackPanel>
-
-                        <!-- Printer Queue Selection -->
                         <Grid Margin="0,0,0,14">
+
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="2.5*" />
-                                <ColumnDefinition Width="10" />
-                                <ColumnDefinition Width="Auto" />
+
+                                <ColumnDefinition Width="*" />
+
                                 <ColumnDefinition Width="14" />
-                                <ColumnDefinition Width="1*" />
+
+                                <ColumnDefinition Width="*" />
+
+                                <ColumnDefinition Width="14" />
+
+                                <ColumnDefinition Width="*" />
+
                             </Grid.ColumnDefinitions>
 
+
+
                             <StackPanel Grid.Column="0">
-                                <TextBlock Text="RECEIPT PRINTER QUEUE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                                <ComboBox ItemsSource="{Binding InstalledPrinters}"
-                                          SelectedItem="{Binding ReceiptPrinterName, Mode=TwoWay}"
-                                          IsEditable="True"
-                                          Style="{StaticResource InputComboBoxStyle}" />
+
+                                <TextBlock Text="PRIMARY PHONE *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                                <TextBox Text="{Binding Phone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+
                             </StackPanel>
 
-                            <Button Grid.Column="2" Content="Refresh"
-                                    Command="{Binding RefreshPrintersCommand}"
-                                    Style="{StaticResource ToolbarButtonStyle}"
-                                    VerticalAlignment="Bottom" Height="34" />
+
+
+                            <StackPanel Grid.Column="2">
+
+                                <TextBlock Text="SECONDARY PHONE / WHATSAPP" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                                <TextBox Text="{Binding SecondaryPhone, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+
+                            </StackPanel>
+
+
 
                             <StackPanel Grid.Column="4">
-                                <TextBlock Text="RECEIPT COPIES" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                                <TextBox Text="{Binding ReceiptCopies, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+
+                                <TextBlock Text="TAX / VAT REGISTRATION #" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                                <TextBox Text="{Binding TaxNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+
                             </StackPanel>
+
                         </Grid>
 
-                        <!-- Paper Width -->
-                        <StackPanel Margin="0,0,0,14">
-                            <TextBlock Text="PAPER ROLL WIDTH" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                            <ComboBox SelectedValuePath="Tag"
-                                      SelectedValue="{Binding ReceiptWidthMm, Mode=TwoWay}"
-                                      Style="{StaticResource InputComboBoxStyle}"
-                                      Width="240" HorizontalAlignment="Left">
-                                <ComboBoxItem Content="80 mm (Standard Thermal)" Tag="80" />
-                                <ComboBoxItem Content="58 mm (Compact Thermal)" Tag="58" />
-                            </ComboBox>
-                        </StackPanel>
 
-                        <CheckBox Content="Automatically print receipt when sale completes" IsChecked="{Binding AutoPrintReceipt, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
-                        <CheckBox Content="Trigger cash drawer kick pulse on cash sales" IsChecked="{Binding OpenCashDrawerOnCashSale, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,14" />
+
+                        <!-- Store Logo for Thermal Receipts -->
+
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14">
+
+                            <Grid>
+
+                                <Grid.ColumnDefinitions>
+
+                                    <ColumnDefinition Width="Auto" />
+
+                                    <ColumnDefinition Width="16" />
+
+                                    <ColumnDefinition Width="*" />
+
+                                </Grid.ColumnDefinitions>
+
+
+
+                                <!-- Logo Thumbnail Preview -->
+
+                                <Border Grid.Column="0" Width="80" Height="80" Background="White" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4">
+
+                                    <Image Source="{Binding LogoImagePath}" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
+
+                                </Border>
+
+
+
+                                <!-- Controls -->
+
+                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+
+                                    <TextBlock Text="STORE LOGO FOR RECEIPTS" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                                    <TextBlock Text="Select a square or circular black/white logo image (PNG, JPG) to print at top of thermal receipts." Style="{StaticResource SubTitleStyle}" Margin="0,0,0,8" />
+
+                                    <StackPanel Orientation="Horizontal">
+
+                                        <Button Content="Choose Logo Image..." Command="{Binding SelectLogoImageCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,8,0" />
+
+                                        <Button Content="Remove Logo" Command="{Binding RemoveLogoImageCommand}" Style="{StaticResource SecondaryButtonStyle}"
+
+                                                Visibility="{Binding LogoImagePath, Converter={StaticResource StringToVisibilityConverter}}" />
+
+                                    </StackPanel>
+
+                                </StackPanel>
+
+                            </Grid>
+
+                        </Border>
+
+                    </StackPanel>
+
+                </Border>
+
+
+
+                <!-- SECTION 2: Appearance & Theme -->
+
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,16">
+
+                    <StackPanel>
+
+                        <TextBlock Text="Appearance &amp; Theme" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14" />
+
+                        <Grid>
+
+                            <Grid.ColumnDefinitions>
+
+                                <ColumnDefinition Width="220" />
+
+                                <ColumnDefinition Width="14" />
+
+                                <ColumnDefinition Width="Auto" />
+
+                                <ColumnDefinition Width="*" />
+
+                            </Grid.ColumnDefinitions>
+
+
+
+                            <StackPanel Grid.Column="0">
+
+                                <TextBlock Text="COLOR THEME" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                                <ComboBox ItemsSource="{Binding AvailableThemes}"
+
+                                          SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
+
+                                          Style="{StaticResource InputComboBoxStyle}" />
+
+                            </StackPanel>
+
+
+
+                            <Button Grid.Column="2"
+
+                                    Content="Toggle Theme"
+
+                                    Command="{Binding ToggleThemeCommand}"
+
+                                    Style="{StaticResource SecondaryButtonStyle}"
+
+                                    VerticalAlignment="Bottom" />
+
+                        </Grid>
+
+                    </StackPanel>
+
+                </Border>
+
+
+
+                <!-- SECTION 3: POS & Sales Policy -->
+
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,16">
+
+                    <StackPanel>
+
+                        <TextBlock Text="POS Checkout &amp; Sales Policies" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,4,4" />
+
+                        <TextBlock Text="Controls cash register constraints, discounts, and pricing." Style="{StaticResource SubTitleStyle}" Margin="0,0,0,14" />
+
+
+
+                        <!-- Toggles -->
+
+                        <CheckBox Content="Allow selling below product minimum sale price" IsChecked="{Binding AllowSellingBelowMinPrice, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
+
+                        <CheckBox Content="Selling prices in product catalog already include tax / VAT" IsChecked="{Binding PricesIncludeTax, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
+
+                        <CheckBox Content="Allow customer returns without original invoice receipt" IsChecked="{Binding AllowReturnWithoutReceipt, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,14" />
+
+
+
+                        <!-- Rounding & Return Window -->
+
+                        <Grid Margin="0,0,0,10">
+
+                            <Grid.ColumnDefinitions>
+
+                                <ColumnDefinition Width="*" />
+
+                                <ColumnDefinition Width="14" />
+
+                                <ColumnDefinition Width="*" />
+
+                            </Grid.ColumnDefinitions>
+
+
+
+                            <StackPanel Grid.Column="0">
+
+                                <TextBlock Text="CASH ROUNDING STEP (0 = DISABLED)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                                <TextBox Text="{Binding CashRoundingStep, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+
+                            </StackPanel>
+
+
+
+                            <StackPanel Grid.Column="2">
+
+                                <TextBlock Text="RETURN WINDOW (DAYS, EMPTY = UNLIMITED)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                                <TextBox Text="{Binding SaleReturnWindowDays, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+
+                            </StackPanel>
+
+                        </Grid>
+
+                    </StackPanel>
+
+                </Border>
+
+
+
+                <!-- SECTION 4: Inventory & Costing -->
+
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,16">
+
+                    <StackPanel>
+
+                        <TextBlock Text="Inventory Costing &amp; Control" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,4" />
+
+                        <TextBlock Text="These critical parameters dictate accounting valuation and stock validation across purchases and POS checkout."
+
+                                   Style="{StaticResource SubTitleStyle}" Margin="0,0,0,16" />
+
+
+
+                        <!-- Costing Method -->
 
                         <StackPanel Margin="0,0,0,16">
-                            <TextBlock Text="RECEIPT FOOTER MESSAGE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
-                            <TextBox Text="{Binding ReceiptFooter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+
+                            <TextBlock Text="INVENTORY COSTING METHOD" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                            <ComboBox ItemsSource="{Binding AvailableCostingMethods}"
+
+                                      SelectedItem="{Binding CostingMethod, Mode=TwoWay}"
+
+                                      IsEnabled="{Binding IsAdmin}"
+
+                                      Style="{StaticResource InputComboBoxStyle}"
+
+                                      Width="280"
+
+                                      HorizontalAlignment="Left" />
+
                         </StackPanel>
 
-                        <!-- Hardware Diagnostics -->
-                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
-                            <StackPanel>
-                                <TextBlock Text="HARDWARE DIAGNOSTICS" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,8" />
-                                <StackPanel Orientation="Horizontal">
-                                    <Button Content="Test Print Receipt" Command="{Binding TestPrintCommand}"
-                                            Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0" />
-                                    <Button Content="Open Cash Drawer" Command="{Binding OpenCashDrawerCommand}"
-                                            Style="{StaticResource SecondaryButtonStyle}" />
-                                </StackPanel>
-                            </StackPanel>
-                        </Border>
+
+
+                        <!-- Allow Negative Stock -->
+
+                        <StackPanel Margin="0,0,0,8">
+
+                            <CheckBox Content="Allow inventory levels to drop into negative quantities"
+
+                                      IsChecked="{Binding AllowNegativeStock, Mode=TwoWay}"
+
+                                      IsEnabled="{Binding IsAdmin}"
+
+                                      FontWeight="Bold"
+
+                                      FontSize="13" />
+
+                        </StackPanel>
+
                     </StackPanel>
+
                 </Border>
+
+
+
+                <!-- SECTION 5: Receipt Printing & Hardware -->
+
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,24">
+
+                    <StackPanel>
+
+                        <TextBlock Text="Receipt Printing &amp; Cash Drawer" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14" />
+
+
+
+                        <!-- Printing Mode -->
+
+                        <StackPanel Margin="0,0,0,14">
+
+                            <TextBlock Text="PRINTING MODE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                            <ComboBox ItemsSource="{Binding AvailablePrinterModes}"
+
+                                      SelectedItem="{Binding PrinterMode, Mode=TwoWay}"
+
+                                      Style="{StaticResource InputComboBoxStyle}"
+
+                                      Width="320" HorizontalAlignment="Left" />
+
+                        </StackPanel>
+
+
+
+                        <!-- Printer Queue Selection -->
+
+                        <Grid Margin="0,0,0,14">
+
+                            <Grid.ColumnDefinitions>
+
+                                <ColumnDefinition Width="2.5*" />
+
+                                <ColumnDefinition Width="10" />
+
+                                <ColumnDefinition Width="Auto" />
+
+                                <ColumnDefinition Width="14" />
+
+                                <ColumnDefinition Width="1*" />
+
+                            </Grid.ColumnDefinitions>
+
+
+
+                            <StackPanel Grid.Column="0">
+
+                                <TextBlock Text="RECEIPT PRINTER QUEUE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                                <ComboBox ItemsSource="{Binding InstalledPrinters}"
+
+                                          SelectedItem="{Binding ReceiptPrinterName, Mode=TwoWay}"
+
+                                          IsEditable="True"
+
+                                          Style="{StaticResource InputComboBoxStyle}" />
+
+                            </StackPanel>
+
+
+
+                            <Button Grid.Column="2" Content="Refresh"
+
+                                    Command="{Binding RefreshPrintersCommand}"
+
+                                    Style="{StaticResource ToolbarButtonStyle}"
+
+                                    VerticalAlignment="Bottom" Padding="10,6" />
+
+
+
+                            <StackPanel Grid.Column="4">
+
+                                <TextBlock Text="RECEIPT COPIES" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                                <TextBox Text="{Binding ReceiptCopies, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+
+                            </StackPanel>
+
+                        </Grid>
+
+
+
+                        <!-- Paper Width -->
+
+                        <StackPanel Margin="0,0,0,14">
+
+                            <TextBlock Text="PAPER ROLL WIDTH" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                            <ComboBox SelectedValuePath="Tag"
+
+                                      SelectedValue="{Binding ReceiptWidthMm, Mode=TwoWay}"
+
+                                      Style="{StaticResource InputComboBoxStyle}"
+
+                                      Width="240" HorizontalAlignment="Left">
+
+                                <ComboBoxItem Content="80 mm (Standard Thermal)" Tag="80" />
+
+                                <ComboBoxItem Content="58 mm (Compact Thermal)" Tag="58" />
+
+                            </ComboBox>
+
+                        </StackPanel>
+
+
+
+                        <CheckBox Content="Automatically print receipt when sale completes" IsChecked="{Binding AutoPrintReceipt, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
+
+                        <CheckBox Content="Trigger cash drawer kick pulse on cash sales" IsChecked="{Binding OpenCashDrawerOnCashSale, Mode=TwoWay}" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,14" />
+
+
+
+                        <StackPanel Margin="0,0,0,14">
+
+                            <TextBlock Text="RECEIPT FOOTER MESSAGE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                            <TextBox Text="{Binding ReceiptFooter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+
+                        </StackPanel>
+
+
+
+                        <StackPanel Margin="0,0,0,16">
+
+                            <TextBlock Text="STORE RETURN &amp; EXCHANGE POLICIES (PRINTED AT BOTTOM OF SLIP)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+
+                            <TextBox Text="{Binding StorePolicy, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+
+                                     Style="{StaticResource InputTextBoxStyle}"
+
+                                     AcceptsReturn="True"
+
+                                     TextWrapping="Wrap"
+
+                                     MinHeight="60"
+
+                                     VerticalScrollBarVisibility="Auto" />
+
+                            <TextBlock Text="These policies are printed at the end of customer receipt slips." FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" />
+
+                        </StackPanel>
+
+
+
+                        <!-- Hardware Diagnostics -->
+
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}" BorderBrush="{DynamicResource SurfaceCardBorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
+
+                            <StackPanel>
+
+                                <TextBlock Text="HARDWARE DIAGNOSTICS" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,8" />
+
+                                <StackPanel Orientation="Horizontal">
+
+                                    <Button Content="Test Print Receipt" Command="{Binding TestPrintCommand}"
+
+                                            Style="{StaticResource SecondaryButtonStyle}" Margin="0,0,10,0" />
+
+                                    <Button Content="Open Cash Drawer" Command="{Binding OpenCashDrawerCommand}"
+
+                                            Style="{StaticResource SecondaryButtonStyle}" />
+
+                                </StackPanel>
+
+                            </StackPanel>
+
+                        </Border>
+
+                    </StackPanel>
+
+                </Border>
+
+                <!-- ================= SECTION 6: Data Tools & Database Maintenance (Section "Data") ================= -->
+
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,16">
+
+                    <StackPanel>
+
+                        <!-- Section Header -->
+
+                        <TextBlock Text="Data" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,4" />
+
+                        <TextBlock Text="Database maintenance tools: clear transactional test data, reset store for a fresh start, clear audit logs, or load ready-to-use demo retail data. Every destructive tool automatically creates a backup archive in C:\ShopData\Backups\ first."
+
+                                   Style="{StaticResource SubTitleStyle}"
+
+                                   TextWrapping="Wrap"
+
+                                   Margin="0,0,0,12" />
+
+
+
+                        <Button Content="Open Backup &amp; Restore Center"
+
+                                Command="{Binding NavigateToBackupRestoreCommand}"
+
+                                Style="{DynamicResource SecondaryButtonStyle}"
+
+                                Padding="14,8"
+
+                                Margin="0,0,0,16"
+
+                                HorizontalAlignment="Left" />
+
+
+
+                        <!-- Busy Status Banner -->
+
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+
+                                BorderBrush="{DynamicResource PrimaryBrush}"
+
+                                BorderThickness="1"
+
+                                CornerRadius="6"
+
+                                Padding="12,10"
+
+                                Margin="0,0,0,16"
+
+                                Visibility="{Binding IsDataToolsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+
+                            <StackPanel>
+
+                                <TextBlock Text="{Binding DataToolsStatusMessage, FallbackValue='Executing database maintenance operation...'}"
+
+                                           FontWeight="SemiBold"
+
+                                           FontSize="13"
+
+                                           Foreground="{DynamicResource PrimaryBrush}"
+
+                                           Margin="0,0,0,6" />
+
+                                <ProgressBar IsIndeterminate="True" Height="4" />
+
+                            </StackPanel>
+
+                        </Border>
+
+
+
+                        <!-- Database Overview Strip -->
+
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+
+                                BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+
+                                BorderThickness="1"
+
+                                CornerRadius="6"
+
+                                Padding="14,12"
+
+                                Margin="0,0,0,16">
+
+                            <Grid>
+
+                                <Grid.RowDefinitions>
+
+                                    <RowDefinition Height="Auto" />
+
+                                    <RowDefinition Height="Auto" />
+
+                                </Grid.RowDefinitions>
+
+                                <Grid.ColumnDefinitions>
+
+                                    <ColumnDefinition Width="*" />
+
+                                    <ColumnDefinition Width="Auto" />
+
+                                </Grid.ColumnDefinitions>
+
+
+
+                                <StackPanel Grid.Row="0" Grid.Column="0">
+
+                                    <TextBlock Text="CURRENT DATABASE RECORDS" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+
+                                    <TextBlock Text="Live row counts across transactional and master tables." FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                                </StackPanel>
+
+
+
+                                <Button Grid.Row="0" Grid.Column="1"
+
+                                        Content="Refresh Counts"
+
+                                        Command="{Binding RefreshDataCountsCommand}"
+
+                                        Style="{StaticResource ToolbarButtonStyle}"
+
+                                        VerticalAlignment="Center"
+
+                                        Padding="10,5" />
+
+
+
+                                <WrapPanel Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,10,0,0">
+
+                                    <Border Background="{DynamicResource SurfaceCardBorderBrush}" CornerRadius="4" Padding="10,5" Margin="0,0,8,6">
+
+                                        <TextBlock Text="{Binding DataCounts.SalesCount, StringFormat='Sales: {0:N0}', FallbackValue='Sales: 0'}" FontWeight="SemiBold" FontSize="12" />
+
+                                    </Border>
+
+                                    <Border Background="{DynamicResource SurfaceCardBorderBrush}" CornerRadius="4" Padding="10,5" Margin="0,0,8,6">
+
+                                        <TextBlock Text="{Binding DataCounts.PurchasesCount, StringFormat='Purchases: {0:N0}', FallbackValue='Purchases: 0'}" FontWeight="SemiBold" FontSize="12" />
+
+                                    </Border>
+
+                                    <Border Background="{DynamicResource SurfaceCardBorderBrush}" CornerRadius="4" Padding="10,5" Margin="0,0,8,6">
+
+                                        <TextBlock Text="{Binding DataCounts.ProductsCount, StringFormat='Products: {0:N0}', FallbackValue='Products: 0'}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource PrimaryBrush}" />
+
+                                    </Border>
+
+                                    <Border Background="{DynamicResource SurfaceCardBorderBrush}" CornerRadius="4" Padding="10,5" Margin="0,0,8,6">
+
+                                        <TextBlock Text="{Binding DataCounts.ExpensesCount, StringFormat='Expenses: {0:N0}', FallbackValue='Expenses: 0'}" FontWeight="SemiBold" FontSize="12" />
+
+                                    </Border>
+
+                                    <Border Background="{DynamicResource SurfaceCardBorderBrush}" CornerRadius="4" Padding="10,5" Margin="0,0,8,6">
+
+                                        <TextBlock Text="{Binding DataCounts.AuditLogsCount, StringFormat='Audit Logs: {0:N0}', FallbackValue='Audit Logs: 0'}" FontWeight="SemiBold" FontSize="12" />
+
+                                    </Border>
+
+                                </WrapPanel>
+
+                            </Grid>
+
+                        </Border>
+
+
+
+                        <!-- TOOL A: Clear Transactions -->
+
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+
+                                BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+
+                                BorderThickness="1"
+
+                                CornerRadius="6"
+
+                                Padding="14"
+
+                                Margin="0,0,0,12">
+
+                            <Grid>
+
+                                <Grid.ColumnDefinitions>
+
+                                    <ColumnDefinition Width="*" />
+
+                                    <ColumnDefinition Width="Auto" />
+
+                                </Grid.ColumnDefinitions>
+
+
+
+                                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+
+                                    <TextBlock Text="Clear Transactions" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,4" />
+
+                                    <TextBlock Text="Deletes all sales, sale items, payments, returns, purchases, purchase items, supplier payments, stock adjustments, stock movements, expenses, and audit logs. Resets all document numbering (INV, HOLD, SRET, PUR, SPAY, PRET, ADJ, EXP) back to 1. Products, categories, brands, units, suppliers, price levels, and settings remain untouched. Product stock is cleared to 0."
+
+                                               FontSize="12"
+
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+
+                                               TextWrapping="Wrap"
+
+                                               Margin="0,0,0,4" />
+
+                                    <TextBlock Text="Requires typing RESET to confirm. Creates an automatic backup first."
+
+                                               FontSize="11"
+
+                                               FontWeight="SemiBold"
+
+                                               Foreground="{DynamicResource DangerBrush}" />
+
+                                </StackPanel>
+
+
+
+                                <Button Grid.Column="1"
+
+                                        Content="Clear Transactions"
+
+                                        Command="{Binding ClearTransactionsCommand}"
+
+                                        Style="{StaticResource DangerButtonStyle}"
+
+                                        VerticalAlignment="Center"
+
+                                        Padding="14,8" />
+
+                            </Grid>
+
+                        </Border>
+
+
+
+                        <!-- TOOL B: Clear Everything (New Shop) -->
+
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+
+                                BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+
+                                BorderThickness="1"
+
+                                CornerRadius="6"
+
+                                Padding="14"
+
+                                Margin="0,0,0,12">
+
+                            <Grid>
+
+                                <Grid.ColumnDefinitions>
+
+                                    <ColumnDefinition Width="*" />
+
+                                    <ColumnDefinition Width="Auto" />
+
+                                </Grid.ColumnDefinitions>
+
+
+
+                                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+
+                                    <TextBlock Text="Clear Everything (New Shop)" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,4" />
+
+                                    <TextBlock Text="Wipes all transactions, stock ledger, products, barcodes, price history, categories, brands, units, suppliers, and expenses. Keeps store settings and the single local user row. Re-seeds default units (pcs, kg, litre, box, dozen), the General category, Retail &amp; Wholesale price levels, and default expense categories."
+
+                                               FontSize="12"
+
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+
+                                               TextWrapping="Wrap"
+
+                                               Margin="0,0,0,4" />
+
+                                    <TextBlock Text="Requires typing RESET to confirm. Creates an automatic backup first."
+
+                                               FontSize="11"
+
+                                               FontWeight="SemiBold"
+
+                                               Foreground="{DynamicResource DangerBrush}" />
+
+                                </StackPanel>
+
+
+
+                                <Button Grid.Column="1"
+
+                                        Content="Clear Everything"
+
+                                        Command="{Binding ClearEverythingCommand}"
+
+                                        Style="{StaticResource DangerButtonStyle}"
+
+                                        VerticalAlignment="Center"
+
+                                        Padding="14,8" />
+
+                            </Grid>
+
+                        </Border>
+
+
+
+                        <!-- TOOL C: Clear Audit Log Only -->
+
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+
+                                BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+
+                                BorderThickness="1"
+
+                                CornerRadius="6"
+
+                                Padding="14"
+
+                                Margin="0,0,0,12">
+
+                            <Grid>
+
+                                <Grid.ColumnDefinitions>
+
+                                    <ColumnDefinition Width="*" />
+
+                                    <ColumnDefinition Width="Auto" />
+
+                                </Grid.ColumnDefinitions>
+
+
+
+                                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+
+                                    <TextBlock Text="Clear Audit Log Only" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,4" />
+
+                                    <TextBlock Text="Deletes all system audit log entries to reduce database footprint. All transactions, master data, products, stock, and settings are preserved intact."
+
+                                               FontSize="12"
+
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+
+                                               TextWrapping="Wrap"
+
+                                               Margin="0,0,0,4" />
+
+                                    <TextBlock Text="Requires typing RESET to confirm. Creates an automatic backup first."
+
+                                               FontSize="11"
+
+                                               FontWeight="SemiBold"
+
+                                               Foreground="{DynamicResource TextSecondaryBrush}" />
+
+                                </StackPanel>
+
+
+
+                                <Button Grid.Column="1"
+
+                                        Content="Clear Audit Log"
+
+                                        Command="{Binding ClearAuditLogCommand}"
+
+                                        Style="{StaticResource SecondaryButtonStyle}"
+
+                                        VerticalAlignment="Center"
+
+                                        Padding="14,8" />
+
+                            </Grid>
+
+                        </Border>
+
+
+
+                        <!-- TOOL D: Load Demo Data -->
+
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+
+                                BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+
+                                BorderThickness="1"
+
+                                CornerRadius="6"
+
+                                Padding="14">
+
+                            <Grid>
+
+                                <Grid.ColumnDefinitions>
+
+                                    <ColumnDefinition Width="*" />
+
+                                    <ColumnDefinition Width="Auto" />
+
+                                </Grid.ColumnDefinitions>
+
+
+
+                                <StackPanel Grid.Column="0" Margin="0,0,16,0">
+
+                                    <TextBlock Text="Load Demo Data" FontWeight="Bold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,4" />
+
+                                    <TextBlock Text="Builds a complete, realistic demo shop through real services: 6 categories, 6 brands, 5 suppliers with phones, ~60 products across categories with valid EAN-13 barcodes (private in-store prefix 200..299), 8 posted purchases over last 30 days, 40 completed sales over last 14 days, and 25 expenses. (Allowed only when transaction tables are empty; run Clear Transactions first if needed)."
+
+                                               FontSize="12"
+
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+
+                                               TextWrapping="Wrap"
+
+                                               Margin="0,0,0,4" />
+
+                                    <TextBlock Text="Creates an automatic backup first. Generates 10 sample barcodes ready for scanning or testing."
+
+                                               FontSize="11"
+
+                                               FontWeight="SemiBold"
+
+                                               Foreground="{DynamicResource PrimaryBrush}" />
+
+                                </StackPanel>
+
+
+
+                                <Button Grid.Column="1"
+
+                                        Content="Load Demo Data"
+
+                                        Command="{Binding LoadDemoDataCommand}"
+
+                                        Style="{StaticResource PrimaryButtonStyle}"
+
+                                        VerticalAlignment="Center"
+
+                                        Padding="14,8" />
+
+                            </Grid>
+
+                        </Border>
+
+                    </StackPanel>
+
+                </Border>
+
+
+
+                <!-- SECTION 6: About ShopPOS & Diagnostics -->
+
+                <Border Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,24">
+
+                    <StackPanel>
+
+                        <TextBlock Text="About ShopPOS &amp; Diagnostics" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,14" />
+
+
+
+                        <!-- Details Grid -->
+
+                        <Grid Margin="0,0,0,16">
+
+                            <Grid.ColumnDefinitions>
+
+                                <ColumnDefinition Width="*" />
+
+                                <ColumnDefinition Width="16" />
+
+                                <ColumnDefinition Width="*" />
+
+                            </Grid.ColumnDefinitions>
+
+
+
+                            <StackPanel Grid.Column="0">
+
+                                <TextBlock Text="APPLICATION VERSION" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+
+                                <TextBlock Text="{Binding AppVersion, StringFormat='ShopPOS v{0}'}" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10" />
+
+
+
+                                <TextBlock Text="DATA FOLDER" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+
+                                <TextBlock Text="{Binding DataFolderPath}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+
+
+                                <TextBlock Text="DATABASE SCHEMA VERSION" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+
+                                <TextBlock Text="{Binding SchemaVersion}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,10" />
+
+                            </StackPanel>
+
+
+
+                            <StackPanel Grid.Column="2">
+
+                                <TextBlock Text="BUILD DATE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+
+                                <TextBlock Text="{Binding BuildDate}" FontWeight="SemiBold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10" />
+
+
+
+                                <TextBlock Text="DATABASE FILE SIZE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+
+                                <TextBlock Text="{Binding DatabaseSizeFormatted}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,10" />
+
+
+
+                                <TextBlock Text="BACKUP STATUS" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+
+                                <TextBlock Text="{Binding BackupStatusText}" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,10" />
+
+                            </StackPanel>
+
+                        </Grid>
+
+
+
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+
+                                BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+
+                                BorderThickness="1"
+
+                                CornerRadius="6"
+
+                                Padding="14,10"
+
+                                Margin="0,0,0,16">
+
+                            <StackPanel>
+
+                                <TextBlock Text="Support &amp; Troubleshooting Diagnostics" FontWeight="Bold" FontSize="13" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,4" />
+
+                                <TextBlock Text="Generate an encrypted support file (.zip) containing system version info and the last 7 days of logs. Sensitive tokens, master passwords, customer data, and the database itself are never included."
+
+                                           FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,10" />
+
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Run Self Check"
+                                            Command="{Binding RunSelfCheckCommand}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Padding="14,6"
+                                            Margin="0,0,10,0"
+                                            HorizontalAlignment="Left" />
+                                    <Button Content="Create Support File (Diagnostics Bundle)"
+                                            Command="{Binding CreateSupportBundleCommand}"
+                                            Style="{StaticResource SecondaryButtonStyle}"
+                                            Padding="14,6"
+                                            HorizontalAlignment="Left" />
+                                </StackPanel>
+
+                            </StackPanel>
+
+                        </Border>
+
+
+
+                        <!-- Action links / buttons -->
+
+                        <WrapPanel Orientation="Horizontal">
+
+                            <Button Content="Open Data Folder"
+
+                                    Command="{Binding OpenDataFolderCommand}"
+
+                                    Style="{StaticResource SecondaryButtonStyle}"
+
+                                    Padding="12,6"
+
+                                    Margin="0,0,8,8" />
+
+
+
+                            <Button Content="Open Logs Folder"
+
+                                    Command="{Binding OpenLogsFolderCommand}"
+
+                                    Style="{StaticResource SecondaryButtonStyle}"
+
+                                    Padding="12,6"
+
+                                    Margin="0,0,8,8" />
+
+
+
+                            <Button Content="Check for Updates"
+
+                                    Command="{Binding CheckForUpdatesCommand}"
+
+                                    Visibility="{Binding HasUpdateUrl, Converter={StaticResource BooleanToVisibilityConverter}}"
+
+                                    Style="{StaticResource SecondaryButtonStyle}"
+
+                                    Padding="12,6"
+
+                                    Margin="0,0,8,8" />
+
+                        </WrapPanel>
+
+                    </StackPanel>
+
+                </Border>
+
             </StackPanel>
+
         </ScrollViewer>
+
     </Grid>
+
 </UserControl>
+

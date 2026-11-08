@@ -74,14 +74,24 @@ public partial class PosSaleViewModel : ObservableObject
 
     public ObservableCollection<PosProductSuggestion> Suggestions { get; } = new();
 
-    // Cart
+    // Cart & Catalog
     public ObservableCollection<PosCartLineItemViewModel> CartItems { get; } = new();
+    public ObservableCollection<PosProductSuggestion> CatalogProducts { get; } = new();
+
+    [ObservableProperty]
+    private PosProductSuggestion? _selectedCatalogProduct;
+
+    [ObservableProperty]
+    private int _activeWorkspaceTab = 0; // 0 = Cart, 1 = Product Catalog
 
     [ObservableProperty]
     private PosCartLineItemViewModel? _selectedCartItem;
 
     // Price Levels
     public ObservableCollection<PriceLevelDto> PriceLevels { get; } = new();
+
+    public IEnumerable<PriceLevelDto> DisplayPriceLevels =>
+        PriceLevels.Where(p => !p.Name.Equals("Wholesale", StringComparison.OrdinalIgnoreCase));
 
     [ObservableProperty]
     private PriceLevelDto? _selectedPriceLevel;
@@ -109,6 +119,12 @@ public partial class PosSaleViewModel : ObservableObject
     // Notes & Discounts
     [ObservableProperty]
     private string? _notes;
+
+    [ObservableProperty]
+    private string? _customerName;
+
+    [ObservableProperty]
+    private string? _customerPhone;
 
     [ObservableProperty]
     private decimal _billDiscountPercent;
@@ -215,6 +231,7 @@ public partial class PosSaleViewModel : ObservableObject
     public async Task InitializeAsync()
     {
         await LoadSettingsAndPriceLevelsAsync();
+        await LoadCatalogProductsAsync();
         RecalculateTotals();
     }
 
@@ -234,8 +251,12 @@ public partial class PosSaleViewModel : ObservableObject
             if (plResult.Success && plResult.Data != null)
             {
                 PriceLevels.Clear();
-                foreach (var pl in plResult.Data) PriceLevels.Add(pl);
-                SelectedPriceLevel = PriceLevels.FirstOrDefault(p => p.Name.Equals("Retail", StringComparison.OrdinalIgnoreCase)) ?? PriceLevels.FirstOrDefault();
+                foreach (var pl in plResult.Data)
+                {
+                    PriceLevels.Add(pl);
+                }
+                OnPropertyChanged(nameof(DisplayPriceLevels));
+                SelectedPriceLevel = DisplayPriceLevels.FirstOrDefault(p => p.Name.Equals("Retail", StringComparison.OrdinalIgnoreCase)) ?? PriceLevels.FirstOrDefault();
             }
 
             var heldResult = await _saleService.ListHeldBillsAsync();
@@ -740,7 +761,9 @@ public partial class PosSaleViewModel : ObservableObject
         var paymentVm = new SalePaymentDialogViewModel(
             GrandTotal,
             CurrencySymbol,
-            _saleCalculator);
+            _saleCalculator,
+            CustomerName,
+            CustomerPhone);
 
         bool? confirmed = _dialogService.ShowSalePaymentDialog(paymentVm);
         if (confirmed == true && paymentVm.Confirmed)
@@ -756,6 +779,8 @@ public partial class PosSaleViewModel : ObservableObject
             HeldBillId = OriginatingHeldBillId,
             PriceLevelId = SelectedPriceLevel?.Id,
             Notes = Notes?.Trim(),
+            CustomerName = !string.IsNullOrWhiteSpace(paymentVm.CustomerName) ? paymentVm.CustomerName.Trim() : CustomerName?.Trim(),
+            CustomerPhone = !string.IsNullOrWhiteSpace(paymentVm.CustomerPhone) ? paymentVm.CustomerPhone.Trim() : CustomerPhone?.Trim(),
             BillDiscountPercent = BillDiscountPercent,
             BillDiscountAmount = BillDiscountAmount,
             Items = CartItems.Select(c => new SaleLineItemDto
@@ -920,4 +945,40 @@ public partial class PosSaleViewModel : ObservableObject
 
     [RelayCommand]
     public void RemoveCartItem(PosCartLineItemViewModel? line) => RemoveCartLine(line);
+
+    [RelayCommand]
+    public async Task LoadCatalogProductsAsync()
+    {
+        try
+        {
+            var res = await _productService.GetPagedProductsAsync(new ProductSearchQuery
+            {
+                PageNumber = 1,
+                PageSize = 250,
+                IsActive = true
+            });
+
+            if (res.Success && res.Data != null)
+            {
+                CatalogProducts.Clear();
+                foreach (var p in res.Data.Items)
+                {
+                    CatalogProducts.Add(new PosProductSuggestion(p));
+                }
+            }
+        }
+        catch
+        {
+            // Ignore load error
+        }
+    }
+
+    [RelayCommand]
+    public async Task AddCatalogProductAsync(PosProductSuggestion? suggestion)
+    {
+        if (suggestion == null) return;
+        await AddProductToCartAsync(suggestion.ProductId, 1m);
+        ActiveWorkspaceTab = 0;
+    }
+
 }

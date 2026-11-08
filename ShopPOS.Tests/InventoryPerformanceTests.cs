@@ -123,7 +123,7 @@ public class InventoryPerformanceTests
                 {
                     PageNumber = 1,
                     PageSize = 50
-                }, RoleDefaults.Admin);
+                });
                 sw.Stop();
 
                 result.Success.Should().BeTrue();
@@ -254,7 +254,7 @@ public class InventoryPerformanceTests
                 {
                     PageNumber = 1,
                     PageSize = 50
-                }, RoleDefaults.Admin);
+                });
                 sw.Stop();
 
                 result.Success.Should().BeTrue();
@@ -270,7 +270,7 @@ public class InventoryPerformanceTests
                     ProductId = 1,
                     PageNumber = 1,
                     PageSize = 50
-                }, RoleDefaults.Admin);
+                });
                 swProduct.Stop();
 
                 productResult.Success.Should().BeTrue();

@@ -145,6 +145,7 @@ public class ProductRepository : Repository<Product>, IProductRepository
     public async Task<Product?> GetWithDetailsAsync(int id, CancellationToken cancellationToken = default)
     {
         return await Context.Products
+            .AsNoTracking()
             .Include(p => p.Category)
             .Include(p => p.Brand)
             .Include(p => p.Unit)
@@ -157,6 +158,7 @@ public class ProductRepository : Repository<Product>, IProductRepository
     {
         var idList = ids.Distinct().ToList();
         return await Context.Products
+            .AsNoTracking()
             .Include(p => p.Category)
             .Include(p => p.Brand)
             .Include(p => p.Unit)
@@ -172,6 +174,7 @@ public class ProductRepository : Repository<Product>, IProductRepository
         var trimmed = code.Trim();
 
         var prod = await Context.Products
+            .AsNoTracking()
             .Include(p => p.Category)
             .Include(p => p.Brand)
             .Include(p => p.Unit)

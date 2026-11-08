@@ -25,7 +25,7 @@ public class SupplierLedgerService : ISupplierLedgerService
         _pdfReportService = pdfReportService;
     }
 
-    public async Task<Result<decimal>> GetSupplierBalanceAsync(int supplierId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<decimal>> GetSupplierBalanceAsync(int supplierId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -33,7 +33,7 @@ public class SupplierLedgerService : ISupplierLedgerService
         return Result.Ok(balance);
     }
 
-    public async Task<Result<Dictionary<int, decimal>>> GetSupplierBalancesAsync(IEnumerable<int> supplierIds, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<Dictionary<int, decimal>>> GetSupplierBalancesAsync(IEnumerable<int> supplierIds, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -41,7 +41,7 @@ public class SupplierLedgerService : ISupplierLedgerService
         return Result.Ok(map);
     }
 
-    public async Task<Result<SupplierLedgerReportDto>> GetSupplierLedgerReportAsync(int supplierId, DateTime fromDate, DateTime toDate, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<SupplierLedgerReportDto>> GetSupplierLedgerReportAsync(int supplierId, DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -55,9 +55,9 @@ public class SupplierLedgerService : ISupplierLedgerService
         return Result.Ok(report);
     }
 
-    public async Task<Result<byte[]>> ExportLedgerCsvAsync(int supplierId, DateTime fromDate, DateTime toDate, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<byte[]>> ExportLedgerCsvAsync(int supplierId, DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default)
     {
-        var reportRes = await GetSupplierLedgerReportAsync(supplierId, fromDate, toDate, userRole, cancellationToken);
+        var reportRes = await GetSupplierLedgerReportAsync(supplierId, fromDate, toDate, cancellationToken);
         if (!reportRes.Success || reportRes.Data == null)
         {
             return Result.Failure<byte[]>(reportRes.ErrorMessage ?? "Failed to generate report.");
@@ -87,9 +87,9 @@ public class SupplierLedgerService : ISupplierLedgerService
         return Result.Ok(bytes);
     }
 
-    public async Task<Result<byte[]>> ExportLedgerPdfAsync(int supplierId, DateTime fromDate, DateTime toDate, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<byte[]>> ExportLedgerPdfAsync(int supplierId, DateTime fromDate, DateTime toDate, CancellationToken cancellationToken = default)
     {
-        var reportRes = await GetSupplierLedgerReportAsync(supplierId, fromDate, toDate, userRole, cancellationToken);
+        var reportRes = await GetSupplierLedgerReportAsync(supplierId, fromDate, toDate, cancellationToken);
         if (!reportRes.Success || reportRes.Data == null)
         {
             return Result.Failure<byte[]>(reportRes.ErrorMessage ?? "Failed to generate report.");

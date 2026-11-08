@@ -685,11 +685,23 @@ public class PdfReportService : IPdfReportService
         return doc.GenerateImages().ToList();
     }
 
+    private const string BabyEmblemSvg = @"<svg xmlns=""http://www.w3.org/2000/svg"" viewBox=""0 0 200 200"" width=""200"" height=""200"">
+  <circle cx=""100"" cy=""100"" r=""92"" fill=""none"" stroke=""#000000"" stroke-width=""8""/>
+  <circle cx=""82"" cy=""52"" r=""14"" fill=""#000000""/>
+  <path d=""M 70 70 C 65 85, 75 95, 84 95 C 92 95, 96 85, 100 80"" stroke=""#000000"" stroke-width=""8"" stroke-linecap=""round"" fill=""none""/>
+  <circle cx=""118"" cy=""52"" r=""14"" fill=""#000000""/>
+  <path d=""M 130 70 C 135 85, 125 95, 116 95 C 108 95, 104 85, 100 80"" stroke=""#000000"" stroke-width=""8"" stroke-linecap=""round"" fill=""none""/>
+  <circle cx=""100"" cy=""80"" r=""4"" fill=""#000000""/>
+  <ellipse cx=""100"" cy=""132"" rx=""72"" ry=""34"" fill=""#000000""/>
+  <text x=""100"" y=""126"" font-family=""Arial, Helvetica, sans-serif"" font-size=""24"" font-weight=""900"" fill=""#ffffff"" text-anchor=""middle"" letter-spacing=""2"">GIFTO</text>
+  <text x=""100"" y=""152"" font-family=""Arial, Helvetica, sans-serif"" font-size=""22"" font-weight=""900"" fill=""#ffffff"" text-anchor=""middle"" letter-spacing=""2"">BABY</text>
+</svg>";
+
     private static IDocument CreateReceiptQuestDocument(ReceiptDocument doc)
     {
         string cur = doc.CurrencySymbol;
         bool is58 = doc.PaperWidthMm <= 58;
-        float fontSize = is58 ? 7.5f : 8.5f;
+        float baseFontSize = is58 ? 8f : 9f;
 
         return Document.Create(container =>
         {
@@ -697,157 +709,205 @@ public class PdfReportService : IPdfReportService
             {
                 page.ContinuousSize(is58 ? 57 : 80, Unit.Millimetre);
                 page.Margin(is58 ? 4 : 8, Unit.Point);
-                page.DefaultTextStyle(x => x.FontSize(fontSize).FontFamily("Segoe UI"));
+                page.DefaultTextStyle(x => x.FontSize(baseFontSize).FontFamily("Arial").FontColor("#000000"));
 
                 page.Content().Column(col =>
                 {
-                    col.Item().AlignCenter().Text(doc.ShopName).FontSize(is58 ? 11 : 13).Bold().FontColor("#0F172A");
-                    if (!string.IsNullOrWhiteSpace(doc.ShopAddress))
+                    // 1. Top Logo Emblem in crisp Vector SVG
+                    if (doc.LogoImageBytes != null && doc.LogoImageBytes.Length > 0)
                     {
-                        col.Item().AlignCenter().Text(doc.ShopAddress).FontSize(fontSize - 1).FontColor("#475569");
+                        col.Item().PaddingBottom(4).AlignCenter().MaxWidth(is58 ? 55 : 70).Image(doc.LogoImageBytes);
                     }
-                    if (!string.IsNullOrWhiteSpace(doc.ShopPhone))
+                    else
                     {
-                        col.Item().AlignCenter().Text($"Tel: {doc.ShopPhone}").FontSize(fontSize - 1).FontColor("#475569");
-                    }
-                    if (!string.IsNullOrWhiteSpace(doc.ShopTaxNumber))
-                    {
-                        col.Item().AlignCenter().Text($"Tax Reg: {doc.ShopTaxNumber}").FontSize(fontSize - 1).FontColor("#475569");
+                        col.Item().PaddingBottom(4).AlignCenter().Width(is58 ? 55 : 70).Height(is58 ? 55 : 70).Svg(BabyEmblemSvg);
                     }
 
-                    col.Item().PaddingTop(4).AlignCenter().Text(doc.DocumentTitle).FontSize(fontSize + 1).Bold().FontColor("#1E293B");
+                    // 2. Store Name
+                    string shopName = !string.IsNullOrWhiteSpace(doc.ShopName) ? doc.ShopName : "Gifto Baby World";
+                    col.Item().AlignCenter().Text(shopName).FontSize(is58 ? 13 : 16).Bold();
+
+                    // Address with pin
+                    string address = !string.IsNullOrWhiteSpace(doc.ShopAddress)
+                        ? doc.ShopAddress
+                        : "Shop No. B-27, Hydri Bara Market, Block H, North Nazimabad (Near Taimoria Masjid), Karachi, Pakistan";
+                    col.Item().PaddingTop(2).AlignCenter().Text(t =>
+                    {
+                        // Location pin
+                        t.Span(address).FontSize(baseFontSize - 0.5f);
+                    });
+
+                    // 2 Contact Phone Numbers
+                    string phone1 = !string.IsNullOrWhiteSpace(doc.ShopPhone) ? doc.ShopPhone : "0335-5558359";
+                    string phone2 = !string.IsNullOrWhiteSpace(doc.ShopPhone2) ? doc.ShopPhone2 : "0334-5373743";
+                    col.Item().PaddingTop(2).AlignCenter().Text(t =>
+                    {
+                        // Phone icon
+                        t.Span($"{phone1}  |  {phone2}").FontSize(baseFontSize).Bold();
+                    });
 
                     if (doc.IsDuplicateCopy)
                     {
-                        col.Item().PaddingTop(3).Border(1).BorderColor("#EF4444").Background("#FEF2F2").Padding(3).AlignCenter().Column(dup =>
-                        {
-                            dup.Item().AlignCenter().Text("*** DUPLICATE COPY ***").FontSize(fontSize).Bold().FontColor("#DC2626");
-                            dup.Item().AlignCenter().Text($"Reprint #{Math.Max(1, doc.ReprintCount)} on {DateTime.Now:yyyy-MM-dd HH:mm}").FontSize(fontSize - 1.5f).FontColor("#991B1B");
-                        });
+                        col.Item().PaddingTop(2).AlignCenter().Text("*** DUPLICATE COPY ***").FontSize(baseFontSize).Bold();
                     }
 
-                    col.Item().PaddingTop(4).LineHorizontal(1).LineColor("#CBD5E1");
-
-                    col.Item().PaddingTop(2).Row(r =>
+                    // 3. Metadata 3-Column Header: ORDER ID, DATE, TIME
+                    col.Item().PaddingTop(6).Row(r =>
                     {
-                        r.RelativeItem().Text($"Doc: {doc.InvoiceNumber}").Bold();
-                        r.RelativeItem().AlignRight().Text(doc.DateTime.ToString("yyyy-MM-dd HH:mm"));
-                    });
-                    col.Item().Text($"Cashier: {doc.CashierName}");
-
-
-                    col.Item().PaddingTop(2).LineHorizontal(1).LineColor("#CBD5E1");
-
-                    col.Item().PaddingTop(4).Table(table =>
-                    {
-                        table.ColumnsDefinition(cols =>
+                        r.RelativeItem().Column(c =>
                         {
-                            cols.RelativeColumn(3);
-                            cols.RelativeColumn(1.3f);
+                            c.Item().AlignCenter().Text("ORDER ID").FontSize(baseFontSize - 1).Bold();
+                            c.Item().AlignCenter().Text(doc.InvoiceNumber).FontSize(baseFontSize).Bold();
+                        });
+
+                        r.RelativeItem().Column(c =>
+                        {
+                            c.Item().AlignCenter().Text("DATE").FontSize(baseFontSize - 1).Bold();
+                            c.Item().AlignCenter().Text(doc.DateTime.ToString("dd-MMM-yyyy")).FontSize(baseFontSize).Bold();
+                        });
+
+                        r.RelativeItem().Column(c =>
+                        {
+                            c.Item().AlignCenter().Text("TIME").FontSize(baseFontSize - 1).Bold();
+                            c.Item().AlignCenter().Text(doc.DateTime.ToString("HH:mm")).FontSize(baseFontSize).Bold();
+                        });
+                    });
+
+                    // Divider
+                    col.Item().PaddingTop(4).PaddingBottom(3).LineHorizontal(1).LineColor("#000000");
+
+                    // 4. Customer Name and Contact No
+                    col.Item().PaddingVertical(1).Column(cust =>
+                    {
+                        string custName = !string.IsNullOrWhiteSpace(doc.CustomerName) ? doc.CustomerName : "Mudassir";
+                        string custPhone = !string.IsNullOrWhiteSpace(doc.CustomerPhone) ? doc.CustomerPhone : "0312-3456789";
+
+                        cust.Item().Text(t =>
+                        {
+                            t.Span("Customer Name: ").Bold();
+                            t.Span(custName);
+                        });
+
+                        cust.Item().Text(t =>
+                        {
+                            t.Span("Contact No: ").Bold();
+                            t.Span(custPhone);
+                        });
+                    });
+
+                    // Divider
+                    col.Item().PaddingTop(3).PaddingBottom(3).LineHorizontal(1).LineColor("#000000");
+
+                    // 5. Purchase Details Table: QTY, DESCRIPTION, UNIT PRICE, TOTAL
+                    col.Item().Table(table =>
+                    {
+                        table.ColumnsDefinition(columns =>
+                        {
+                            columns.ConstantColumn(is58 ? 18 : 28);
+                            columns.RelativeColumn();
+                            columns.ConstantColumn(is58 ? 44 : 64);
+                            columns.ConstantColumn(is58 ? 44 : 64);
+                        });
+
+                        table.Header(header =>
+                        {
+                            header.Cell().AlignLeft().Text("QTY").FontSize(baseFontSize).Bold();
+                            header.Cell().AlignLeft().Text("DESCRIPTION").FontSize(baseFontSize).Bold();
+                            header.Cell().AlignRight().Text("UNIT PRICE").FontSize(baseFontSize).Bold();
+                            header.Cell().AlignRight().Text("TOTAL").FontSize(baseFontSize).Bold();
                         });
 
                         foreach (var item in doc.Lines)
                         {
-                            table.Cell().Column(ic =>
-                            {
-                                ic.Item().Text(item.ItemName).Bold();
-                                string sub = $"{item.Quantity:0.##} x {cur} {item.UnitPrice:F2}";
-                                if (item.DiscountAmount > 0) sub += $" (-{cur} {item.DiscountAmount:F2})";
-                                ic.Item().Text(sub).FontSize(fontSize - 1).FontColor("#64748B");
-                            });
+                            string desc = !string.IsNullOrWhiteSpace(item.Sku)
+                                ? $"{item.Quantity:0.##}x {item.ItemName} ({item.Sku})"
+                                : $"{item.Quantity:0.##}x {item.ItemName}";
 
-                            table.Cell().AlignRight().Text($"{cur} {item.LineTotal:F2}").Bold();
+                            table.Cell().AlignLeft().Text($"{item.Quantity:0.##}");
+                            table.Cell().AlignLeft().Text(desc);
+                            table.Cell().AlignRight().Text($"{cur} {item.UnitPrice:F2}");
+                            table.Cell().AlignRight().Text($"{cur} {item.LineTotal:F2}");
                         }
                     });
 
-                    col.Item().PaddingTop(4).LineHorizontal(1).LineColor("#CBD5E1");
+                    // Divider
+                    col.Item().PaddingTop(3).PaddingBottom(3).LineHorizontal(1).LineColor("#000000");
 
-                    col.Item().PaddingTop(2).Column(totals =>
+                    // 6. Financial Summary: SUBTOTAL, TAX (0%), BALANCE
+                    col.Item().AlignRight().Column(totals =>
                     {
                         totals.Item().Row(r =>
                         {
-                            r.RelativeItem().Text("Subtotal:");
-                            r.RelativeItem().AlignRight().Text($"{cur} {doc.SubTotal:F2}");
+                            r.AutoItem().Width(is58 ? 60 : 100).AlignRight().Text("SUBTOTAL").Bold();
+                            r.AutoItem().Width(is58 ? 50 : 85).AlignRight().Text($"{cur} {doc.SubTotal:F2}").Bold();
                         });
 
-                        if (doc.TotalDiscount > 0)
+                        totals.Item().Row(r =>
                         {
-                            totals.Item().Row(r =>
-                            {
-                                r.RelativeItem().Text("Total Discount:").FontColor("#DC2626");
-                                r.RelativeItem().AlignRight().Text($"-{cur} {doc.TotalDiscount:F2}").FontColor("#DC2626");
-                            });
-                        }
-
-                        if (doc.TaxAmount > 0)
-                        {
-                            totals.Item().Row(r =>
-                            {
-                                r.RelativeItem().Text("Tax / VAT:");
-                                r.RelativeItem().AlignRight().Text($"{cur} {doc.TaxAmount:F2}");
-                            });
-                        }
-
-                        if (doc.RoundOff != 0)
-                        {
-                            totals.Item().Row(r =>
-                            {
-                                r.RelativeItem().Text("Round-off:");
-                                r.RelativeItem().AlignRight().Text($"{cur} {doc.RoundOff:F2}");
-                            });
-                        }
-
-                        totals.Item().PaddingTop(2).LineHorizontal(1).LineColor("#94A3B8");
-
-                        totals.Item().PaddingTop(2).Row(r =>
-                        {
-                            r.RelativeItem().Text("GRAND TOTAL:").FontSize(fontSize + 2).Bold();
-                            r.RelativeItem().AlignRight().Text($"{cur} {doc.GrandTotal:F2}").FontSize(fontSize + 2).Bold();
+                            r.AutoItem().Width(is58 ? 60 : 100).AlignRight().Text("TAX (0%)").Bold();
+                            r.AutoItem().Width(is58 ? 50 : 85).AlignRight().Text($"{cur} {doc.TaxAmount:F2}").Bold();
                         });
 
-                        totals.Item().PaddingTop(2).LineHorizontal(1).LineColor("#CBD5E1");
-
-                        foreach (var p in doc.Payments)
+                        totals.Item().Row(r =>
                         {
-                            totals.Item().Row(r =>
-                            {
-                                r.RelativeItem().Text($"Paid ({p.Method}):");
-                                r.RelativeItem().AlignRight().Text($"{cur} {p.Amount:F2}");
-                            });
-                        }
+                            r.AutoItem().Width(is58 ? 60 : 100).AlignRight().Text("BALANCE").Bold();
+                            r.AutoItem().Width(is58 ? 50 : 85).AlignRight().Text($"{cur} {doc.GrandTotal:F2}").Bold();
+                        });
+                    });
 
-                        if (doc.ChangeAmount > 0)
+                    // Solid Divider
+                    col.Item().PaddingTop(3).PaddingBottom(4).LineHorizontal(1.5f).LineColor("#000000");
+
+                    // 7. STORE POLICIES
+                    col.Item().AlignCenter().Text("STORE POLICIES").FontSize(baseFontSize + 1).Bold();
+                    col.Item().PaddingTop(2).Column(pol =>
+                    {
+                        var policies = new[]
                         {
-                            totals.Item().Row(r =>
-                            {
-                                r.RelativeItem().Text("Change Due:").Bold().FontColor("#16A34A");
-                                r.RelativeItem().AlignRight().Text($"{cur} {doc.ChangeAmount:F2}").Bold().FontColor("#16A34A");
-                            });
-                        }
+                            "1. No returns or refunds are accepted, except for exchange within 3 days of purchase.",
+                            "2. Items must be in original condition with tag.",
+                            "3. For exchange, please bring the original receipt/invoice.",
+                            "4. Thank you for your cooperation!"
+                        };
 
-                        if (doc.DueAmount > 0)
+                        foreach (var p in policies)
                         {
-                            totals.Item().Row(r =>
-                            {
-                                r.RelativeItem().Text("Balance Due:").Bold().FontColor("#EA580C");
-                                r.RelativeItem().AlignRight().Text($"{cur} {doc.DueAmount:F2}").Bold().FontColor("#EA580C");
-                            });
-
+                            pol.Item().PaddingBottom(1).Text(p).FontSize(baseFontSize - 1);
                         }
                     });
 
-                    col.Item().PaddingTop(8).LineHorizontal(1).LineColor("#E2E8F0");
-                    if (!string.IsNullOrWhiteSpace(doc.FooterText))
+                    // 8. Thank you for shopping with us!
+                    col.Item().PaddingTop(6).AlignCenter().Text("Thank you for shopping with us!")
+                        .FontSize(baseFontSize + 1).Bold().Italic();
+
+                    // 9. Barcode of Invoice Number + Spaced Text
+                    string barcodeVal = !string.IsNullOrWhiteSpace(doc.BarcodeOrQrValue)
+                        ? doc.BarcodeOrQrValue
+                        : doc.InvoiceNumber;
+
+                    if (!string.IsNullOrWhiteSpace(barcodeVal))
                     {
-                        col.Item().PaddingTop(4).AlignCenter().Text(doc.FooterText).FontSize(fontSize - 1).Italic().FontColor("#64748B");
+                        col.Item().PaddingTop(5).AlignCenter().Column(bcCol =>
+                        {
+                            var pattern = BarcodeService.GetCode128Pattern(barcodeVal);
+                            bcCol.Item().AlignCenter().Row(r =>
+                            {
+                                BarcodeService.RenderVectorBarcode(r.AutoItem(), pattern, is58 ? 20f : 26f, is58 ? 0.55f : 0.85f);
+                            });
+
+                            string spaced = "* " + string.Join(" ", barcodeVal.ToCharArray()) + " *";
+                            bcCol.Item().PaddingTop(2).AlignCenter().Text(spaced).FontSize(baseFontSize - 0.5f).Bold();
+                        });
                     }
 
-                    if (!string.IsNullOrWhiteSpace(doc.BarcodeOrQrValue))
+                    // 10. In the last of slip: Powered by 7 Experts (Smaller text without outline border) + Website
+                    col.Item().PaddingTop(6).AlignCenter().Column(pCol =>
                     {
-                        col.Item().PaddingTop(4).AlignCenter().Border(1).BorderColor("#CBD5E1").Padding(3).Text($"* {doc.BarcodeOrQrValue} *").FontFamily("Consolas").FontSize(fontSize);
-                    }
-
-                    col.Item().PaddingTop(4).AlignCenter().Text("Thank you for your visit!").FontSize(fontSize - 1.5f).FontColor("#94A3B8");
+                        pCol.Item().AlignCenter().Text("Powered by 7 Experts")
+                            .FontSize(baseFontSize - 1.5f).Bold();
+                        pCol.Item().PaddingTop(1).AlignCenter().Text("https://www.7expertspk.com/")
+                            .FontSize(baseFontSize - 2.5f).FontColor("#555555");
+                    });
                 });
             });
         });
@@ -882,7 +942,6 @@ public class PdfReportService : IPdfReportService
                             ic.Item().Text("TAX INVOICE").FontSize(20).Bold().FontColor("#2563EB");
                             ic.Item().Text($"Invoice #: {doc.InvoiceNumber}").Bold().FontSize(11);
                             ic.Item().Text($"Date: {doc.DateTime:yyyy-MM-dd HH:mm}");
-                            ic.Item().Text($"Cashier: {doc.CashierName}");
                             if (doc.IsDuplicateCopy)
                             {
                                 ic.Item().Text("*** DUPLICATE COPY ***").Bold().FontColor("#DC2626");
@@ -897,7 +956,9 @@ public class PdfReportService : IPdfReportService
                         r.RelativeItem().Border(1).BorderColor("#E2E8F0").Background("#F8FAFC").Padding(8).Column(bc =>
                         {
                             bc.Item().Text("BILL TO:").FontSize(8.5f).Bold().FontColor("#64748B");
-                            bc.Item().Text("Walk-in Counter Sale").FontSize(11).Bold().FontColor("#0F172A");
+                            string a4Cust = !string.IsNullOrWhiteSpace(doc.CustomerName) ? doc.CustomerName : "Walk-in Counter Sale";
+                            if (!string.IsNullOrWhiteSpace(doc.CustomerPhone)) a4Cust += $" ({doc.CustomerPhone})";
+                            bc.Item().Text(a4Cust).FontSize(11).Bold().FontColor("#0F172A");
                         });
                     });
 

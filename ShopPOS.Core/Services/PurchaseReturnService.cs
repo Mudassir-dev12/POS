@@ -38,7 +38,7 @@ public class PurchaseReturnService : IPurchaseReturnService
         _validator = validator;
     }
 
-    public async Task<Result<PagedResult<PurchaseReturnDto>>> GetReturnsAsync(int? supplierId, int pageNumber, int pageSize, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PagedResult<PurchaseReturnDto>>> GetReturnsAsync(int? supplierId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -46,7 +46,7 @@ public class PurchaseReturnService : IPurchaseReturnService
         return Result.Ok(result);
     }
 
-    public async Task<Result<PurchaseReturnDto>> PostReturnAsync(CreatePurchaseReturnDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PurchaseReturnDto>> PostReturnAsync(CreatePurchaseReturnDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -217,7 +217,7 @@ public class PurchaseReturnService : IPurchaseReturnService
         }, cancellationToken);
     }
 
-    public async Task<Result<bool>> CancelPurchaseReturnAsync(int returnId, string reason, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<bool>> CancelPurchaseReturnAsync(int returnId, string reason, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -287,7 +287,7 @@ public class PurchaseReturnService : IPurchaseReturnService
                 continue;
             }
 
-            var cancelRes = await CancelPurchaseReturnAsync(id, reason, userId, null, cancellationToken);
+            var cancelRes = await CancelPurchaseReturnAsync(id, reason, userId, cancellationToken);
             if (cancelRes.Success)
             {
                 result.Items.Add(new BulkItemResult { Id = id, Identifier = r.ReturnNumber, Success = true });

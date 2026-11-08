@@ -1,0 +1,204 @@
+<Window x:Class="ShopPOS.UI.Views.Dialogs.RestoreConfirmDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Dialogs"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance vm:RestoreConfirmDialogViewModel}"
+        Title="Restore Database"
+        Width="580"
+        MaxHeight="680"
+        SizeToContent="Height"
+        Style="{DynamicResource DialogWindowStyle}"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+
+    <Border Padding="20" Style="{DynamicResource SurfaceCardStyle}" Margin="10">
+        <Grid>
+            <Grid.RowDefinitions>
+                <!-- Row 0: Header & Warning (Fixed) -->
+                <RowDefinition Height="Auto" />
+                <!-- Row 1: Manifest Info & Comparison (Scrollable) -->
+                <RowDefinition Height="*" MaxHeight="300" />
+                <!-- Row 2: Confirmation & Actions (Fixed) -->
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- Row 0: Header & Warning -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,12">
+                <TextBlock Text="Restore Database Backup" Style="{DynamicResource SectionHeaderStyle}" Margin="0,0,0,4" />
+                <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,8" TextTrimming="CharacterEllipsis" />
+
+                <!-- Warning Banner -->
+                <Border Background="{DynamicResource DangerBackgroundBrush}"
+                        BorderBrush="{DynamicResource DangerBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="12,10">
+                    <StackPanel>
+                        <TextBlock Text="WARNING: DATABASE REPLACEMENT" FontWeight="Bold" Foreground="{DynamicResource DangerBrush}" FontSize="12" Margin="0,0,0,3" />
+                        <TextBlock Text="Restoring this backup will replace all current business records with the data inside this archive. A safety Pre-Restore backup of your current database will be created automatically before proceeding."
+                                   Style="{DynamicResource SubTitleStyle}" TextWrapping="Wrap" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Error Message if any -->
+                <Border Background="{DynamicResource DangerBackgroundBrush}"
+                        BorderBrush="{DynamicResource DangerBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="8"
+                        Margin="0,8,0,0"
+                        Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerBrush}" FontSize="12" TextWrapping="Wrap" />
+                </Border>
+
+                <!-- Encrypted Backup Password Section -->
+                <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+                        BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="12,10"
+                        Margin="0,8,0,0"
+                        Visibility="{Binding IsEncrypted, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <StackPanel>
+                        <TextBlock Text="ENCRYPTED BACKUP PASSWORD" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,6" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="8" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <PasswordBox x:Name="BackupPasswordBox"
+                                         Grid.Column="0"
+                                         Style="{DynamicResource InputPasswordBoxStyle}"
+                                         PasswordChanged="BackupPasswordBox_PasswordChanged" />
+                            <Button Grid.Column="2"
+                                    Content="Unlock Preview"
+                                    Command="{Binding ValidatePasswordCommand}"
+                                    Style="{DynamicResource SecondaryButtonStyle}"
+                                    Padding="12,6" />
+                        </Grid>
+                        <TextBlock Text="{Binding PasswordError}"
+                                   Foreground="{DynamicResource DangerBrush}"
+                                   FontSize="11"
+                                   Margin="0,4,0,0"
+                                   Visibility="{Binding PasswordError, Converter={StaticResource StringToVisibilityConverter}}" />
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+
+            <!-- Row 1: Manifest Info & Table Counts -->
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Margin="0,0,0,12">
+                <StackPanel>
+                    <!-- Metadata Strip -->
+                    <Border Background="{DynamicResource SecondaryBackgroundBrush}"
+                            BorderBrush="{DynamicResource SecondaryBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="10,8"
+                            Margin="0,0,0,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,8,4">
+                                <TextBlock Text="BACKUP DATE" Style="{DynamicResource MutedLabelStyle}" FontSize="10" />
+                                <TextBlock Text="{Binding CreatedAtFormatted}" FontWeight="SemiBold" FontSize="11" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,4">
+                                <TextBlock Text="STORE NAME" Style="{DynamicResource MutedLabelStyle}" FontSize="10" />
+                                <TextBlock Text="{Binding ShopName}" FontWeight="SemiBold" FontSize="11" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,4,8,0">
+                                <TextBlock Text="APP VERSION" Style="{DynamicResource MutedLabelStyle}" FontSize="10" />
+                                <TextBlock Text="{Binding AppVersion}" FontWeight="SemiBold" FontSize="11" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,4,0,0">
+                                <TextBlock Text="SCHEMA VERSION" Style="{DynamicResource MutedLabelStyle}" FontSize="10" />
+                                <TextBlock Text="{Binding SchemaVersion}" FontWeight="SemiBold" FontSize="11" TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Table Counts Comparison -->
+                    <TextBlock Text="RECORD COUNTS COMPARISON" Style="{DynamicResource MutedLabelStyle}" Margin="0,0,0,4" />
+                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="4">
+                        <ItemsControl ItemsSource="{Binding ComparisonItems}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1" Padding="10,6">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="110" />
+                                                <ColumnDefinition Width="110" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{Binding EntityName}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Backup: " Foreground="{DynamicResource TextMutedBrush}" FontSize="11" />
+                                                <TextBlock Text="{Binding BackupCount}" FontWeight="Bold" Foreground="{DynamicResource SuccessBrush}" FontSize="12" />
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <TextBlock Text="Current: " Foreground="{DynamicResource TextMutedBrush}" FontSize="11" />
+                                                <TextBlock Text="{Binding CurrentCount}" FontWeight="Bold" FontSize="12" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Border>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- Row 2: Confirmation & Actions -->
+            <StackPanel Grid.Row="2">
+                <Border Background="{DynamicResource DangerBackgroundBrush}"
+                        BorderBrush="{DynamicResource DangerBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="10,8"
+                        Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="TYPE RESTORE TO CONFIRM:" Style="{DynamicResource MutedLabelStyle}" Foreground="{DynamicResource DangerBrush}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding TypedConfirmation, UpdateSourceTrigger=PropertyChanged}"
+                                 Style="{DynamicResource InputTextBoxStyle}"
+                                 FontSize="13"
+                                 FontWeight="Bold"
+                                 Padding="8,6" />
+                        <TextBlock Text="Type the exact word RESTORE in uppercase letters to enable the restore action."
+                                   FontSize="11"
+                                   Foreground="{DynamicResource TextMutedBrush}"
+                                   Margin="0,4,0,0" />
+                    </StackPanel>
+                </Border>
+
+                <!-- Action Buttons -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,0,0">
+                    <Button Content="Cancel"
+                            Command="{Binding CancelCommand}"
+                            Style="{DynamicResource SecondaryButtonStyle}"
+                            Padding="16,8"
+                            Margin="0,0,8,0" />
+                    <Button Content="Restore Database"
+                            Command="{Binding ConfirmCommand}"
+                            IsEnabled="{Binding CanRestore}"
+                            Style="{DynamicResource DangerButtonStyle}"
+                            Padding="16,8" />
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
+

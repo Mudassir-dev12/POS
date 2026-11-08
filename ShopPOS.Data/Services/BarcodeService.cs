@@ -333,7 +333,7 @@ public class BarcodeService : IBarcodeService
         "11010011100", "1100011101011" // 106 = Stop pattern
     };
 
-    private bool[] GetCode128Pattern(string barcode)
+    internal static bool[] GetCode128Pattern(string barcode)
     {
         var bits = new List<bool>();
 
@@ -383,6 +383,9 @@ public class BarcodeService : IBarcodeService
 
     public byte[] GenerateBarcodeLabelPdf(BarcodeLabelRequest request)
     {
+        QuestPDF.Settings.UseSystemFonts = true;
+        QuestPDF.Settings.ThrowOnMissingFontFamilies = false;
+
         // Unfold items according to Quantity
         var labelList = new List<BarcodeLabelItem>();
         foreach (var item in request.Items)
@@ -435,7 +438,7 @@ public class BarcodeService : IBarcodeService
             {
                 page.Size(PageSizes.A4);
                 page.Margin(7, Unit.Millimetre);
-                page.DefaultTextStyle(x => x.FontFamily("Segoe UI").FontSize(8));
+                page.DefaultTextStyle(x => x.FontSize(8));
 
                 page.Content().Table(table =>
                 {
@@ -474,7 +477,7 @@ public class BarcodeService : IBarcodeService
             {
                 page.ContinuousSize(widthMm, Unit.Millimetre);
                 page.Margin(1.5f, Unit.Millimetre);
-                page.DefaultTextStyle(x => x.FontFamily("Segoe UI").FontSize(7));
+                page.DefaultTextStyle(x => x.FontSize(7));
 
                 page.Content().Element(cell =>
                 {
@@ -532,7 +535,7 @@ public class BarcodeService : IBarcodeService
         });
     }
 
-    private static void RenderVectorBarcode(IContainer container, bool[] pattern, float heightPoints)
+    internal static void RenderVectorBarcode(IContainer container, bool[] pattern, float heightPoints, float unitWidth = 0.85f)
     {
         // Run-length encode pattern into alternating black bars and white gaps
         var runs = new List<(bool isBlack, int count)>();
@@ -563,11 +566,11 @@ public class BarcodeService : IBarcodeService
             {
                 if (isBlack)
                 {
-                    row.AutoItem().Width(count * 0.85f).Height(heightPoints).Background(Colors.Black);
+                    row.AutoItem().Width(count * unitWidth).Height(heightPoints).Background(Colors.Black);
                 }
                 else
                 {
-                    row.AutoItem().Width(count * 0.85f).Height(heightPoints);
+                    row.AutoItem().Width(count * unitWidth).Height(heightPoints);
                 }
             }
         });

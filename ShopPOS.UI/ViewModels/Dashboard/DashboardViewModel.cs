@@ -1,33 +1,38 @@
 using System;
+using System.Collections.ObjectModel;
 using System.Globalization;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using ShopPOS.Core.DTOs;
+using ShopPOS.Core.DTOs.Reports;
 using ShopPOS.Core.Enums;
 using ShopPOS.Core.Interfaces;
 using ShopPOS.UI.Services;
 
 namespace ShopPOS.UI.ViewModels.Dashboard;
 
+public class ChartBarItem
+{
+    public DateTime Date { get; set; }
+    public decimal NetSales { get; set; }
+    public double BarHeight { get; set; }
+    public string DateLabel { get; set; } = string.Empty;
+    public string FormattedAmount { get; set; } = string.Empty;
+    public string TooltipText => $"{Date:dd MMM yyyy}: {FormattedAmount}";
+}
+
 public partial class DashboardViewModel : ObservableObject
 {
-    private readonly IInventoryService _inventoryService;
-    private readonly ISaleService _saleService;
-    private readonly ISupplierService _supplierService;
-    private readonly ICurrentUserProvider _currentUserProvider;
-    private readonly INavigationService _navigationService;
+    private readonly IReportService? _reportService;
+    private readonly INavigationService? _navigationService;
+    private readonly ShopPOS.Core.Interfaces.IBackupService? _backupService;
 
     [ObservableProperty]
     private bool _isLoading;
 
     [ObservableProperty]
     private string? _errorMessage;
-
-    [ObservableProperty]
-    private DashboardStatsDto? _stats;
 
     // Temporal Header
     [ObservableProperty]
@@ -58,6 +63,57 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private decimal _supplierPayables;
 
+    // Stock & Catalog Metrics
+    [ObservableProperty]
+    private int _lowStockCount;
+
+    [ObservableProperty]
+    private int _outOfStockCount;
+
+    [ObservableProperty]
+    private int _totalProductsCount;
+
+    // Chart properties
+    public ObservableCollection<ChartBarItem> ChartBars { get; } = new();
+
+    [ObservableProperty]
+    private string _chartMaxLabel = "Rs 0";
+
+    [ObservableProperty]
+    private string _chartMidLabel = "Rs 0";
+
+    [ObservableProperty]
+    private string _chartZeroLabel = "Rs 0";
+
+    // Top 5 Products
+    public ObservableCollection<TopSellingProductDto> Top5Products { get; } = new();
+
+    [ObservableProperty]
+    private bool _hasTopProducts;
+
+    // Backup Status & Warning
+    [ObservableProperty]
+    private string _lastBackupText = "Never";
+
+    [ObservableProperty]
+    private bool _hasBackupWarning;
+
+    [ObservableProperty]
+    private string? _backupWarningMessage;
+
+    // Cloud Backup Status & Warning
+    [ObservableProperty]
+    private bool _hasCloudBackupWarning;
+
+    [ObservableProperty]
+    private string? _cloudBackupWarningMessage;
+
+    [ObservableProperty]
+    private bool _isDriveConnected;
+
+    [ObservableProperty]
+    private string _lastDriveUploadText = "Never";
+
     // Daily Checklist
     [ObservableProperty]
     private bool _checklistSaleMade;
@@ -68,60 +124,85 @@ public partial class DashboardViewModel : ObservableObject
     [ObservableProperty]
     private bool _checklistBackupCurrent;
 
-    public DashboardViewModel(
-        IInventoryService inventoryService,
-        ISaleService saleService,
-        ISupplierService supplierService,
-        ICurrentUserProvider currentUserProvider,
-        INavigationService navigationService)
+    public DashboardViewModel()
     {
-        _inventoryService = inventoryService;
-        _saleService = saleService;
-        _supplierService = supplierService;
-        _currentUserProvider = currentUserProvider;
+        // Parameterless constructor for testing and designer
+    }
+
+    public DashboardViewModel(
+        IReportService reportService,
+        INavigationService navigationService,
+        ShopPOS.Core.Interfaces.IBackupService? backupService = null)
+    {
+        _reportService = reportService;
         _navigationService = navigationService;
+        _backupService = backupService;
+
+        _ = InitializeAsync();
+    }
+
+    [RelayCommand]
+    public async Task BackupNowAsync()
+    {
+        if (_backupService != null)
+        {
+            await _backupService.CreateBackupAsync(ShopPOS.Core.Enums.BackupKind.Manual);
+            await LoadStatsAsync();
+        }
     }
 
     [RelayCommand]
     public void StartSelling()
     {
-        _navigationService.NavigateTo("Sales");
+        _navigationService?.NavigateTo("Sales");
     }
 
     [RelayCommand]
     public void OpenLowStock()
     {
-        _navigationService.NavigateTo("StockOverview", StockStatus.Low);
+        _navigationService?.NavigateTo("StockOverview", StockStatus.Low);
     }
 
     [RelayCommand]
     public void OpenOutOfStock()
     {
-        _navigationService.NavigateTo("StockOverview", StockStatus.OutOfStock);
+        _navigationService?.NavigateTo("StockOverview", StockStatus.OutOfStock);
+    }
+
+    [RelayCommand]
+    public void OpenReorder()
+    {
+        _navigationService?.NavigateTo("Reorder");
     }
 
     [RelayCommand]
     public void OpenProducts()
     {
-        _navigationService.NavigateTo("Products");
+        _navigationService?.NavigateTo("Products");
     }
 
     [RelayCommand]
     public void OpenSalesList()
     {
-        _navigationService.NavigateTo("SalesList");
+        _navigationService?.NavigateTo("SalesList");
     }
 
     [RelayCommand]
     public void OpenHeldBills()
     {
-        _navigationService.NavigateTo("Sales");
+        _navigationService?.NavigateTo("Sales");
+    }
+
+    [RelayCommand]
+    public void OpenBackupRestore()
+    {
+        _navigationService?.NavigateTo("BackupRestore");
     }
 
     [RelayCommand]
     public void OpenSupplierPayables()
     {
-        _navigationService.NavigateTo("SupplierLedger");
+        _navigationService?.NavigateTo("SupplierLedger");
     }
 
     [RelayCommand]
@@ -133,100 +214,161 @@ public partial class DashboardViewModel : ObservableObject
     [RelayCommand]
     public async Task LoadStatsAsync()
     {
+        if (_reportService == null) return;
+
         IsLoading = true;
         ErrorMessage = null;
         TodayDateFormatted = DateTime.Today.ToString("dddd, d MMMM yyyy", CultureInfo.InvariantCulture).ToUpperInvariant();
 
         try
         {
-            // 1. Inventory & Stock Stats
-            var result = await _inventoryService.GetDashboardStatsAsync("Owner");
-            if (result.Success && result.Data != null)
+            var summary = await _reportService.GetDashboardSummaryAsync();
+
+            TodaySalesCount = summary.TodaySalesCount;
+            TodaySalesTotal = summary.TodayNetSales;
+            TodayProfit = summary.TodayGrossProfit;
+            HeldBillsCount = summary.HeldBillsCount;
+            SupplierPayables = summary.SupplierPayables;
+
+            LowStockCount = summary.LowStockCount;
+            OutOfStockCount = summary.OutOfStockCount;
+            TotalProductsCount = summary.TotalProductsCount;
+
+            // vs yesterday text (only when yesterday has data)
+            if (summary.SalesVsYesterdayPercent.HasValue)
             {
-                Stats = result.Data;
-            }
-            else
-            {
-                ErrorMessage = result.ErrorMessage;
-            }
-
-            // 2. Today's Sales
-            var todayStart = DateTime.Today;
-            var todayEnd = DateTime.Today.AddDays(1).AddTicks(-1);
-
-            var todaySalesResult = await _saleService.SearchSalesAsync(new SaleSearchDto
-            {
-                DateFrom = todayStart,
-                DateTo = todayEnd,
-                Status = SaleStatus.Completed,
-                PageSize = 1000
-            });
-
-            TodaySalesCount = todaySalesResult.TotalCount;
-            TodaySalesTotal = todaySalesResult.Items.Sum(s => s.GrandTotal);
-            TodayProfit = todaySalesResult.Items.Sum(s => s.Profit);
-
-            // 3. Yesterday's Sales for genuine comparison
-            var yesterdayStart = DateTime.Today.AddDays(-1);
-            var yesterdayEnd = DateTime.Today.AddTicks(-1);
-
-            var yesterdayResult = await _saleService.SearchSalesAsync(new SaleSearchDto
-            {
-                DateFrom = yesterdayStart,
-                DateTo = yesterdayEnd,
-                Status = SaleStatus.Completed,
-                PageSize = 1000
-            });
-
-            decimal yesterdaySalesTotal = yesterdayResult.Items.Sum(s => s.GrandTotal);
-            decimal yesterdayProfit = yesterdayResult.Items.Sum(s => s.Profit);
-            int yesterdayCount = yesterdayResult.TotalCount;
-
-            if (yesterdaySalesTotal > 0)
-            {
-                decimal salesDiff = ((TodaySalesTotal - yesterdaySalesTotal) / yesterdaySalesTotal) * 100m;
-                SalesVsYesterdayText = $"{(salesDiff >= 0 ? "+" : "")}{salesDiff:N1}% vs yesterday";
+                decimal diff = summary.SalesVsYesterdayPercent.Value;
+                SalesVsYesterdayText = $"{(diff >= 0 ? "+" : "")}{diff:N1}% vs yesterday";
             }
             else
             {
                 SalesVsYesterdayText = string.Empty;
             }
 
-            if (yesterdayProfit > 0)
+            if (summary.ProfitVsYesterdayPercent.HasValue)
             {
-                decimal profitDiff = ((TodayProfit - yesterdayProfit) / yesterdayProfit) * 100m;
-                ProfitVsYesterdayText = $"{(profitDiff >= 0 ? "+" : "")}{profitDiff:N1}% vs yesterday";
+                decimal diff = summary.ProfitVsYesterdayPercent.Value;
+                ProfitVsYesterdayText = $"{(diff >= 0 ? "+" : "")}{diff:N1}% vs yesterday";
             }
             else
             {
                 ProfitVsYesterdayText = string.Empty;
             }
 
-            if (yesterdayCount > 0)
+            if (summary.SalesCountVsYesterdayDiff.HasValue)
             {
-                int countDiff = TodaySalesCount - yesterdayCount;
-                SalesCountVsYesterdayText = $"{(countDiff >= 0 ? "+" : "")}{countDiff} vs yesterday";
+                int diff = summary.SalesCountVsYesterdayDiff.Value;
+                SalesCountVsYesterdayText = $"{(diff >= 0 ? "+" : "")}{diff} vs yesterday";
             }
             else
             {
                 SalesCountVsYesterdayText = string.Empty;
             }
 
-            // 4. Held Bills
-            var heldResult = await _saleService.ListHeldBillsAsync();
-            HeldBillsCount = heldResult.Success && heldResult.Data != null ? heldResult.Data.Count : 0;
-
-            // 5. Supplier Payables
-            var suppliersRes = await _supplierService.GetFlatListAsync();
-            if (suppliersRes.Success && suppliersRes.Data != null)
+            // Backup Overview & Checklist
+            if (_backupService != null)
             {
-                SupplierPayables = suppliersRes.Data.Sum(s => Math.Max(0m, s.CurrentBalance));
+                var backupSummary = await _backupService.GetBackupSummaryAsync();
+                LastBackupText = backupSummary.LastBackupAtFormatted ?? "Never";
+                HasBackupWarning = backupSummary.HasWarning;
+                BackupWarningMessage = backupSummary.WarningMessage;
+                ChecklistBackupCurrent = backupSummary.LastBackupAt.HasValue && backupSummary.LastBackupAt.Value.Date == DateTime.Today;
+
+                IsDriveConnected = backupSummary.IsDriveConnected;
+                LastDriveUploadText = backupSummary.LastDriveUploadFormatted ?? "Never";
+
+                HasCloudBackupWarning = false;
+                CloudBackupWarningMessage = null;
+
+                if (backupSummary.IsGitHubConnected)
+                {
+                    if (backupSummary.IsGitHubReconnectNeeded)
+                    {
+                        HasCloudBackupWarning = true;
+                        CloudBackupWarningMessage = "GitHub personal access token has expired or is unauthorized. Please reconnect in Backup & Restore.";
+                    }
+                    else if (backupSummary.IsGitHubRepoPublic)
+                    {
+                        HasCloudBackupWarning = true;
+                        CloudBackupWarningMessage = "GitHub repository is marked public. For security reasons, backups will only upload to a private repository.";
+                    }
+                    else if (backupSummary.IsGitHubFileTooLarge)
+                    {
+                        HasCloudBackupWarning = true;
+                        CloudBackupWarningMessage = "Backup release asset exceeds 1.8 GiB. Please exclude images or archive older data.";
+                    }
+                    else if (backupSummary.TotalBackupsCount > 0 &&
+                             (!backupSummary.LastGitHubUploadAt.HasValue || (DateTime.UtcNow - backupSummary.LastGitHubUploadAt.Value).TotalDays >= 7))
+                    {
+                        HasCloudBackupWarning = true;
+                        CloudBackupWarningMessage = "Warning: No GitHub backup has succeeded in the last 7 days. Check your GitHub settings and internet connection.";
+                    }
+                }
+                else if (backupSummary.IsDriveConnected)
+                {
+                    if (backupSummary.IsDriveReconnectNeeded)
+                    {
+                        HasCloudBackupWarning = true;
+                        CloudBackupWarningMessage = "Google Drive authorization has expired. Please reconnect in Backup & Restore.";
+                    }
+                    else if (backupSummary.IsDriveFull)
+                    {
+                        HasCloudBackupWarning = true;
+                        CloudBackupWarningMessage = "Google Drive storage quota is full. Cloud backup uploads are paused.";
+                    }
+                    else if (backupSummary.TotalBackupsCount > 0 &&
+                             (!backupSummary.LastDriveUploadAt.HasValue || (DateTime.UtcNow - backupSummary.LastDriveUploadAt.Value).TotalDays >= 7))
+                    {
+                        HasCloudBackupWarning = true;
+                        CloudBackupWarningMessage = "No backup has been uploaded to Google Drive in over 7 days. Please check your cloud connection.";
+                    }
+                }
+            }
+            else
+            {
+                ChecklistBackupCurrent = summary.DatabaseBackupPresent;
             }
 
-            // 6. Checklist Status (derived from real data)
-            ChecklistSaleMade = TodaySalesCount > 0;
-            ChecklistLowStockChecked = Stats != null && Stats.LowStockCount == 0;
-            ChecklistBackupCurrent = CheckIfBackupExists();
+            // Checklist
+            ChecklistSaleMade = summary.HasCompletedSaleToday;
+            ChecklistLowStockChecked = summary.LowStockReviewed;
+
+            // Top 5 Products
+            Top5Products.Clear();
+            foreach (var p in summary.Top5ProductsToday)
+            {
+                Top5Products.Add(p);
+            }
+            HasTopProducts = Top5Products.Count > 0;
+
+            // 30-Day Net Sales Chart
+            ChartBars.Clear();
+            decimal maxSales = summary.Last30DaysTrend.Count > 0 ? summary.Last30DaysTrend.Max(p => p.NetSales) : 0m;
+            if (maxSales <= 0) maxSales = 1000m;
+
+            ChartMaxLabel = $"Rs {maxSales:N0}";
+            ChartMidLabel = $"Rs {(maxSales / 2m):N0}";
+            ChartZeroLabel = "Rs 0";
+
+            foreach (var point in summary.Last30DaysTrend)
+            {
+                double height = 0.0;
+                if (point.NetSales > 0)
+                {
+                    height = (double)(point.NetSales / maxSales) * 120.0;
+                    if (height < 4.0) height = 4.0;
+                    if (height > 120.0) height = 120.0;
+                }
+
+                ChartBars.Add(new ChartBarItem
+                {
+                    Date = point.Date,
+                    NetSales = point.NetSales,
+                    BarHeight = height,
+                    DateLabel = point.FormattedDate,
+                    FormattedAmount = $"Rs {point.NetSales:N2}"
+                });
+            }
         }
         catch (Exception ex)
         {
@@ -236,23 +378,5 @@ public partial class DashboardViewModel : ObservableObject
         {
             IsLoading = false;
         }
-    }
-
-    private bool CheckIfBackupExists()
-    {
-        try
-        {
-            string backupDir = @"C:\ShopData\Backups";
-            if (Directory.Exists(backupDir))
-            {
-                var files = Directory.GetFiles(backupDir, "*.db");
-                return files.Length > 0;
-            }
-        }
-        catch
-        {
-            // Ignore access errors
-        }
-        return false;
     }
 }

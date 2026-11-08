@@ -73,7 +73,7 @@ public partial class UnitsViewModel : BaseCrudViewModel<UnitDto>
     {
         if (!CanAdd) return;
 
-        var dialogVm = new UnitDialogViewModel(_unitService, GetCurrentUserId(), GetCurrentRole());
+        var dialogVm = new UnitDialogViewModel(_unitService, GetCurrentUserId());
         dialogVm.Initialize(null);
 
         if (_dialogService.ShowUnitDialog(dialogVm) == true)
@@ -86,7 +86,7 @@ public partial class UnitsViewModel : BaseCrudViewModel<UnitDto>
     {
         if (!CanEdit || SelectedItem == null) return;
 
-        var dialogVm = new UnitDialogViewModel(_unitService, GetCurrentUserId(), GetCurrentRole());
+        var dialogVm = new UnitDialogViewModel(_unitService, GetCurrentUserId());
         dialogVm.Initialize(SelectedItem);
 
         if (_dialogService.ShowUnitDialog(dialogVm) == true)
@@ -102,7 +102,7 @@ public partial class UnitsViewModel : BaseCrudViewModel<UnitDto>
         int id = SelectedItem.Id;
         string name = SelectedItem.Name;
 
-        var delRes = await _unitService.DeleteUnitAsync(id, GetCurrentUserId(), GetCurrentRole());
+        var delRes = await _unitService.DeleteUnitAsync(id, GetCurrentUserId());
         if (delRes.Success)
         {
             await LoadDataAsync();
@@ -118,7 +118,7 @@ public partial class UnitsViewModel : BaseCrudViewModel<UnitDto>
 
             if (result == ConfirmActionResult.Deactivate)
             {
-                await _unitService.DeactivateUnitAsync(id, GetCurrentUserId(), GetCurrentRole());
+                await _unitService.DeactivateUnitAsync(id, GetCurrentUserId());
                 await LoadDataAsync();
             }
         }

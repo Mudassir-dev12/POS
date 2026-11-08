@@ -108,6 +108,8 @@ public class SaleService : ISaleService
         }
 
         sale.PriceLevelId = dto.PriceLevelId;
+        sale.CustomerName = dto.CustomerName;
+        sale.CustomerPhone = dto.CustomerPhone;
         sale.Notes = dto.Notes;
         sale.SubTotal = calc.SubTotal;
         sale.LineDiscountTotal = calc.LineDiscountTotal;
@@ -319,7 +321,7 @@ public class SaleService : ISaleService
                             Amount = applied,
                             TenderedAmount = tendered,
                             Reference = p.Reference,
-                            PaidAt = DateTime.Now,
+                            PaidAt = dto.SaleDateOverride ?? DateTime.Now,
                             CreatedByUserId = _currentUserProvider.UserId
                         });
                     }
@@ -331,7 +333,7 @@ public class SaleService : ISaleService
                             Amount = p.Amount,
                             TenderedAmount = p.Amount,
                             Reference = p.Reference,
-                            PaidAt = DateTime.Now,
+                            PaidAt = dto.SaleDateOverride ?? DateTime.Now,
                             CreatedByUserId = _currentUserProvider.UserId
                         });
                     }
@@ -347,7 +349,7 @@ public class SaleService : ISaleService
                         Amount = p.Amount,
                         TenderedAmount = p.TenderedAmount ?? p.Amount,
                         Reference = p.Reference,
-                        PaidAt = DateTime.Now,
+                        PaidAt = dto.SaleDateOverride ?? DateTime.Now,
                         CreatedByUserId = _currentUserProvider.UserId
                     });
                 }
@@ -359,7 +361,7 @@ public class SaleService : ISaleService
             var sale = new Sale
             {
                 SaleNumber = saleNumber,
-                SaleDate = DateTime.Now,
+                SaleDate = dto.SaleDateOverride ?? DateTime.Now,
                 PriceLevelId = dto.PriceLevelId,
                 Status = SaleStatus.Completed,
                 SubTotal = calc.SubTotal,
@@ -371,6 +373,8 @@ public class SaleService : ISaleService
                 PaidAmount = effectivePaidAmount,
                 ChangeAmount = changeAmount,
                 DueAmount = 0m,
+                CustomerName = dto.CustomerName,
+                CustomerPhone = dto.CustomerPhone,
                 Notes = dto.Notes,
                 CompletedAt = DateTime.Now,
                 CreatedByUserId = _currentUserProvider.UserId,
@@ -575,6 +579,8 @@ public class SaleService : ISaleService
             DueAmount = sale.DueAmount,
             TotalCost = sale.TotalCost,
             Notes = sale.Notes,
+            CustomerName = sale.CustomerName,
+            CustomerPhone = sale.CustomerPhone,
             CompletedAt = sale.CompletedAt,
             CancelledAt = sale.CancelledAt,
             CancelReason = sale.CancelReason,

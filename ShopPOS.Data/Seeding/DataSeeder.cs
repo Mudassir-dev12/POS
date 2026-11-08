@@ -139,12 +139,14 @@ public class DataSeeder : IDataSeeder
             await _context.ShopSettings.AddAsync(new ShopSetting
             {
                 ShopName = "My Mart & Retail Store",
-                Address = "Plot 14-B, Commercial Avenue, Phase 5",
-                Phone = "0300-1234567",
+                Address = "Shop No. B-27, Hydri Bara Market, Block H, North Nazimabad (Near Taimoria Masjid), Karachi, Pakistan",
+                Phone = "0335-5558359",
+                SecondaryPhone = "0334-5373743",
                 TaxNumber = "TRN-9876543",
                 CurrencySymbol = "Rs",
                 CurrencyDecimals = 2,
-                ReceiptFooter = "Thank you for shopping with us! Please come again.",
+                StorePolicy = "1. No returns or refunds are accepted, except for exchange within 3 days of purchase.\n2. Items must be in original condition with tag.\n3. For exchange, please bring the original receipt/invoice.\n4. Thank you for your cooperation!",
+                ReceiptFooter = "Thank you for shopping with us!",
                 ReceiptWidthMm = 80,
                 DefaultTaxPercent = 0m,
                 AllowSellingBelowMinPrice = false,
@@ -158,13 +160,32 @@ public class DataSeeder : IDataSeeder
         }
 
         // 6. Seed Default NumberSequences
-        var defaultPrefixes = new[] { "INV", "HOLD", "SRET", "PUR", "SPAY", "PRET", "ADJ" };
+        var defaultPrefixes = new[] { "INV", "HOLD", "SRET", "PUR", "SPAY", "PRET", "ADJ", "EXP" };
         foreach (var prefix in defaultPrefixes)
         {
             var seq = await _context.NumberSequences.FirstOrDefaultAsync(n => n.Key == prefix, cancellationToken);
             if (seq == null)
             {
                 await _context.NumberSequences.AddAsync(new NumberSequence { Key = prefix, LastNumber = 0 }, cancellationToken);
+            }
+        }
+
+        // 6b. Seed Default Expense Categories
+        var defaultExpenseCategories = new[]
+        {
+            "Rent", "Electricity", "Salaries", "Transport", "Maintenance", "Internet and phone", "Packaging", "Other"
+        };
+        foreach (var catName in defaultExpenseCategories)
+        {
+            var exists = await _context.ExpenseCategories.IgnoreQueryFilters().AnyAsync(c => c.Name == catName, cancellationToken);
+            if (!exists)
+            {
+                await _context.ExpenseCategories.AddAsync(new ExpenseCategory
+                {
+                    Name = catName,
+                    IsActive = true,
+                    IsDeleted = false
+                }, cancellationToken);
             }
         }
 

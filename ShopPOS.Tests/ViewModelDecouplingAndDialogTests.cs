@@ -186,14 +186,14 @@ public class ViewModelDecouplingAndDialogTests
             .ReturnsAsync(Result<PagedResult<BrandDto>>.Ok(new PagedResult<BrandDto>(new List<BrandDto>(), 0, 1, 10)));
 
         // Delete returns REFERENCED_CANNOT_DELETE
-        mockProductService.Setup(p => p.DeleteProductAsync(10, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
+        mockProductService.Setup(p => p.DeleteProductAsync(10, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure("REFERENCED_CANNOT_DELETE"));
 
         // User chooses Deactivate in dialog
         mockDialogService.Setup(d => d.ShowConfirmActionDialog(It.IsAny<string>(), It.IsAny<string>(), true))
             .Returns(ConfirmActionResult.Deactivate);
 
-        mockProductService.Setup(p => p.DeactivateProductAsync(10, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
+        mockProductService.Setup(p => p.DeactivateProductAsync(10, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
 
         mockProductService.Setup(p => p.GetPagedProductsAsync(It.IsAny<ProductSearchQuery>(), It.IsAny<CancellationToken>()))
@@ -217,7 +217,7 @@ public class ViewModelDecouplingAndDialogTests
 
         // Assert
         mockDialogService.Verify(d => d.ShowConfirmActionDialog(It.IsAny<string>(), It.IsAny<string>(), true), Times.Once);
-        mockProductService.Verify(p => p.DeactivateProductAsync(10, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()), Times.Once);
+        mockProductService.Verify(p => p.DeactivateProductAsync(10, 1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -268,13 +268,13 @@ public class ViewModelDecouplingAndDialogTests
         var mockDialogService = new Mock<IDialogService>();
 
 
-        mockBrandService.Setup(b => b.DeleteBrandAsync(5, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
+        mockBrandService.Setup(b => b.DeleteBrandAsync(5, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure("REFERENCED_CANNOT_DELETE"));
 
         mockDialogService.Setup(d => d.ShowConfirmActionDialog(It.IsAny<string>(), It.IsAny<string>(), true))
             .Returns(ConfirmActionResult.Deactivate);
 
-        mockBrandService.Setup(b => b.DeactivateBrandAsync(5, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
+        mockBrandService.Setup(b => b.DeactivateBrandAsync(5, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
 
         mockBrandService.Setup(b => b.GetPagedBrandsAsync(It.IsAny<MasterDataSearchQuery>(), It.IsAny<CancellationToken>()))
@@ -293,7 +293,7 @@ public class ViewModelDecouplingAndDialogTests
 
         // Assert
         mockDialogService.Verify(d => d.ShowConfirmActionDialog(It.IsAny<string>(), It.IsAny<string>(), true), Times.Once);
-        mockBrandService.Verify(b => b.DeactivateBrandAsync(5, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()), Times.Once);
+        mockBrandService.Verify(b => b.DeactivateBrandAsync(5, 1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -305,13 +305,13 @@ public class ViewModelDecouplingAndDialogTests
         var mockDialogService = new Mock<IDialogService>();
 
 
-        mockCategoryService.Setup(c => c.DeleteCategoryAsync(3, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
+        mockCategoryService.Setup(c => c.DeleteCategoryAsync(3, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure("REFERENCED_CANNOT_DELETE"));
 
         mockDialogService.Setup(d => d.ShowConfirmActionDialog(It.IsAny<string>(), It.IsAny<string>(), true))
             .Returns(ConfirmActionResult.Deactivate);
 
-        mockCategoryService.Setup(c => c.DeactivateCategoryAsync(3, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
+        mockCategoryService.Setup(c => c.DeactivateCategoryAsync(3, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
 
         mockCategoryService.Setup(c => c.GetCategoryTreeAsync(It.IsAny<bool>(), It.IsAny<CancellationToken>()))
@@ -330,7 +330,7 @@ public class ViewModelDecouplingAndDialogTests
 
         // Assert
         mockDialogService.Verify(d => d.ShowConfirmActionDialog(It.IsAny<string>(), It.IsAny<string>(), true), Times.Once);
-        mockCategoryService.Verify(c => c.DeactivateCategoryAsync(3, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()), Times.Once);
+        mockCategoryService.Verify(c => c.DeactivateCategoryAsync(3, 1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -342,13 +342,13 @@ public class ViewModelDecouplingAndDialogTests
         var mockDialogService = new Mock<IDialogService>();
 
 
-        mockUnitService.Setup(u => u.DeleteUnitAsync(2, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
+        mockUnitService.Setup(u => u.DeleteUnitAsync(2, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure("REFERENCED_CANNOT_DELETE"));
 
         mockDialogService.Setup(d => d.ShowConfirmActionDialog(It.IsAny<string>(), It.IsAny<string>(), true))
             .Returns(ConfirmActionResult.Deactivate);
 
-        mockUnitService.Setup(u => u.DeactivateUnitAsync(2, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
+        mockUnitService.Setup(u => u.DeactivateUnitAsync(2, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
 
         mockUnitService.Setup(u => u.GetPagedUnitsAsync(It.IsAny<MasterDataSearchQuery>(), It.IsAny<CancellationToken>()))
@@ -367,7 +367,7 @@ public class ViewModelDecouplingAndDialogTests
 
         // Assert
         mockDialogService.Verify(d => d.ShowConfirmActionDialog(It.IsAny<string>(), It.IsAny<string>(), true), Times.Once);
-        mockUnitService.Verify(u => u.DeactivateUnitAsync(2, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()), Times.Once);
+        mockUnitService.Verify(u => u.DeactivateUnitAsync(2, 1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -379,16 +379,16 @@ public class ViewModelDecouplingAndDialogTests
         var mockDialogService = new Mock<IDialogService>();
 
 
-        mockSupplierService.Setup(s => s.DeleteSupplierAsync(4, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
+        mockSupplierService.Setup(s => s.DeleteSupplierAsync(4, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Failure("REFERENCED_CANNOT_DELETE"));
 
         mockDialogService.Setup(d => d.ShowConfirmActionDialog(It.IsAny<string>(), It.IsAny<string>(), true))
             .Returns(ConfirmActionResult.Deactivate);
 
-        mockSupplierService.Setup(s => s.DeactivateSupplierAsync(4, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()))
+        mockSupplierService.Setup(s => s.DeactivateSupplierAsync(4, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result.Ok());
 
-        mockSupplierService.Setup(s => s.GetPagedSuppliersAsync(It.IsAny<MasterDataSearchQuery>(), RoleDefaults.Admin, It.IsAny<CancellationToken>()))
+        mockSupplierService.Setup(s => s.GetPagedSuppliersAsync(It.IsAny<MasterDataSearchQuery>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(Result<PagedResult<SupplierDto>>.Ok(new PagedResult<SupplierDto>(new List<SupplierDto>(), 0, 1, 50)));
 
         var vm = new SuppliersViewModel(
@@ -404,7 +404,7 @@ public class ViewModelDecouplingAndDialogTests
 
         // Assert
         mockDialogService.Verify(d => d.ShowConfirmActionDialog(It.IsAny<string>(), It.IsAny<string>(), true), Times.Once);
-        mockSupplierService.Verify(s => s.DeactivateSupplierAsync(4, 1, RoleDefaults.Admin, It.IsAny<CancellationToken>()), Times.Once);
+        mockSupplierService.Verify(s => s.DeactivateSupplierAsync(4, 1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     }

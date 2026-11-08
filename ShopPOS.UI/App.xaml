@@ -1,4 +1,5 @@
 <Application x:Class="ShopPOS.UI.App"
+             ShutdownMode="OnExplicitShutdown"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -26,6 +27,7 @@
             <helpers:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
             <helpers:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter" />
             <helpers:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+            <helpers:EqualityToBooleanConverter x:Key="EqualityToBooleanConverter" />
             <helpers:StepVisibilityConverter x:Key="StepVisibilityConverter" />
             <helpers:StepColorConverter x:Key="StepColorConverter" />
             <helpers:LowStockBackgroundConverter x:Key="LowStockBackgroundConverter" />
@@ -50,6 +52,9 @@
             <helpers:DateDisplayConverter x:Key="DateDisplayConverter" />
             <helpers:TimeDisplayConverter x:Key="TimeDisplayConverter" />
             <helpers:DateTimeDisplayConverter x:Key="DateTimeDisplayConverter" />
+            <helpers:StringEqualsToVisibilityConverter x:Key="StringEqualsToVisibilityConverter" />
+            <helpers:BooleanToYesNoConverter x:Key="BooleanToYesNoConverter" />
+            <helpers:EncryptButtonTextConverter x:Key="EncryptButtonTextConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

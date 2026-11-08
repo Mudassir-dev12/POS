@@ -1,4 +1,5 @@
-using ShopPOS.Core.Interfaces;
+using ShopPOS.Core.Interfaces;
+
 using ShopPOS.Core.Enums;
 
 namespace ShopPOS.Core.DTOs;
@@ -28,6 +29,8 @@ public class SalePaymentDto
 public class SaveSaleDto
 {
     public int? Id { get; set; }
+    public string? CustomerName { get; set; }
+    public string? CustomerPhone { get; set; }
     public int? PriceLevelId { get; set; }
     public string? Notes { get; set; }
     public List<SaleLineItemDto> Items { get; set; } = new();
@@ -38,12 +41,15 @@ public class SaveSaleDto
 public class CompleteSaleDto
 {
     public int? HeldBillId { get; set; }
+    public string? CustomerName { get; set; }
+    public string? CustomerPhone { get; set; }
     public int? PriceLevelId { get; set; }
     public string? Notes { get; set; }
     public List<SaleLineItemDto> Items { get; set; } = new();
     public decimal BillDiscountPercent { get; set; } = 0m;
     public decimal BillDiscountAmount { get; set; } = 0m;
     public List<SalePaymentDto> Payments { get; set; } = new();
+    public DateTime? SaleDateOverride { get; set; }
 }
 
 public class SaleItemDetailDto
@@ -77,6 +83,8 @@ public class SalePaymentDetailDto
 public class SaleDetailDto
 {
     public int Id { get; set; }
+    public string? CustomerName { get; set; }
+    public string? CustomerPhone { get; set; }
     public string? SaleNumber { get; set; }
     public string? HoldNumber { get; set; }
     public DateTime SaleDate { get; set; }
@@ -113,6 +121,8 @@ public class SaleSummaryDto : ISelectable
     public string? HoldNumber { get; set; }
     public DateTime SaleDate { get; set; }
     public SaleStatus Status { get; set; }
+    public string? CustomerName { get; set; }
+    public string? CustomerPhone { get; set; }
     public decimal GrandTotal { get; set; }
     public decimal PaidAmount { get; set; }
     public decimal DueAmount { get; set; }

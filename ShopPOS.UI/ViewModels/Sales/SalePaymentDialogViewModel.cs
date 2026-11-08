@@ -59,6 +59,12 @@ public partial class SalePaymentDialogViewModel : ObservableObject
     [ObservableProperty]
     private string _currencySymbol = "Rs";
 
+    [ObservableProperty]
+    private string? _customerName;
+
+    [ObservableProperty]
+    private string? _customerPhone;
+
     public ObservableCollection<PaymentLineViewModel> Payments { get; } = new();
 
     public ObservableCollection<decimal> QuickCashNotes { get; } = new();
@@ -72,11 +78,15 @@ public partial class SalePaymentDialogViewModel : ObservableObject
     public SalePaymentDialogViewModel(
         decimal grandTotal,
         string currencySymbol,
-        ISaleCalculator saleCalculator)
+        ISaleCalculator saleCalculator,
+        string? customerName = null,
+        string? customerPhone = null)
     {
         _saleCalculator = saleCalculator;
         GrandTotal = grandTotal;
         CurrencySymbol = currencySymbol;
+        CustomerName = customerName;
+        CustomerPhone = customerPhone;
 
         // Populate initial payment line with full cash amount
         var initialLine = new PaymentLineViewModel
@@ -100,7 +110,7 @@ public partial class SalePaymentDialogViewModel : ObservableObject
         bool allowCreditSales,
         string currencySymbol,
         ISaleCalculator saleCalculator)
-        : this(grandTotal, currencySymbol, saleCalculator)
+        : this(grandTotal, currencySymbol, saleCalculator, customerName, null)
     {
     }
 

@@ -41,3 +41,9 @@ $RECYCLE.BIN/
 *.bak
 *.tmp
 *~
+
+## Google Drive & GitHub secrets and tokens
+googledrive.client.json
+google_token.dat
+github_token.dat
+*.token

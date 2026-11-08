@@ -31,6 +31,8 @@ public class Sale : BaseEntity
     /// </summary>
     public decimal DueAmount { get; set; } = 0m;
     public decimal TotalCost { get; set; } = 0m;
+    public string? CustomerName { get; set; }
+    public string? CustomerPhone { get; set; }
 
     public string? Notes { get; set; }
 

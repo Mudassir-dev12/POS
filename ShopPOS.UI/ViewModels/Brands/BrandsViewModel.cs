@@ -73,7 +73,7 @@ public partial class BrandsViewModel : BaseCrudViewModel<BrandDto>
     {
         if (!CanAdd) return;
 
-        var dialogVm = new BrandDialogViewModel(_brandService, GetCurrentUserId(), GetCurrentRole());
+        var dialogVm = new BrandDialogViewModel(_brandService, GetCurrentUserId());
         dialogVm.Initialize(null);
 
         if (_dialogService.ShowBrandDialog(dialogVm) == true)
@@ -86,7 +86,7 @@ public partial class BrandsViewModel : BaseCrudViewModel<BrandDto>
     {
         if (!CanEdit || SelectedItem == null) return;
 
-        var dialogVm = new BrandDialogViewModel(_brandService, GetCurrentUserId(), GetCurrentRole());
+        var dialogVm = new BrandDialogViewModel(_brandService, GetCurrentUserId());
         dialogVm.Initialize(SelectedItem);
 
         if (_dialogService.ShowBrandDialog(dialogVm) == true)
@@ -102,7 +102,7 @@ public partial class BrandsViewModel : BaseCrudViewModel<BrandDto>
         int id = SelectedItem.Id;
         string name = SelectedItem.Name;
 
-        var delRes = await _brandService.DeleteBrandAsync(id, GetCurrentUserId(), GetCurrentRole());
+        var delRes = await _brandService.DeleteBrandAsync(id, GetCurrentUserId());
         if (delRes.Success)
         {
             await LoadDataAsync();
@@ -118,7 +118,7 @@ public partial class BrandsViewModel : BaseCrudViewModel<BrandDto>
 
             if (result == ConfirmActionResult.Deactivate)
             {
-                await _brandService.DeactivateBrandAsync(id, GetCurrentUserId(), GetCurrentRole());
+                await _brandService.DeactivateBrandAsync(id, GetCurrentUserId());
                 await LoadDataAsync();
             }
         }

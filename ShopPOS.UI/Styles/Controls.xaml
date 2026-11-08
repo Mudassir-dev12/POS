@@ -417,13 +417,16 @@
     <Style TargetType="TextBox">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="Height" Value="34" />
-        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="MinHeight" Value="28" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Padding" Value="10,0" />
         <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource InputTextBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="UseLayoutRounding" Value="True" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
@@ -432,14 +435,41 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="4"
-                            SnapsToDevicePixels="True">
-                        <ScrollViewer x:Name="PART_ContentHost"
-                                      Focusable="False"
-                                      HorizontalScrollBarVisibility="Hidden"
-                                      VerticalScrollBarVisibility="Hidden"
-                                      Margin="{TemplateBinding Padding}" />
+                            Padding="{TemplateBinding Padding}"
+                            SnapsToDevicePixels="True"
+                            UseLayoutRounding="True">
+                        <Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Disabled"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          SnapsToDevicePixels="{TemplateBinding SnapsToDevicePixels}"
+                                          UseLayoutRounding="True" />
+                            <TextBlock x:Name="PlaceholderText"
+                                       Text="{TemplateBinding Tag}"
+                                       Foreground="{DynamicResource TextMutedBrush}"
+                                       FontSize="{TemplateBinding FontSize}"
+                                       FontFamily="{TemplateBinding FontFamily}"
+                                       VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
+                                       HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                       Margin="2,0,0,0"
+                                       IsHitTestVisible="False"
+                                       Visibility="Collapsed" />
+                        </Grid>
                     </Border>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="Text" Value="">
+                            <Setter TargetName="PlaceholderText" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="Text" Value="" />
+                                <Condition Property="IsFocused" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="PlaceholderText" Property="Opacity" Value="0.6" />
+                        </MultiTrigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="border" Property="BorderBrush" Value="{DynamicResource InputFocusBorderBrush}" />
                         </Trigger>
@@ -459,6 +489,41 @@
     </Style>
 
     <Style x:Key="InputTextBoxStyle" TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}" />
+
+    <!-- ========================================================
+         DATEPICKER STYLES
+         Fixes baseline text clipping across all date pickers
+         ======================================================== -->
+
+    <Style TargetType="DatePickerTextBox">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Padding" Value="4,0" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Foreground" Value="{DynamicResource InputTextBrush}" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+    </Style>
+
+    <Style TargetType="DatePicker">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="MinHeight" Value="34" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Padding" Value="6,0" />
+        <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource InputTextBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="UseLayoutRounding" Value="True" />
+    </Style>
+
+    <Style x:Key="InputDatePickerStyle" TargetType="DatePicker" BasedOn="{StaticResource {x:Type DatePicker}}" />
 
     <!-- ========================================================
          COMBOBOX STYLES
@@ -497,8 +562,8 @@
     <Style TargetType="ComboBox">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="FontSize" Value="13" />
-        <Setter Property="Height" Value="34" />
-        <Setter Property="Padding" Value="8,5" />
+        <Setter Property="Height" Value="36" />
+        <Setter Property="Padding" Value="10,0" />
         <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
         <Setter Property="Foreground" Value="{DynamicResource InputTextBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource InputBorderBrush}" />

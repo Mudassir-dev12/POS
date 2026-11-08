@@ -14,6 +14,7 @@ using ShopPOS.UI.ViewModels.Units;
 using ShopPOS.UI.ViewModels.Inventory;
 using ShopPOS.UI.ViewModels.Dashboard;
 using ShopPOS.UI.ViewModels.Sales;
+using ShopPOS.UI.ViewModels.Reports;
 
 namespace ShopPOS.UI.Services;
 
@@ -75,7 +76,11 @@ public class NavigationService : INavigationService
                 return _serviceProvider.GetRequiredService<SettingsViewModel>();
 
             case "DASHBOARD":
-                return _serviceProvider.GetRequiredService<DashboardViewModel>();
+            {
+                var dashVm = _serviceProvider.GetRequiredService<DashboardViewModel>();
+                _ = dashVm.InitializeAsync();
+                return dashVm;
+            }
 
             case "STOCKOVERVIEW" or "INVENTORY":
             {
@@ -109,10 +114,14 @@ public class NavigationService : INavigationService
                 return _serviceProvider.GetRequiredService<SaleReturnsViewModel>();
 
             case "REPORTS":
-                return new PlaceholderViewModel(
-                    "Reports & Analytics",
-                    "ChartMultiple24",
-                    "Sales analytics, stock valuation, profit & loss reports, and tax declarations.");
+            {
+                var reportsVm = _serviceProvider.GetRequiredService<ReportsViewModel>();
+                _ = reportsVm.LoadReportAsync();
+                return reportsVm;
+            }
+
+            case "BACKUPRESTORE" or "BACKUP" or "BACKUPS":
+                return _serviceProvider.GetRequiredService<ShopPOS.UI.ViewModels.BackupRestore.BackupRestoreViewModel>();
 
             default:
                 return new PlaceholderViewModel(menuKey, "Apps24", "Placeholder for module: " + menuKey);

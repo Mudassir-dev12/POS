@@ -10,8 +10,7 @@ public partial class SupplierDialogViewModel : ObservableObject
 {
     private readonly ISupplierService _supplierService;
     private readonly int? _currentUserId;
-    private readonly string? _currentUserRole;
-
+    
     [ObservableProperty]
     private string _dialogTitle = "Add Supplier";
 
@@ -65,12 +64,10 @@ public partial class SupplierDialogViewModel : ObservableObject
 
     public event Action<bool>? RequestClose;
 
-    public SupplierDialogViewModel(ISupplierService supplierService, int? currentUserId, string? currentUserRole)
+    public SupplierDialogViewModel(ISupplierService supplierService, int? currentUserId)
     {
         _supplierService = supplierService;
-        _currentUserId = currentUserId;
-        _currentUserRole = currentUserRole;
-    }
+        _currentUserId = currentUserId;    }
 
     public void Initialize(SupplierDto? supplier = null)
     {
@@ -119,7 +116,7 @@ public partial class SupplierDialogViewModel : ObservableObject
                 Address = Address,
                 Notes = Notes,
                 OpeningBalance = OpeningBalance
-            }, _currentUserId, _currentUserRole);
+            }, _currentUserId);
 
             if (!res.Success)
             {
@@ -141,7 +138,7 @@ public partial class SupplierDialogViewModel : ObservableObject
                 Notes = Notes,
                 OpeningBalance = OpeningBalance,
                 IsActive = IsActive
-            }, _currentUserId, _currentUserRole);
+            }, _currentUserId);
 
             if (!res.Success)
             {

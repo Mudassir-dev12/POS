@@ -40,29 +40,29 @@ public class InventoryService : IInventoryService
         _pdfReportService = pdfReportService;
     }
 
-    public async Task<Result<PagedResult<StockOverviewItemDto>>> GetStockOverviewAsync(StockOverviewFilterQuery query, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PagedResult<StockOverviewItemDto>>> GetStockOverviewAsync(StockOverviewFilterQuery query, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
-        bool isCashier = string.Equals(userRole, RoleDefaults.Cashier, StringComparison.OrdinalIgnoreCase);
+        bool isCashier = false;
         var result = await _inventoryRepo.GetStockOverviewAsync(query, isCashier, cancellationToken);
         return Result<PagedResult<StockOverviewItemDto>>.Ok(result);
     }
 
-    public async Task<Result<StockOverviewSummaryDto>> GetStockOverviewSummaryAsync(string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<StockOverviewSummaryDto>> GetStockOverviewSummaryAsync(CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
-        bool isCashier = string.Equals(userRole, RoleDefaults.Cashier, StringComparison.OrdinalIgnoreCase);
+        bool isCashier = false;
         var result = await _inventoryRepo.GetStockOverviewSummaryAsync(isCashier, cancellationToken);
         return Result<StockOverviewSummaryDto>.Ok(result);
     }
 
-    public async Task<Result<StockOverviewItemDto>> GetProductStockDetailAsync(int productId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<StockOverviewItemDto>> GetProductStockDetailAsync(int productId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
-        bool isCashier = string.Equals(userRole, RoleDefaults.Cashier, StringComparison.OrdinalIgnoreCase);
+        bool isCashier = false;
 
         var p = await _productRepo.GetWithDetailsAsync(productId, cancellationToken);
         if (p == null)
@@ -104,7 +104,7 @@ public class InventoryService : IInventoryService
         });
     }
 
-    public async Task<Result<PagedResult<MovementHistoryItemDto>>> GetMovementHistoryAsync(MovementHistoryFilterQuery query, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PagedResult<MovementHistoryItemDto>>> GetMovementHistoryAsync(MovementHistoryFilterQuery query, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -112,7 +112,7 @@ public class InventoryService : IInventoryService
         return Result<PagedResult<MovementHistoryItemDto>>.Ok(result);
     }
 
-    public async Task<Result<IReadOnlyList<CategoryValuationDto>>> GetCategoryValuationsAsync(string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<IReadOnlyList<CategoryValuationDto>>> GetCategoryValuationsAsync(CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -157,7 +157,7 @@ public class InventoryService : IInventoryService
         return Result<IReadOnlyList<CategoryValuationDto>>.Ok(valuations.OrderBy(v => v.CategoryName).ToList());
     }
 
-    public async Task<Result<IReadOnlyList<ReorderItemDto>>> GetReorderListAsync(string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<IReadOnlyList<ReorderItemDto>>> GetReorderListAsync(CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -208,7 +208,7 @@ public class InventoryService : IInventoryService
         return Result<IReadOnlyList<ReorderItemDto>>.Ok(reorderItems.OrderBy(r => r.ProductName).ToList());
     }
 
-    public async Task<Result<PurchaseDetailDto>> CreatePurchaseDraftFromReorderAsync(CreatePurchaseFromReorderDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PurchaseDetailDto>> CreatePurchaseDraftFromReorderAsync(CreatePurchaseFromReorderDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -237,7 +237,7 @@ public class InventoryService : IInventoryService
             }).ToList()
         };
 
-        var purchaseResult = await _purchaseService.CreatePurchaseDraftAsync(createPurchaseDto, userId, userRole, cancellationToken);
+        var purchaseResult = await _purchaseService.CreatePurchaseDraftAsync(createPurchaseDto, userId, cancellationToken);
         if (!purchaseResult.Success)
         {
             return Result<PurchaseDetailDto>.Failure(purchaseResult.ErrorMessage ?? "Failed to create purchase draft.");
@@ -246,15 +246,15 @@ public class InventoryService : IInventoryService
         return Result<PurchaseDetailDto>.Ok(purchaseResult.Data!);
     }
 
-    public async Task<Result<byte[]>> ExportStockOverviewCsvAsync(StockOverviewFilterQuery query, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<byte[]>> ExportStockOverviewCsvAsync(StockOverviewFilterQuery query, CancellationToken cancellationToken = default)
     {
-        var overviewResult = await GetStockOverviewAsync(query, userRole, cancellationToken);
+        var overviewResult = await GetStockOverviewAsync(query, cancellationToken);
         if (!overviewResult.Success)
         {
             return Result<byte[]>.Failure(overviewResult.ErrorMessage ?? "Failed to fetch stock overview for CSV export.");
         }
 
-        bool isCashier = string.Equals(userRole, RoleDefaults.Cashier, StringComparison.OrdinalIgnoreCase);
+        bool isCashier = false;
 
         var sb = new StringBuilder();
         if (isCashier)
@@ -277,9 +277,9 @@ public class InventoryService : IInventoryService
         return Result<byte[]>.Ok(Encoding.UTF8.GetBytes(sb.ToString()));
     }
 
-    public async Task<Result<byte[]>> ExportStockOverviewPdfAsync(StockOverviewFilterQuery query, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<byte[]>> ExportStockOverviewPdfAsync(StockOverviewFilterQuery query, CancellationToken cancellationToken = default)
     {
-        var overviewResult = await GetStockOverviewAsync(query, userRole, cancellationToken);
+        var overviewResult = await GetStockOverviewAsync(query, cancellationToken);
         if (!overviewResult.Success)
         {
             return Result<byte[]>.Failure(overviewResult.ErrorMessage ?? "Failed to fetch stock overview for PDF export.");
@@ -294,12 +294,12 @@ public class InventoryService : IInventoryService
             CurrencySymbol = settings?.CurrencySymbol ?? "Rs"
         };
 
-        bool isCashier = string.Equals(userRole, RoleDefaults.Cashier, StringComparison.OrdinalIgnoreCase);
+        bool isCashier = false;
         var pdfBytes = await _pdfReportService.GenerateStockOverviewPdfAsync(overviewResult.Data!.Items, settingsDto, isCashier, cancellationToken);
         return Result<byte[]>.Ok(pdfBytes);
     }
 
-    public async Task<Result<byte[]>> ExportMovementHistoryCsvAsync(MovementHistoryFilterQuery query, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<byte[]>> ExportMovementHistoryCsvAsync(MovementHistoryFilterQuery query, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -315,9 +315,9 @@ public class InventoryService : IInventoryService
         return Result<byte[]>.Ok(Encoding.UTF8.GetBytes(sb.ToString()));
     }
 
-    public async Task<Result<byte[]>> ExportValuationPdfAsync(string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<byte[]>> ExportValuationPdfAsync(CancellationToken cancellationToken = default)
     {
-        var valuationResult = await GetCategoryValuationsAsync(userRole, cancellationToken);
+        var valuationResult = await GetCategoryValuationsAsync(cancellationToken);
         if (!valuationResult.Success)
         {
             return Result<byte[]>.Failure(valuationResult.ErrorMessage ?? "Failed to fetch valuation for PDF export.");
@@ -336,9 +336,9 @@ public class InventoryService : IInventoryService
         return Result<byte[]>.Ok(pdfBytes);
     }
 
-    public async Task<Result<byte[]>> ExportValuationCsvAsync(string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<byte[]>> ExportValuationCsvAsync(CancellationToken cancellationToken = default)
     {
-        var valuationResult = await GetCategoryValuationsAsync(userRole, cancellationToken);
+        var valuationResult = await GetCategoryValuationsAsync(cancellationToken);
         if (!valuationResult.Success)
         {
             return Result<byte[]>.Failure(valuationResult.ErrorMessage ?? "Failed to fetch valuation for CSV export.");
@@ -354,11 +354,11 @@ public class InventoryService : IInventoryService
         return Result<byte[]>.Ok(Encoding.UTF8.GetBytes(sb.ToString()));
     }
 
-    public async Task<Result<DashboardStatsDto>> GetDashboardStatsAsync(string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<DashboardStatsDto>> GetDashboardStatsAsync(CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
-        bool isCashier = string.Equals(userRole, RoleDefaults.Cashier, StringComparison.OrdinalIgnoreCase);
+        bool isCashier = false;
 
         var allProducts = await _productRepo.GetAllAsync(cancellationToken);
         var activeStockProducts = allProducts.Where(p => p.IsActive && p.TrackStock).ToList();

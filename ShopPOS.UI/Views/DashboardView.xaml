@@ -5,7 +5,12 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Dashboard"
              mc:Ignorable="d"
+             Loaded="UserControl_Loaded"
              d:DataContext="{d:DesignInstance Type=vm:DashboardViewModel}">
+
+    <UserControl.InputBindings>
+        <KeyBinding Key="F5" Command="{Binding LoadStatsCommand}" />
+    </UserControl.InputBindings>
 
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
         <Grid Margin="0,0,0,24">
@@ -14,12 +19,71 @@
                 <RowDefinition Height="Auto" />
                 <!-- KPI Strip -->
                 <RowDefinition Height="Auto" />
+                <!-- Middle Section: 30-Day Sales Chart + Top 5 Products -->
+                <RowDefinition Height="Auto" />
                 <!-- Lower Split: Stock & Payables + Daily Checklist -->
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <!-- ================= TOP HEADER ================= -->
-            <Grid Grid.Row="0" Margin="0,0,0,20">
+            <!-- ================= 1. TOP HEADER ================= -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                <!-- Cloud Backup Warning Banner -->
+                <Border Background="{DynamicResource DangerBackgroundBrush}"
+                        BorderBrush="{DynamicResource DangerBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="14,10"
+                        Margin="0,0,0,12"
+                        Visibility="{Binding HasCloudBackupWarning, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="GOOGLE DRIVE BACKUP WARNING" FontWeight="Bold" Foreground="{DynamicResource DangerBrush}" FontSize="12" Margin="0,0,0,2" />
+                            <TextBlock Text="{Binding CloudBackupWarningMessage}" Foreground="{DynamicResource PrimaryTextBrush}" FontSize="12" TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <Button Grid.Column="1"
+                                Content="View Backups"
+                                Command="{Binding OpenBackupRestoreCommand}"
+                                Style="{DynamicResource PrimaryButtonStyle}"
+                                Padding="14,6"
+                                VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+
+                <!-- Backup Warning Banner -->
+                <Border Background="{DynamicResource WarningBackgroundBrush}"
+                        BorderBrush="{DynamicResource WarningBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Padding="14,10"
+                        Margin="0,0,0,16"
+                        Visibility="{Binding HasBackupWarning, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="BACKUP ATTENTION REQUIRED" FontWeight="Bold" Foreground="{DynamicResource WarningBrush}" FontSize="12" Margin="0,0,0,2" />
+                            <TextBlock Text="{Binding BackupWarningMessage}" Foreground="{DynamicResource PrimaryTextBrush}" FontSize="12" TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <Button Grid.Column="1"
+                                Content="Backup Now"
+                                Command="{Binding BackupNowCommand}"
+                                Style="{DynamicResource PrimaryButtonStyle}"
+                                Padding="14,6"
+                                VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+
+                <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -50,9 +114,10 @@
                             Command="{Binding StartSellingCommand}"
                             Style="{StaticResource PrimaryButtonStyle}" />
                 </StackPanel>
-            </Grid>
+                </Grid>
+            </StackPanel>
 
-            <!-- ================= KPI STRIP (5 Metrics) ================= -->
+            <!-- ================= 2. KPI STRIP (5 Metrics) ================= -->
             <Border Grid.Row="1"
                     Background="{DynamicResource CardBackgroundBrush}"
                     BorderBrush="{DynamicResource CardBorderBrush}"
@@ -161,8 +226,156 @@
                 </Grid>
             </Border>
 
-            <!-- ================= LOWER SECTION: STOCK & PAYABLES + DAILY CHECKLIST ================= -->
-            <Grid Grid.Row="2">
+            <!-- ================= 3. MIDDLE SECTION: 30-DAY SALES CHART & TOP 5 PRODUCTS ================= -->
+            <Grid Grid.Row="2" Margin="0,0,0,24">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="3*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="2*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Left: 30-Day Net Sales Chart -->
+                <Border Grid.Column="0"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource CardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="20">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="180" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Header -->
+                        <Grid Grid.Row="0" Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="30-day net sales trend" Style="{StaticResource SectionHeaderStyle}" />
+                            <TextBlock Grid.Column="1" Text="Last 30 Days" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextMutedBrush}" />
+                        </Grid>
+
+                        <Border Grid.Row="1" Height="1" Background="{DynamicResource ThinRuleBrush}" Margin="0,0,0,12" />
+
+                        <!-- Chart Surface with Y-Axis and Bars -->
+                        <Grid Grid.Row="2">
+                            <Grid.ColumnDefinitions>
+                                <!-- Y Axis Labels -->
+                                <ColumnDefinition Width="65" />
+                                <!-- Chart Canvas / Bars -->
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Y-Axis Values -->
+                            <Grid Grid.Column="0" Margin="0,0,8,16">
+                                <TextBlock Text="{Binding ChartMaxLabel}" FontSize="10" FontFamily="{StaticResource AppMonospaceFontFamily}" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Top" HorizontalAlignment="Right" />
+                                <TextBlock Text="{Binding ChartMidLabel}" FontSize="10" FontFamily="{StaticResource AppMonospaceFontFamily}" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Center" HorizontalAlignment="Right" />
+                                <TextBlock Text="{Binding ChartZeroLabel}" FontSize="10" FontFamily="{StaticResource AppMonospaceFontFamily}" Foreground="{DynamicResource TextMutedBrush}" VerticalAlignment="Bottom" HorizontalAlignment="Right" />
+                            </Grid>
+
+                            <!-- Grid Horizontal Reference Lines -->
+                            <Grid Grid.Column="1" Margin="0,0,0,16">
+                                <Border Height="1" Background="{DynamicResource ThinRuleBrush}" VerticalAlignment="Top" />
+                                <Border Height="1" Background="{DynamicResource ThinRuleBrush}" VerticalAlignment="Center" />
+                                <Border Height="1" Background="{DynamicResource BorderBrush}" VerticalAlignment="Bottom" />
+
+                                <!-- Bars ItemsControl -->
+                                <ItemsControl ItemsSource="{Binding ChartBars}" VerticalAlignment="Bottom" HorizontalAlignment="Stretch">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <UniformGrid Rows="1" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Grid VerticalAlignment="Bottom" ToolTipService.ToolTip="{Binding TooltipText}" Cursor="Hand" Margin="2,0">
+                                                <Border Height="{Binding BarHeight}"
+                                                        Background="{DynamicResource PrimaryBrush}"
+                                                        CornerRadius="2,2,0,0"
+                                                        MinWidth="4"
+                                                        HorizontalAlignment="Stretch"
+                                                        Opacity="0.85">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Style.Triggers>
+                                                                <Trigger Property="IsMouseOver" Value="True">
+                                                                    <Setter Property="Opacity" Value="1.0" />
+                                                                </Trigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </Grid>
+                        </Grid>
+
+                        <!-- X Axis Subtext -->
+                        <Grid Grid.Row="3" Margin="65,4,0,0">
+                            <TextBlock Text="30 days ago" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Left" />
+                            <TextBlock Text="Today" FontSize="10" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Right" />
+                        </Grid>
+                    </Grid>
+                </Border>
+
+                <!-- Right: Top 5 Products Today -->
+                <Border Grid.Column="2"
+                        Background="{DynamicResource CardBackgroundBrush}"
+                        BorderBrush="{DynamicResource CardBorderBrush}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="20">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Header -->
+                        <TextBlock Grid.Row="0" Text="Top products today" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,12" />
+                        <Border Grid.Row="1" Height="1" Background="{DynamicResource ThinRuleBrush}" Margin="0,0,0,12" />
+
+                        <!-- List of Products -->
+                        <ItemsControl Grid.Row="2" ItemsSource="{Binding Top5Products}" Visibility="{Binding HasTopProducts, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="{DynamicResource ThinRuleBrush}" BorderThickness="0,0,0,1" Padding="0,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding ProductName}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+                                                <TextBlock Text="{Binding Quantity, StringFormat='{}{0:N0} sold'}" FontSize="11" Foreground="{DynamicResource TextMutedBrush}" Margin="0,2,0,0" />
+                                            </StackPanel>
+                                            <TextBlock Grid.Column="1" Text="{Binding Revenue, Converter={StaticResource MoneyConverter}}"
+                                                       FontFamily="{StaticResource AppMonospaceFontFamily}" FontWeight="Bold" FontSize="13"
+                                                       Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Empty State if no sales today -->
+                        <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{Binding HasTopProducts, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                            <TextBlock Text="No sales recorded today yet" FontSize="13" Foreground="{DynamicResource TextMutedBrush}" HorizontalAlignment="Center" />
+                            <Button Content="Start selling F2" Command="{Binding StartSellingCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,10,0,0" Padding="12,6" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ================= 4. LOWER SECTION: STOCK & PAYABLES + DAILY CHECKLIST ================= -->
+            <Grid Grid.Row="3">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="3*" />
                     <ColumnDefinition Width="16" />
@@ -178,10 +391,7 @@
                         Padding="20">
                     <StackPanel>
                         <!-- Section Header -->
-                        <Grid Margin="0,0,0,16">
-                            <TextBlock Text="Stock and payables"
-                                       Style="{StaticResource SectionHeaderStyle}" />
-                        </Grid>
+                        <TextBlock Text="Stock and payables" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,16" />
                         <Border Height="1" Background="{DynamicResource ThinRuleBrush}" Margin="0,0,0,8" />
 
                         <!-- Row 1: Low Stock Warnings -->
@@ -212,7 +422,7 @@
                                         Style="{StaticResource StockTagLow}"
                                         Padding="10,3"
                                         VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Stats.LowStockCount, StringFormat='{}{0} items'}"
+                                    <TextBlock Text="{Binding LowStockCount, StringFormat='{}{0} items'}"
                                                FontFamily="{StaticResource AppMonospaceFontFamily}"
                                                FontSize="12"
                                                FontWeight="Bold"
@@ -249,7 +459,7 @@
                                         Style="{StaticResource StockTagOut}"
                                         Padding="10,3"
                                         VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Stats.OutOfStockCount, StringFormat='{}{0} items'}"
+                                    <TextBlock Text="{Binding OutOfStockCount, StringFormat='{}{0} items'}"
                                                FontFamily="{StaticResource AppMonospaceFontFamily}"
                                                FontSize="12"
                                                FontWeight="Bold"
@@ -258,14 +468,14 @@
                             </Grid>
                         </Border>
 
-                        <!-- Row 3: Catalog Products -->
+                        <!-- Row 3: Products Needing Reorder -->
                         <Border Padding="10,12"
                                 BorderBrush="{DynamicResource ThinRuleBrush}"
                                 BorderThickness="0,0,0,1"
                                 Background="Transparent"
                                 Cursor="Hand">
                             <Border.InputBindings>
-                                <MouseBinding Gesture="LeftClick" Command="{Binding OpenProductsCommand}" />
+                                <MouseBinding Gesture="LeftClick" Command="{Binding OpenReorderCommand}" />
                             </Border.InputBindings>
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -273,17 +483,17 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel Grid.Column="0">
-                                    <TextBlock Text="Catalog products"
+                                    <TextBlock Text="Products needing reorder"
                                                FontSize="13"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Total active catalog products tracked in database"
+                                    <TextBlock Text="Review restock recommendations and supplier orders"
                                                FontSize="11"
                                                Foreground="{DynamicResource TextMutedBrush}"
                                                Margin="0,2,0,0" />
                                 </StackPanel>
                                 <TextBlock Grid.Column="1"
-                                           Text="{Binding Stats.TotalProducts}"
+                                           Text="{Binding LowStockCount}"
                                            FontFamily="{StaticResource AppMonospaceFontFamily}"
                                            FontSize="16"
                                            FontWeight="Bold"
@@ -323,6 +533,34 @@
                                            VerticalAlignment="Center" />
                             </Grid>
                         </Border>
+
+                        <!-- Row 5: Last Backup -->
+                        <Border BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="0,1,0,0"
+                                Padding="0,10,0,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0">
+                                    <TextBlock Text="Last database backup"
+                                               FontWeight="SemiBold"
+                                               FontSize="13"
+                                               Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock Text="Local disaster recovery archive"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource TextMutedBrush}"
+                                               Margin="0,2,0,0" />
+                                </StackPanel>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding LastBackupText}"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
                     </StackPanel>
                 </Border>
 
@@ -335,9 +573,7 @@
                         Padding="20">
                     <StackPanel>
                         <!-- Section Header -->
-                        <TextBlock Text="Daily checklist"
-                                   Style="{StaticResource SectionHeaderStyle}"
-                                   Margin="0,0,0,16" />
+                        <TextBlock Text="Daily checklist" Style="{StaticResource SectionHeaderStyle}" Margin="0,0,0,16" />
                         <Border Height="1" Background="{DynamicResource ThinRuleBrush}" Margin="0,0,0,8" />
 
                         <!-- Checklist Item 1: Make a Sale Today -->
@@ -359,7 +595,7 @@
                                                FontSize="13"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="At least 1 completed customer sale transaction"
+                                    <TextBlock Text="At least 1 completed sale transaction"
                                                FontSize="11"
                                                Foreground="{DynamicResource TextMutedBrush}"
                                                Margin="0,2,0,0" />
@@ -411,7 +647,7 @@
                                                FontSize="13"
                                                FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimaryBrush}" />
-                                    <TextBlock Text="Ensure safe offline database copy in C:\ShopData\Backups"
+                                    <TextBlock Text="Ensure safe offline database copy in backups folder"
                                                FontSize="11"
                                                Foreground="{DynamicResource TextMutedBrush}"
                                                Margin="0,2,0,0" />

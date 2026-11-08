@@ -166,8 +166,7 @@ public partial class ProductsViewModel : BaseCrudViewModel<ProductListItemDto>
             _unitService,
             _priceLevelService,
             _dialogService,
-            GetCurrentUserId(),
-            GetCurrentRole());
+            GetCurrentUserId());
 
         await dialogVm.InitializeAsync(null);
 
@@ -188,8 +187,7 @@ public partial class ProductsViewModel : BaseCrudViewModel<ProductListItemDto>
             _unitService,
             _priceLevelService,
             _dialogService,
-            GetCurrentUserId(),
-            GetCurrentRole());
+            GetCurrentUserId());
 
         await dialogVm.InitializeAsync(SelectedItem.Id);
 
@@ -207,7 +205,7 @@ public partial class ProductsViewModel : BaseCrudViewModel<ProductListItemDto>
         string name = SelectedItem.Name;
 
         // Try deleting first: service returns REFERENCED_CANNOT_DELETE if in use
-        var delRes = await _productService.DeleteProductAsync(id, GetCurrentUserId(), GetCurrentRole());
+        var delRes = await _productService.DeleteProductAsync(id, GetCurrentUserId());
 
         if (delRes.Success)
         {
@@ -225,7 +223,7 @@ public partial class ProductsViewModel : BaseCrudViewModel<ProductListItemDto>
 
             if (result == ConfirmActionResult.Deactivate)
             {
-                await _productService.DeactivateProductAsync(id, GetCurrentUserId(), GetCurrentRole());
+                await _productService.DeactivateProductAsync(id, GetCurrentUserId());
                 await LoadDataAsync();
             }
         }
@@ -251,7 +249,7 @@ public partial class ProductsViewModel : BaseCrudViewModel<ProductListItemDto>
     {
         if (!CanAdd || SelectedItem == null) return;
 
-        var res = await _productService.DuplicateProductAsync(SelectedItem.Id, GetCurrentUserId(), GetCurrentRole());
+        var res = await _productService.DuplicateProductAsync(SelectedItem.Id, GetCurrentUserId());
         if (res.Success && res.Data != null)
         {
             await LoadDataAsync();
@@ -300,7 +298,7 @@ public partial class ProductsViewModel : BaseCrudViewModel<ProductListItemDto>
     {
         if (!CanAdd) return;
 
-        var wizardVm = new CsvImportWizardViewModel(_csvProductService, _dialogService, GetCurrentUserId(), GetCurrentRole());
+        var wizardVm = new CsvImportWizardViewModel(_csvProductService, _dialogService, GetCurrentUserId());
 
         if (_dialogService.ShowCsvImportWizardDialog(wizardVm) == true)
         {

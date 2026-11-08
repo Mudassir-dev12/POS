@@ -257,7 +257,10 @@ public class CsvProductService : ICsvProductService
         }
     }
 
-    public async Task<Result<CsvValidationReport>> ValidateCsvAsync(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<Result<CsvValidationReport>> ValidateCsvAsync(
+        Stream stream,
+        CsvColumnMapping? columnMapping = null,
+        CancellationToken cancellationToken = default)
     {
         try
         {
@@ -266,28 +269,28 @@ public class CsvProductService : ICsvProductService
 
             foreach (var (rowNumber, rowData) in rows)
             {
-                string name = ResolveProductName(rowData);
+                string name = ResolveProductName(rowData, columnMapping?.ProductNameColumn);
                 if (string.IsNullOrWhiteSpace(name))
                 {
                     errors.Add(new CsvRowError { RowNumber = rowNumber, Error = "Product Name is required." });
                     continue;
                 }
 
-                string costStr = GetVal(rowData, "costprice", "cost", "purchaseprice", "unitcost", "buyingprice", "buyprice");
+                string costStr = GetFieldVal(rowData, columnMapping?.CostPriceColumn, "costprice", "actualprice", "actual", "cost", "purchaseprice", "unitcost", "buyingprice", "buyprice");
                 if (!string.IsNullOrWhiteSpace(costStr) && (!decimal.TryParse(costStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var c) || c < 0))
                 {
                     errors.Add(new CsvRowError { RowNumber = rowNumber, Error = $"Invalid Cost Price '{costStr}'. Must be >= 0." });
                     continue;
                 }
 
-                string saleStr = GetVal(rowData, "saleprice", "price", "sellingprice", "retailprice", "unitprice", "retail", "sale");
+                string saleStr = GetFieldVal(rowData, columnMapping?.SalePriceColumn, "saleprice", "price", "sellingprice", "retailprice", "unitprice", "retail", "sale");
                 if (!string.IsNullOrWhiteSpace(saleStr) && (!decimal.TryParse(saleStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var s) || s < 0))
                 {
                     errors.Add(new CsvRowError { RowNumber = rowNumber, Error = $"Invalid Sale Price '{saleStr}'. Must be >= 0." });
                     continue;
                 }
 
-                string minSaleStr = GetVal(rowData, "minsaleprice", "minprice", "floorprice");
+                string minSaleStr = GetFieldVal(rowData, columnMapping?.MinSalePriceColumn, "minsaleprice", "minprice", "floorprice");
                 if (!string.IsNullOrWhiteSpace(minSaleStr) && decimal.TryParse(minSaleStr, NumberStyles.Any, CultureInfo.InvariantCulture, out var m))
                 {
                     if (m < 0)
@@ -363,10 +366,11 @@ public class CsvProductService : ICsvProductService
                 var batch = rows.Skip(i).Take(batchSize).ToList();
 
                 using var tx = await _context.Database.BeginTransactionAsync(cancellationToken);
+                var mapping = options.ColumnMapping;
 
                 foreach (var (rowNumber, rowData) in batch)
                 {
-                    string name = ResolveProductName(rowData);
+                    string name = ResolveProductName(rowData, mapping?.ProductNameColumn);
                     if (string.IsNullOrWhiteSpace(name))
                     {
                         result.Errors.Add(new CsvRowError { RowNumber = rowNumber, Error = "Missing required product name." });
@@ -376,12 +380,12 @@ public class CsvProductService : ICsvProductService
                     }
 
                     // Price and numeric parsing
-                    decimal cost = ParseDecimal(GetVal(rowData, "costprice", "cost", "purchaseprice", "unitcost", "buyingprice", "buyprice"), 0m);
-                    decimal sale = ParseDecimal(GetVal(rowData, "saleprice", "price", "sellingprice", "retailprice", "unitprice", "retail", "sale"), 0m);
-                    decimal? minSale = ParseNullableDecimal(GetVal(rowData, "minsaleprice", "minprice", "floorprice"));
-                    decimal tax = ParseDecimal(GetVal(rowData, "taxpercent", "tax", "taxrate", "vat", "gst"), 0m);
+                    decimal cost = ParseDecimal(GetFieldVal(rowData, mapping?.CostPriceColumn, "costprice", "actualprice", "actual", "cost", "purchaseprice", "unitcost", "buyingprice", "buyprice"), 0m);
+                    decimal sale = ParseDecimal(GetFieldVal(rowData, mapping?.SalePriceColumn, "saleprice", "price", "sellingprice", "retailprice", "unitprice", "retail", "sale"), 0m);
+                    decimal? minSale = ParseNullableDecimal(GetFieldVal(rowData, mapping?.MinSalePriceColumn, "minsaleprice", "minprice", "floorprice"));
+                    decimal tax = ParseDecimal(GetFieldVal(rowData, mapping?.TaxPercentColumn, "taxpercent", "tax", "taxrate", "vat", "gst"), 0m);
                     decimal reorder = ParseDecimal(GetVal(rowData, "reorderlevel", "reorder", "minstock", "alertlevel", "lowstock"), 0m);
-                    decimal? stockQty = ParseNullableDecimal(GetVal(rowData, "currentstock", "stock", "quantity", "qty", "openingstock", "initialstock", "onhand"));
+                    decimal? stockQty = ParseNullableDecimal(GetFieldVal(rowData, mapping?.StockQuantityColumn, "currentstock", "stock", "quantity", "qty", "openingstock", "initialstock", "onhand"));
 
                     bool trackStock = ParseBool(GetVal(rowData, "trackstock", "trackinventory"), true);
                     bool isWeighable = ParseBool(GetVal(rowData, "isweighable", "weighable", "soldbyweight"), false);
@@ -389,14 +393,14 @@ public class CsvProductService : ICsvProductService
                     bool isActive = ParseBool(GetVal(rowData, "isactive", "active", "status", "enabled"), true);
                     string? desc = GetVal(rowData, "description", "desc", "details", "notes");
 
-                    string? barcode = GetVal(rowData, "barcode", "primarybarcode", "upc", "ean", "barcodes", "codebar");
+                    string? barcode = GetFieldVal(rowData, mapping?.BarcodeColumn, "barcode", "primarybarcode", "upc", "ean", "barcodes", "codebar");
                     if (string.IsNullOrWhiteSpace(barcode)) barcode = null;
 
-                    string? sku = GetVal(rowData, "sku", "itemcode", "productcode", "code", "itemno");
+                    string? sku = GetFieldVal(rowData, mapping?.SkuColumn, "sku", "modelnumber", "model", "serial", "itemcode", "productcode", "code", "itemno");
                     if (string.IsNullOrWhiteSpace(sku)) sku = null;
 
                     // 1. Resolve Category (case-insensitive auto create)
-                    string catName = GetVal(rowData, "category", "categoryname", "group", "department");
+                    string catName = GetFieldVal(rowData, mapping?.CategoryColumn, "category", "categoryname", "group", "department");
                     Category category;
                     if (!string.IsNullOrWhiteSpace(catName))
                     {
@@ -415,7 +419,7 @@ public class CsvProductService : ICsvProductService
                     }
 
                     // 2. Resolve Brand (case-insensitive auto create if provided)
-                    string brandName = GetVal(rowData, "brand", "brandname", "manufacturer", "make");
+                    string brandName = GetFieldVal(rowData, mapping?.BrandColumn, "brand", "brandname", "manufacturer", "make");
                     Brand? brand = null;
                     if (!string.IsNullOrWhiteSpace(brandName))
                     {
@@ -430,7 +434,7 @@ public class CsvProductService : ICsvProductService
                     }
 
                     // 3. Resolve Unit (case-insensitive auto create if provided)
-                    string unitName = GetVal(rowData, "unit", "unitname", "unitshortname", "uom");
+                    string unitName = GetFieldVal(rowData, mapping?.UnitColumn, "unit", "unitname", "unitshortname", "uom");
                     Unit unit;
                     if (!string.IsNullOrWhiteSpace(unitName))
                     {
@@ -850,8 +854,17 @@ public class CsvProductService : ICsvProductService
         return new string(key.Where(char.IsLetterOrDigit).ToArray()).ToLowerInvariant();
     }
 
-    private static string ResolveProductName(Dictionary<string, string> dict)
+    private static string ResolveProductName(Dictionary<string, string> dict, string? mappedColumn = null)
     {
+        if (!string.IsNullOrWhiteSpace(mappedColumn))
+        {
+            string norm = NormalizeKey(mappedColumn);
+            if (!string.IsNullOrEmpty(norm) && dict.TryGetValue(norm, out var mappedVal) && !string.IsNullOrWhiteSpace(mappedVal))
+            {
+                return mappedVal.Trim();
+            }
+        }
+
         // 1. Direct alias check
         string val = GetVal(dict,
             "productname", "name", "itemname", "item", "product", "title",
@@ -870,6 +883,20 @@ public class CsvProductService : ICsvProductService
         }
 
         return string.Empty;
+    }
+
+    private static string GetFieldVal(Dictionary<string, string> dict, string? mappedColumn, params string[] fallbackAliases)
+    {
+        if (!string.IsNullOrWhiteSpace(mappedColumn))
+        {
+            string norm = NormalizeKey(mappedColumn);
+            if (!string.IsNullOrEmpty(norm) && dict.TryGetValue(norm, out var mappedVal) && !string.IsNullOrWhiteSpace(mappedVal))
+            {
+                return mappedVal.Trim();
+            }
+        }
+
+        return GetVal(dict, fallbackAliases);
     }
 
     private static string GetVal(Dictionary<string, string> dict, params string[] normalizedAliases)

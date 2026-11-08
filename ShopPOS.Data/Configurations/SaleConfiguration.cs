@@ -38,6 +38,8 @@ public class SaleConfiguration : IEntityTypeConfiguration<Sale>
         builder.Property(s => s.TotalCost).HasConversion<MoneyConverter>();
 
         builder.Property(s => s.Notes).HasMaxLength(1000);
+        builder.Property(s => s.CustomerName).HasMaxLength(150);
+        builder.Property(s => s.CustomerPhone).HasMaxLength(50);
         builder.Property(s => s.CancelReason).HasMaxLength(500);
 
         builder.HasOne(s => s.PriceLevel)

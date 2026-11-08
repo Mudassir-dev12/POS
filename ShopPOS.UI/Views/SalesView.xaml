@@ -48,8 +48,9 @@
             <WrapPanel VerticalAlignment="Center">
                 <!-- Search term -->
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="Search:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
-                    <TextBox Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="180" Style="{StaticResource InputTextBoxStyle}">
+                    <TextBlock Text="Search:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding SearchTerm, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Width="200" Height="36"
+                             Tag="Invoice #, customer..." Style="{StaticResource InputTextBoxStyle}">
                         <TextBox.InputBindings>
                             <KeyBinding Key="Return" Command="{Binding LoadSalesCommand}" />
                         </TextBox.InputBindings>
@@ -58,32 +59,31 @@
 
                 <!-- Date Range -->
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="From Date:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
-                    <DatePicker SelectedDate="{Binding DateFrom, Mode=TwoWay}" Width="125" Height="30" />
+                    <TextBlock Text="From Date:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                    <DatePicker SelectedDate="{Binding DateFrom, Mode=TwoWay}" Width="145" Height="36" Style="{StaticResource InputDatePickerStyle}" />
                 </StackPanel>
 
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="To Date:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
-                    <DatePicker SelectedDate="{Binding DateTo, Mode=TwoWay}" Width="125" Height="30" />
+                    <TextBlock Text="To Date:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                    <DatePicker SelectedDate="{Binding DateTo, Mode=TwoWay}" Width="145" Height="36" Style="{StaticResource InputDatePickerStyle}" />
                 </StackPanel>
 
                 <!-- Status Filter -->
                 <StackPanel Margin="0,0,14,0">
-                    <TextBlock Text="Status:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,3" />
-                    <ComboBox SelectedItem="{Binding SelectedStatus, Mode=TwoWay}" Width="130" Style="{StaticResource InputComboBoxStyle}">
-                        <ComboBoxItem Content="All Statuses" IsSelected="True" />
-                        <enums:SaleStatus>Completed</enums:SaleStatus>
-                        <enums:SaleStatus>Cancelled</enums:SaleStatus>
-                    </ComboBox>
-                </StackPanel>
-
-                <!-- Due Only (Historical) -->
-                <StackPanel VerticalAlignment="Bottom" Margin="0,0,14,4">
-                    <CheckBox Content="With Due Only (Old)" IsChecked="{Binding WithDueOnly, Mode=TwoWay}" VerticalAlignment="Center" FontSize="12" />
+                    <TextBlock Text="Status:" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                    <ComboBox ItemsSource="{Binding StatusOptions}"
+                              SelectedValue="{Binding SelectedStatus, Mode=TwoWay}"
+                              SelectedValuePath="Value"
+                              DisplayMemberPath="Display"
+                              Width="140" Height="36"
+                              Style="{StaticResource InputComboBoxStyle}" />
                 </StackPanel>
 
                 <!-- Filter Button -->
-                <Button Content="Filter / Refresh (F5)" Command="{Binding LoadSalesCommand}" Style="{StaticResource PrimaryButtonStyle}" Margin="0,16,0,0" />
+                <Button Content="Filter / Refresh (F5)" Command="{Binding LoadSalesCommand}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Height="36" Padding="16,0"
+                        Margin="0,17,0,0" VerticalAlignment="Bottom" />
             </WrapPanel>
         </Border>
 

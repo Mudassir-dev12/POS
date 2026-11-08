@@ -35,7 +35,7 @@ public class SupplierPaymentService : ISupplierPaymentService
         _validator = validator;
     }
 
-    public async Task<Result<PagedResult<SupplierPaymentDto>>> GetPaymentsAsync(int? supplierId, int pageNumber, int pageSize, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<PagedResult<SupplierPaymentDto>>> GetPaymentsAsync(int? supplierId, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -43,7 +43,7 @@ public class SupplierPaymentService : ISupplierPaymentService
         return Result.Ok(result);
     }
 
-    public async Task<Result<SupplierPaymentDto>> RecordPaymentAsync(CreateSupplierPaymentDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<SupplierPaymentDto>> RecordPaymentAsync(CreateSupplierPaymentDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -139,7 +139,7 @@ public class SupplierPaymentService : ISupplierPaymentService
         }, cancellationToken);
     }
 
-    public async Task<Result<bool>> CancelPaymentAsync(int paymentId, string reason, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<bool>> CancelPaymentAsync(int paymentId, string reason, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -193,7 +193,7 @@ public class SupplierPaymentService : ISupplierPaymentService
                 continue;
             }
 
-            var cancelRes = await CancelPaymentAsync(id, reason, userId, null, cancellationToken);
+            var cancelRes = await CancelPaymentAsync(id, reason, userId, cancellationToken);
             if (cancelRes.Success)
             {
                 result.Items.Add(new BulkItemResult { Id = id, Identifier = p.PaymentNumber, Success = true });

@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection;
+using ShopPOS.UI.ViewModels.Purchases;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -23,6 +25,7 @@ public partial class MainWindowViewModel : ObservableObject
     private readonly ISupplierService _supplierService;
     private readonly IPurchaseRepository _purchaseRepository;
     private readonly IDialogService _dialogService;
+    private readonly IServiceProvider? _serviceProvider;
 
     private CancellationTokenSource? _searchCts;
 
@@ -78,7 +81,8 @@ public partial class MainWindowViewModel : ObservableObject
         ISaleRepository saleRepository,
         ISupplierService supplierService,
         IPurchaseRepository purchaseRepository,
-        IDialogService dialogService)
+        IDialogService dialogService,
+        IServiceProvider? serviceProvider = null)
     {
         _currentUserProvider = currentUserProvider;
         _shopSettingService = shopSettingService;
@@ -89,6 +93,7 @@ public partial class MainWindowViewModel : ObservableObject
         _supplierService = supplierService;
         _purchaseRepository = purchaseRepository;
         _dialogService = dialogService;
+        _serviceProvider = serviceProvider;
 
         _currentTheme = _themeService.CurrentTheme;
         _themeService.ThemeChanged += theme => CurrentTheme = theme;
@@ -173,6 +178,7 @@ public partial class MainWindowViewModel : ObservableObject
 
         var systemItems = new List<NavigationItem>
         {
+            new("BackupRestore", "Backup & Restore", "ArrowDownload", "", "SYSTEM"),
             new("Settings", "Settings", "Settings", "", "SYSTEM")
         };
 
@@ -279,7 +285,7 @@ public partial class MainWindowViewModel : ObservableObject
             }
 
             // 3. Suppliers
-            var suppliersRes = await _supplierService.GetFlatListAsync(false, null, ct);
+            var suppliersRes = await _supplierService.GetFlatListAsync(false, ct);
             if (suppliersRes.Success && suppliersRes.Data != null)
             {
                 var matchingSuppliers = suppliersRes.Data
@@ -369,6 +375,26 @@ public partial class MainWindowViewModel : ObservableObject
         if (matching != null)
         {
             SelectedNavigationItem = matching;
+        }
+    }
+
+    [RelayCommand]
+    public async Task HandleGlobalBarcodeScanAsync(string barcode)
+    {
+        if (string.IsNullOrWhiteSpace(barcode)) return;
+        if (_serviceProvider == null) return;
+
+        try
+        {
+            var entryVm = _serviceProvider.GetRequiredService<PurchaseEntryViewModel>();
+            await entryVm.InitializeAsync(null);
+            entryVm.BarcodeInput = barcode.Trim();
+            await entryVm.AddScannedProductAsync();
+            _dialogService.ShowPurchaseEntryDialog(entryVm);
+        }
+        catch (Exception ex)
+        {
+            Serilog.Log.Error(ex, "Failed to route global barcode scan '{Barcode}' to Purchase.", barcode);
         }
     }
 }

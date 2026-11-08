@@ -41,7 +41,18 @@ public static class DatabaseBackupHelper
             string backupFileName = $"pre-migration-{migrationName}-{timestamp}.db";
             string backupFilePath = Path.Combine(backupDir, backupFileName);
 
-            File.Copy(dbPath, backupFilePath, overwrite: false);
+            try
+            {
+                using var srcConn = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={dbPath};Mode=ReadOnly");
+                srcConn.Open();
+                using var dstConn = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={backupFilePath}");
+                dstConn.Open();
+                srcConn.BackupDatabase(dstConn);
+            }
+            catch
+            {
+                File.Copy(dbPath, backupFilePath, overwrite: false);
+            }
 
             Trace.WriteLine($"Pre-migration backup successfully created at '{backupFilePath}' for migration '{migrationName}'.");
 

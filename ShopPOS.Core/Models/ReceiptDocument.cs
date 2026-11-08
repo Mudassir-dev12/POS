@@ -42,6 +42,10 @@ public class ReceiptDocument
     public string? ShopAddress { get; set; }
     public string? ShopPhone { get; set; }
     public string? ShopTaxNumber { get; set; }
+    public string? ShopPhone2 { get; set; }
+    public string? LogoImagePath { get; set; }
+    public byte[]? LogoImageBytes { get; set; }
+    public string? StorePolicy { get; set; }
 
     // Receipt Metadata
     public string ReceiptNumber { get; set; } = string.Empty;
@@ -49,6 +53,8 @@ public class ReceiptDocument
     public DateTime IssuedAt { get; set; } = DateTime.Now;
     public DateTime DateTime { get => IssuedAt; set => IssuedAt = value; }
     public string CashierName { get; set; } = "Owner";
+    public string? CustomerName { get; set; }
+    public string? CustomerPhone { get; set; }
 
     // Line items
     public List<ReceiptLineItem> Lines { get; set; } = new();

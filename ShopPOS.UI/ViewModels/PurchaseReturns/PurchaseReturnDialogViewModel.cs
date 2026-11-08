@@ -87,7 +87,7 @@ public partial class PurchaseReturnDialogViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var supRes = await _supplierService.GetFlatListAsync(false, "Owner");
+            var supRes = await _supplierService.GetFlatListAsync(false);
             if (supRes.Success && supRes.Data != null)
             {
                 Suppliers.Clear();
@@ -137,7 +137,7 @@ public partial class PurchaseReturnDialogViewModel : ObservableObject
             Status = PurchaseStatus.Posted,
             PageNumber = 1,
             PageSize = 100
-        }, "Owner");
+        });
 
         if (res.Success && res.Data != null)
         {
@@ -160,7 +160,7 @@ public partial class PurchaseReturnDialogViewModel : ObservableObject
 
         if (!purchaseId.HasValue) return;
 
-        var res = await _purchaseService.GetPurchaseByIdAsync(purchaseId.Value, "Owner");
+        var res = await _purchaseService.GetPurchaseByIdAsync(purchaseId.Value);
         if (res.Success && res.Data != null)
         {
             foreach (var item in res.Data.Items)
@@ -240,9 +240,7 @@ public partial class PurchaseReturnDialogViewModel : ObservableObject
             };
 
             int? userId = 1;
-            string? userRole = "Owner";
-
-            var res = await _returnService.PostReturnAsync(dto, userId, userRole);
+            var res = await _returnService.PostReturnAsync(dto, userId);
             if (res.Success)
             {
                 RequestClose?.Invoke(true);

@@ -21,6 +21,7 @@ public class SupplierPaymentConfiguration : IEntityTypeConfiguration<SupplierPay
             .IsUnique();
 
         builder.HasIndex(p => p.SupplierId);
+        builder.HasIndex(p => new { p.IsCancelled, p.PaymentDate, p.Method });
 
         builder.Property(p => p.Amount)
             .HasConversion<MoneyConverter>();

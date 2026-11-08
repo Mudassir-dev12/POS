@@ -232,10 +232,10 @@ public class PurchaseModuleTests : IDisposable
             }
         };
 
-        var draftRes = await _purchaseService.CreatePurchaseDraftAsync(createDraft, _adminUser.Id, RoleDefaults.Admin);
+        var draftRes = await _purchaseService.CreatePurchaseDraftAsync(createDraft, _adminUser.Id);
         draftRes.Success.Should().BeTrue();
 
-        var postRes = await _purchaseService.PostPurchaseAsync(draftRes.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        var postRes = await _purchaseService.PostPurchaseAsync(draftRes.Data!.Id, null, null, _adminUser.Id);
         postRes.Success.Should().BeTrue();
 
         // Stock movement verified
@@ -271,8 +271,8 @@ public class PurchaseModuleTests : IDisposable
             }
         };
 
-        var draft2 = await _purchaseService.CreatePurchaseDraftAsync(createDraft2, _adminUser.Id, RoleDefaults.Admin);
-        var post2 = await _purchaseService.PostPurchaseAsync(draft2.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        var draft2 = await _purchaseService.CreatePurchaseDraftAsync(createDraft2, _adminUser.Id);
+        var post2 = await _purchaseService.PostPurchaseAsync(draft2.Data!.Id, null, null, _adminUser.Id);
         post2.Success.Should().BeTrue();
 
         var prod1After2 = await _context.Products.FindAsync(_product1.Id);
@@ -294,8 +294,8 @@ public class PurchaseModuleTests : IDisposable
             }
         };
 
-        var draft3 = await _purchaseService.CreatePurchaseDraftAsync(createDraft3, _adminUser.Id, RoleDefaults.Admin);
-        var post3 = await _purchaseService.PostPurchaseAsync(draft3.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        var draft3 = await _purchaseService.CreatePurchaseDraftAsync(createDraft3, _adminUser.Id);
+        var post3 = await _purchaseService.PostPurchaseAsync(draft3.Data!.Id, null, null, _adminUser.Id);
         post3.Success.Should().BeTrue();
 
         var prod1After3 = await _context.Products.FindAsync(_product1.Id);
@@ -315,11 +315,11 @@ public class PurchaseModuleTests : IDisposable
             }
         };
 
-        var draft = await _purchaseService.CreatePurchaseDraftAsync(createDraft, _adminUser.Id, RoleDefaults.Admin);
+        var draft = await _purchaseService.CreatePurchaseDraftAsync(createDraft, _adminUser.Id);
         draft.Success.Should().BeTrue();
 
         // Attempt to post with payNow amount that exceeds GrandTotal (triggers failure inside transaction)
-        var postRes = await _purchaseService.PostPurchaseAsync(draft.Data!.Id, payNowAmount: 999999m, PaymentMethod.Cash, _adminUser.Id, RoleDefaults.Admin);
+        var postRes = await _purchaseService.PostPurchaseAsync(draft.Data!.Id, payNowAmount: 999999m, PaymentMethod.Cash, _adminUser.Id);
         postRes.Success.Should().BeFalse();
 
         // Assert nothing was saved
@@ -338,9 +338,9 @@ public class PurchaseModuleTests : IDisposable
         {
             SupplierId = _supplierA.Id,
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 5m, UnitCost = 10m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
 
-        var postRes = await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        var postRes = await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _adminUser.Id);
         postRes.Success.Should().BeTrue();
 
         // Edit attempt fails
@@ -349,12 +349,12 @@ public class PurchaseModuleTests : IDisposable
             Id = draft.Data!.Id,
             SupplierId = _supplierA.Id,
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 8m, UnitCost = 12m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         editRes.Success.Should().BeFalse();
         editRes.ErrorMessage.Should().Contain("draft");
 
         // Delete attempt fails
-        var delRes = await _purchaseService.DeletePurchaseDraftAsync(draft.Data!.Id, _adminUser.Id, RoleDefaults.Admin);
+        var delRes = await _purchaseService.DeletePurchaseDraftAsync(draft.Data!.Id, _adminUser.Id);
         delRes.Success.Should().BeFalse();
         delRes.ErrorMessage.Should().Contain("draft");
     }
@@ -366,12 +366,12 @@ public class PurchaseModuleTests : IDisposable
         {
             SupplierId = _supplierA.Id,
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 10m, UnitCost = 15m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
 
-        await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _adminUser.Id);
 
         // Cancel with reason
-        var cancelRes = await _purchaseService.CancelPurchaseAsync(draft.Data!.Id, "Vendor cancelled order", _adminUser.Id, RoleDefaults.Admin);
+        var cancelRes = await _purchaseService.CancelPurchaseAsync(draft.Data!.Id, "Vendor cancelled order", _adminUser.Id);
         cancelRes.Success.Should().BeTrue();
 
         var movements = await _context.StockMovements.Where(sm => sm.ProductId == _product1.Id).OrderBy(sm => sm.Id).ToListAsync();
@@ -402,9 +402,9 @@ public class PurchaseModuleTests : IDisposable
         {
             SupplierId = _supplierA.Id,
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 10m, UnitCost = 15m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
 
-        await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _adminUser.Id);
 
         // 1. Record an active payment
         var payRes = await _paymentService.RecordPaymentAsync(new CreateSupplierPaymentDto
@@ -412,16 +412,16 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = _supplierA.Id,
             PurchaseId = draft.Data!.Id,
             Amount = 50.00m
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         payRes.Success.Should().BeTrue();
 
         // 2. Cancellation blocked due to active payment
-        var cancelFail = await _purchaseService.CancelPurchaseAsync(draft.Data!.Id, "Cancel attempt", _adminUser.Id, RoleDefaults.Admin);
+        var cancelFail = await _purchaseService.CancelPurchaseAsync(draft.Data!.Id, "Cancel attempt", _adminUser.Id);
         cancelFail.Success.Should().BeFalse();
         cancelFail.ErrorMessage.Should().Contain("payments");
 
         // Cancel payment first
-        await _paymentService.CancelPaymentAsync(payRes.Data!.Id, "Refunded", _adminUser.Id, RoleDefaults.Admin);
+        await _paymentService.CancelPaymentAsync(payRes.Data!.Id, "Refunded", _adminUser.Id);
 
         // 3. Simulate stock reduction (sold 8 items, only 2 remaining on hand)
         _context.StockMovements.Add(new StockMovement
@@ -435,7 +435,7 @@ public class PurchaseModuleTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Cancelling would reduce stock by 10 (2 - 10 = -8), which is blocked when AllowNegativeStock is false
-        var cancelStockFail = await _purchaseService.CancelPurchaseAsync(draft.Data!.Id, "Stock check", _adminUser.Id, RoleDefaults.Admin);
+        var cancelStockFail = await _purchaseService.CancelPurchaseAsync(draft.Data!.Id, "Stock check", _adminUser.Id);
         cancelStockFail.Success.Should().BeFalse();
         cancelStockFail.ErrorMessage.Should().Contain("below zero");
 
@@ -444,7 +444,7 @@ public class PurchaseModuleTests : IDisposable
         settings.AllowNegativeStock = true;
         await _context.SaveChangesAsync();
 
-        var cancelSuccess = await _purchaseService.CancelPurchaseAsync(draft.Data!.Id, "Overdrawn allowed", _adminUser.Id, RoleDefaults.Admin);
+        var cancelSuccess = await _purchaseService.CancelPurchaseAsync(draft.Data!.Id, "Overdrawn allowed", _adminUser.Id);
         cancelSuccess.Success.Should().BeTrue();
     }
 
@@ -455,9 +455,9 @@ public class PurchaseModuleTests : IDisposable
         {
             SupplierId = _supplierA.Id,
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 10m, UnitCost = 15m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
 
-        await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _adminUser.Id);
 
         // 1. Post return of 6 items
         var retRes = await _returnService.PostReturnAsync(new CreatePurchaseReturnDto
@@ -468,7 +468,7 @@ public class PurchaseModuleTests : IDisposable
             {
                 new() { ProductId = _product1.Id, Quantity = 6m, UnitCost = 15m }
             }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         retRes.Success.Should().BeTrue();
 
         // Ledger reflects negative movement (-6)
@@ -484,12 +484,12 @@ public class PurchaseModuleTests : IDisposable
             {
                 new() { ProductId = _product1.Id, Quantity = 5m, UnitCost = 15m }
             }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         retExcess.Success.Should().BeFalse();
         retExcess.ErrorMessage.Should().Contain("Maximum returnable quantity");
 
         // 3. Cancel the first return
-        var cancelRet = await _returnService.CancelPurchaseReturnAsync(retRes.Data!.Id, "Returned by mistake", _adminUser.Id, RoleDefaults.Admin);
+        var cancelRet = await _returnService.CancelPurchaseReturnAsync(retRes.Data!.Id, "Returned by mistake", _adminUser.Id);
         cancelRet.Success.Should().BeTrue();
 
         // Stock restored via PurchaseReturnCancel (+6)
@@ -505,11 +505,11 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = _supplierA.Id,
             DueDate = DateTime.Today.AddDays(-1), // Due yesterday -> Overdue
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 10m, UnitCost = 10m } } // GrandTotal = 100.00
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
 
-        await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _adminUser.Id);
 
-        var pDetail = await _purchaseService.GetPurchaseByIdAsync(draft.Data!.Id, RoleDefaults.Admin);
+        var pDetail = await _purchaseService.GetPurchaseByIdAsync(draft.Data!.Id);
         pDetail.Data!.PaymentStatus.Should().Be(PurchasePaymentStatus.Overdue);
 
         // 1. Partial payment of 40
@@ -518,7 +518,7 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = _supplierA.Id,
             PurchaseId = draft.Data!.Id,
             Amount = 40.00m
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         pay1.Success.Should().BeTrue();
 
         // 2. Overpayment attempt (40 + 70 = 110 > 100)
@@ -527,7 +527,7 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = _supplierA.Id,
             PurchaseId = draft.Data!.Id,
             Amount = 70.00m
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         payExcess.Success.Should().BeFalse();
         payExcess.ErrorMessage.Should().Contain("exceeds");
 
@@ -537,10 +537,10 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = _supplierA.Id,
             PurchaseId = draft.Data!.Id,
             Amount = 60.00m
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         pay2.Success.Should().BeTrue();
 
-        var pDetailPaid = await _purchaseService.GetPurchaseByIdAsync(draft.Data!.Id, RoleDefaults.Admin);
+        var pDetailPaid = await _purchaseService.GetPurchaseByIdAsync(draft.Data!.Id);
         pDetailPaid.Data!.PaymentStatus.Should().Be(PurchasePaymentStatus.Paid);
         pDetailPaid.Data.PaidAmount.Should().Be(100.00m);
         pDetailPaid.Data.Balance.Should().Be(0.00m);
@@ -555,16 +555,16 @@ public class PurchaseModuleTests : IDisposable
         {
             SupplierId = _supplierB.Id,
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 50m, UnitCost = 10m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
-        await _purchaseService.PostPurchaseAsync(p1.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
+        await _purchaseService.PostPurchaseAsync(p1.Data!.Id, null, null, _adminUser.Id);
 
         // Purchase 2 posted: +300.00
         var p2 = await _purchaseService.CreatePurchaseDraftAsync(new CreatePurchaseDto
         {
             SupplierId = _supplierB.Id,
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 30m, UnitCost = 10m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
-        await _purchaseService.PostPurchaseAsync(p2.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
+        await _purchaseService.PostPurchaseAsync(p2.Data!.Id, null, null, _adminUser.Id);
 
         // Purchase return posted: -100.00
         await _returnService.PostReturnAsync(new CreatePurchaseReturnDto
@@ -572,25 +572,25 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = _supplierB.Id,
             PurchaseId = p1.Data!.Id,
             Items = new List<CreatePurchaseReturnItemDto> { new() { ProductId = _product1.Id, Quantity = 10m, UnitCost = 10m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
 
         // Payment 1: -250.00
         await _paymentService.RecordPaymentAsync(new CreateSupplierPaymentDto
         {
             SupplierId = _supplierB.Id,
             Amount = 250.00m
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
 
         // Cancelled payment: does not reduce balance
         var payCancel = await _paymentService.RecordPaymentAsync(new CreateSupplierPaymentDto
         {
             SupplierId = _supplierB.Id,
             Amount = 50.00m
-        }, _adminUser.Id, RoleDefaults.Admin);
-        await _paymentService.CancelPaymentAsync(payCancel.Data!.Id, "Error", _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
+        await _paymentService.CancelPaymentAsync(payCancel.Data!.Id, "Error", _adminUser.Id);
 
         // Expected = 200 (Opening) + 500 (P1) + 300 (P2) - 100 (Return) - 250 (Payment) = 650.00
-        var balanceRes = await _ledgerService.GetSupplierBalanceAsync(_supplierB.Id, RoleDefaults.Admin);
+        var balanceRes = await _ledgerService.GetSupplierBalanceAsync(_supplierB.Id);
         balanceRes.Success.Should().BeTrue();
         balanceRes.Data.Should().Be(650.00m);
     }
@@ -606,10 +606,10 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = _supplierB.Id,
             PurchaseDate = DateTime.Today,
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 10m, UnitCost = 10m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
-        await _purchaseService.PostPurchaseAsync(p.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
+        await _purchaseService.PostPurchaseAsync(p.Data!.Id, null, null, _adminUser.Id);
 
-        var reportRes = await _ledgerService.GetSupplierLedgerReportAsync(_supplierB.Id, fromDate, toDate, RoleDefaults.Admin);
+        var reportRes = await _ledgerService.GetSupplierLedgerReportAsync(_supplierB.Id, fromDate, toDate);
         reportRes.Success.Should().BeTrue();
 
         var report = reportRes.Data!;
@@ -673,7 +673,7 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = _supplierA.Id,
             SupplierInvoiceNo = "INV-DUPLICATE-01",
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 1m, UnitCost = 10m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         p1.Success.Should().BeTrue();
 
         // Same supplier + invoice number is rejected
@@ -682,7 +682,7 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = _supplierA.Id,
             SupplierInvoiceNo = "INV-DUPLICATE-01",
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 1m, UnitCost = 10m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
 
         pDuplicate.Success.Should().BeFalse();
         pDuplicate.ErrorMessage.Should().Contain("already been used");
@@ -693,7 +693,7 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = _supplierB.Id,
             SupplierInvoiceNo = "INV-DUPLICATE-01",
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 1m, UnitCost = 10m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
 
         pDifferentSupplier.Success.Should().BeTrue();
     }
@@ -706,17 +706,17 @@ public class PurchaseModuleTests : IDisposable
         {
             SupplierId = _supplierA.Id,
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 1m, UnitCost = 10m } }
-        }, _managerUser.Id, RoleDefaults.Manager);
+        }, _managerUser.Id);
         draft.Success.Should().BeTrue();
 
-        var post = await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _managerUser.Id, RoleDefaults.Manager);
+        var post = await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _managerUser.Id);
         post.Success.Should().BeTrue();
 
         var pay = await _paymentService.RecordPaymentAsync(new CreateSupplierPaymentDto
         {
             SupplierId = _supplierA.Id,
             Amount = 10m
-        }, _managerUser.Id, RoleDefaults.Manager);
+        }, _managerUser.Id);
         pay.Success.Should().BeTrue();
     }
 
@@ -727,9 +727,9 @@ public class PurchaseModuleTests : IDisposable
         {
             SupplierId = _supplierA.Id,
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 2m, UnitCost = 10m } }
-        }, _managerUser.Id, RoleDefaults.Manager);
+        }, _managerUser.Id);
 
-        var postRes = await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _managerUser.Id, RoleDefaults.Manager);
+        var postRes = await _purchaseService.PostPurchaseAsync(draft.Data!.Id, null, null, _managerUser.Id);
         postRes.Success.Should().BeTrue();
 
         var purchase = await _context.Purchases.FindAsync(draft.Data!.Id);
@@ -748,7 +748,7 @@ public class PurchaseModuleTests : IDisposable
             {
                 new() { ProductId = _product1.Id, Quantity = 5m, UnitCost = 15.00m }
             }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
 
         draft.Success.Should().BeTrue();
         draft.Data!.Warnings.Should().NotBeEmpty();
@@ -979,7 +979,7 @@ public class PurchaseModuleTests : IDisposable
                 {
                     SupplierId = supplierId,
                     Items = new List<CreatePurchaseItemDto> { new() { ProductId = productId, Quantity = 10m, UnitCost = 20.00m } }
-                }, adminUserId, RoleDefaults.Admin);
+                }, adminUserId);
                 d1.Success.Should().BeTrue();
                 draft1Id = d1.Data!.Id;
 
@@ -988,7 +988,7 @@ public class PurchaseModuleTests : IDisposable
                 {
                     SupplierId = supplierId,
                     Items = new List<CreatePurchaseItemDto> { new() { ProductId = productId, Quantity = 10m, UnitCost = 40.00m } }
-                }, adminUserId, RoleDefaults.Admin);
+                }, adminUserId);
                 d2.Success.Should().BeTrue();
                 draft2Id = d2.Data!.Id;
             }
@@ -1011,7 +1011,7 @@ public class PurchaseModuleTests : IDisposable
                     new ShopPOS.Core.Validators.CreatePurchaseValidator(),
                     new ShopPOS.Core.Validators.UpdatePurchaseValidator());
 
-                return await pService1.PostPurchaseAsync(draft1Id, null, null, adminUserId, RoleDefaults.Admin);
+                return await pService1.PostPurchaseAsync(draft1Id, null, null, adminUserId);
             });
 
             var task2 = Task.Run(async () =>
@@ -1031,7 +1031,7 @@ public class PurchaseModuleTests : IDisposable
                     new ShopPOS.Core.Validators.CreatePurchaseValidator(),
                     new ShopPOS.Core.Validators.UpdatePurchaseValidator());
 
-                return await pService2.PostPurchaseAsync(draft2Id, null, null, adminUserId, RoleDefaults.Admin);
+                return await pService2.PostPurchaseAsync(draft2Id, null, null, adminUserId);
             });
 
             var results = await Task.WhenAll(task1, task2);
@@ -1089,18 +1089,18 @@ public class PurchaseModuleTests : IDisposable
         {
             SupplierId = supplier.Id,
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 100m, UnitCost = 10.00m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         p1Draft.Success.Should().BeTrue();
-        await _purchaseService.PostPurchaseAsync(p1Draft.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        await _purchaseService.PostPurchaseAsync(p1Draft.Data!.Id, null, null, _adminUser.Id);
 
         // 3. Post Purchase 2: Grand total = 600.00 (60 units @ 10)
         var p2Draft = await _purchaseService.CreatePurchaseDraftAsync(new CreatePurchaseDto
         {
             SupplierId = supplier.Id,
             Items = new List<CreatePurchaseItemDto> { new() { ProductId = _product1.Id, Quantity = 60m, UnitCost = 10.00m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         p2Draft.Success.Should().BeTrue();
-        await _purchaseService.PostPurchaseAsync(p2Draft.Data!.Id, null, null, _adminUser.Id, RoleDefaults.Admin);
+        await _purchaseService.PostPurchaseAsync(p2Draft.Data!.Id, null, null, _adminUser.Id);
 
         // 4. Record Payment 1 for Purchase 1: 400.00
         var pay1 = await _paymentService.RecordPaymentAsync(new CreateSupplierPaymentDto
@@ -1108,7 +1108,7 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = supplier.Id,
             PurchaseId = p1Draft.Data!.Id,
             Amount = 400.00m
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         pay1.Success.Should().BeTrue();
 
         // 5. Record Payment 2 for Purchase 1: 300.00
@@ -1117,11 +1117,11 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = supplier.Id,
             PurchaseId = p1Draft.Data!.Id,
             Amount = 300.00m
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         pay2.Success.Should().BeTrue();
 
         // 6. Cancel Payment 2 (300.00)
-        var cancelPay2 = await _paymentService.CancelPaymentAsync(pay2.Data!.Id, "Accidental duplicate entry", _adminUser.Id, RoleDefaults.Admin);
+        var cancelPay2 = await _paymentService.CancelPaymentAsync(pay2.Data!.Id, "Accidental duplicate entry", _adminUser.Id);
         cancelPay2.Success.Should().BeTrue();
 
         // 7. Post Purchase Return on Purchase 1: 15 units @ 10.00 = 150.00
@@ -1130,7 +1130,7 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = supplier.Id,
             PurchaseId = p1Draft.Data!.Id,
             Items = new List<CreatePurchaseReturnItemDto> { new() { ProductId = _product1.Id, Quantity = 15m, UnitCost = 10.00m } }
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         ret1.Success.Should().BeTrue();
 
         // 8. Record Payment 3 for Purchase 2: 250.00
@@ -1139,7 +1139,7 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = supplier.Id,
             PurchaseId = p2Draft.Data!.Id,
             Amount = 250.00m
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         pay3.Success.Should().BeTrue();
 
         // 9. Record unallocated Payment 4: 100.00
@@ -1148,7 +1148,7 @@ public class PurchaseModuleTests : IDisposable
             SupplierId = supplier.Id,
             PurchaseId = null,
             Amount = 100.00m
-        }, _adminUser.Id, RoleDefaults.Admin);
+        }, _adminUser.Id);
         pay4.Success.Should().BeTrue();
 
         // Assert 1: For each purchase, Purchase.PaidAmount equals the sum of its non-cancelled payments
@@ -1169,12 +1169,12 @@ public class PurchaseModuleTests : IDisposable
         // Assert 2: Supplier balance from GetSupplierBalanceAsync equals expected math:
         // Opening (500) + P1 (1000) + P2 (600) - Return (150) - Active Payments (400 + 250 + 100) = 1200.00
         decimal expectedBalance = 500.00m + 1000.00m + 600.00m - 150.00m - 750.00m; // 1200.00m
-        var balanceRes = await _ledgerService.GetSupplierBalanceAsync(supplier.Id, RoleDefaults.Admin);
+        var balanceRes = await _ledgerService.GetSupplierBalanceAsync(supplier.Id);
         balanceRes.Success.Should().BeTrue();
         balanceRes.Data.Should().Be(expectedBalance);
 
         // Assert 3: Supplier balance from GetSupplierLedgerReportAsync ClosingBalance matches GetSupplierBalanceAsync exactly
-        var ledgerRes = await _ledgerService.GetSupplierLedgerReportAsync(supplier.Id, DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1), RoleDefaults.Admin);
+        var ledgerRes = await _ledgerService.GetSupplierLedgerReportAsync(supplier.Id, DateTime.Today.AddDays(-1), DateTime.Today.AddDays(1));
         ledgerRes.Success.Should().BeTrue();
         ledgerRes.Data!.ClosingBalance.Should().Be(balanceRes.Data);
         ledgerRes.Data.ClosingBalance.Should().Be(expectedBalance);

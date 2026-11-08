@@ -1,3 +1,4 @@
+using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Input;
 using ShopPOS.UI.ViewModels.Purchases;
@@ -52,5 +53,17 @@ public partial class PurchaseEntryWindow : Window
     {
         ViewModel.DeleteSelectedLineCommand.Execute(null);
     }
-}
 
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (!ViewModel.IsReadOnly &&
+            !BarcodeScannerBox.IsFocused &&
+            !(Keyboard.FocusedElement is TextBox) &&
+            e.Key != Key.Tab && e.Key != Key.Escape && !e.Key.ToString().StartsWith("F") &&
+            e.Key != Key.LeftCtrl && e.Key != Key.RightCtrl && e.Key != Key.LeftAlt && e.Key != Key.RightAlt)
+        {
+            BarcodeScannerBox.Focus();
+        }
+    }
+
+}

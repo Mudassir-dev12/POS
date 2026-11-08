@@ -18,9 +18,24 @@ public class ShopSetting : BaseEntity
     public string? Address { get; set; }
 
     /// <summary>
-    /// Gets or sets the shop telephone number.
+    /// Gets or sets the shop primary telephone number.
     /// </summary>
     public string? Phone { get; set; }
+
+    /// <summary>
+    /// Gets or sets the secondary telephone or mobile/WhatsApp number.
+    /// </summary>
+    public string? SecondaryPhone { get; set; }
+
+    /// <summary>
+    /// Gets or sets the path to the store logo image printed on receipts.
+    /// </summary>
+    public string? LogoImagePath { get; set; }
+
+    /// <summary>
+    /// Gets or sets the store policies (e.g. return/exchange terms) printed at the bottom of receipts.
+    /// </summary>
+    public string? StorePolicy { get; set; } = "Items can be exchanged within 7 days with original receipt. No cash refunds.";
 
     /// <summary>
     /// Gets or sets the tax / VAT registration number.
@@ -118,4 +133,171 @@ public class ShopSetting : BaseEntity
     /// Gets or sets the maximum window in days for customer returns against a receipt. Null = unlimited.
     /// </summary>
     public int? SaleReturnWindowDays { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether automatic scheduled backups are enabled. Default is true.
+    /// </summary>
+    public bool BackupEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the daily scheduled backup time in HH:mm 24-hour format (default 22:00).
+    /// </summary>
+    public string BackupTime { get; set; } = "22:00";
+
+    /// <summary>
+    /// Gets or sets whether an automatic backup is taken on application close. Default is true.
+    /// </summary>
+    public bool BackupOnAppClose { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets how many daily backups to retain under GFS retention. Default is 7.
+    /// </summary>
+    public int KeepDaily { get; set; } = 7;
+
+    /// <summary>
+    /// Gets or sets how many weekly backups to retain under GFS retention. Default is 4.
+    /// </summary>
+    public int KeepWeekly { get; set; } = 4;
+
+    /// <summary>
+    /// Gets or sets how many monthly backups to retain under GFS retention. Default is 6.
+    /// </summary>
+    public int KeepMonthly { get; set; } = 6;
+
+    /// <summary>
+    /// Gets or sets the optional secondary folder path for mirroring backups (e.g. external USB drive).
+    /// </summary>
+    public string? SecondFolderPath { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether backups are encrypted with AES-256-GCM. Default is false.
+    /// </summary>
+    public bool EncryptBackups { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the random salt for PBKDF2 encryption key derivation (base64).
+    /// </summary>
+    public string? EncryptionSalt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the key-check hash value (never the password) to validate password entry.
+    /// </summary>
+    public string? EncryptionKeyCheck { get; set; }
+
+    /// <summary>
+    /// Gets or sets the timestamp of the last successful backup.
+    /// </summary>
+    public DateTime? LastSuccessfulBackupAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the error message from the last backup attempt, if any.
+    /// </summary>
+    public string? LastBackupError { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether automatic Google Drive uploads are enabled. Default is false.
+    /// </summary>
+    public bool GoogleDriveEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the connected Google account email.
+    /// </summary>
+    public string? GoogleDriveAccountEmail { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Drive ID of the "ShopPOS Backups" root folder.
+    /// </summary>
+    public string? GoogleDriveFolderId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the Drive ID of the shop subfolder inside "ShopPOS Backups".
+    /// </summary>
+    public string? GoogleDriveSubFolderId { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether manual backups are also preserved on Drive during retention. Default is true.
+    /// </summary>
+    public bool KeepManualBackupsOnDrive { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets whether older backups purged by Drive retention are moved to trash instead of deleted permanently. Default is false (permanent delete).
+    /// </summary>
+    public bool GoogleDriveDeleteToTrash { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the timestamp of the last successful upload to Google Drive.
+    /// </summary>
+    public DateTime? LastSuccessfulDriveUploadAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the error message from the last Google Drive attempt, if any.
+    /// </summary>
+    public string? LastDriveUploadError { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether user re-authentication is required due to token expiration (401 / invalid_grant).
+    /// </summary>
+    public bool GoogleDriveReconnectNeeded { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets whether the connected Google Drive account is full (403 storage quota exceeded).
+    /// </summary>
+    public bool GoogleDriveIsFull { get; set; } = false;
+
+    // Phase 7B-GitHub Private Repository Backup
+
+    /// <summary>
+    /// Gets or sets whether automatic uploads to a private GitHub repository are enabled. Default is false.
+    /// </summary>
+    public bool GitHubEnabled { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the GitHub repository owner / organization name.
+    /// </summary>
+    public string? GitHubOwner { get; set; }
+
+    /// <summary>
+    /// Gets or sets the GitHub repository name.
+    /// </summary>
+    public string? GitHubRepo { get; set; }
+
+    /// <summary>
+    /// Gets or sets the target branch name (default is "main").
+    /// </summary>
+    public string GitHubBranch { get; set; } = "main";
+
+    /// <summary>
+    /// Gets or sets whether product images are excluded from the GitHub backup archive (default true to preserve quota).
+    /// </summary>
+    public bool GitHubExcludeImages { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets the timestamp of the last successful upload to GitHub.
+    /// </summary>
+    public DateTime? LastSuccessfulGitHubUploadAt { get; set; }
+
+    /// <summary>
+    /// Gets or sets the error message from the last GitHub upload attempt, if any.
+    /// </summary>
+    public string? LastGitHubUploadError { get; set; }
+
+    /// <summary>
+    /// Gets or sets whether re-authentication / new token is needed (401 / 403).
+    /// </summary>
+    public bool GitHubReconnectNeeded { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets whether upload was refused because the target GitHub repository is public.
+    /// </summary>
+    public bool GitHubRepoIsPublic { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets whether upload was refused because the backup package exceeded 90 MB.
+    /// </summary>
+    public bool GitHubFileTooLarge { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets the timestamp when commit history was last squashed.
+    /// </summary>
+    public DateTime? LastGitHubSquashAt { get; set; }
 }

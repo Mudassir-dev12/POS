@@ -1,0 +1,431 @@
+<Window x:Class="ShopPOS.UI.Views.Setup.SetupWizardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Setup"
+        mc:Ignorable="d"
+        Title="ShopPOS - First-Run Setup Wizard"
+        Height="720"
+        Width="980"
+        MinHeight="650"
+        MinWidth="850"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource PageBackgroundBrush}"
+        FontFamily="{StaticResource AppFontFamily}">
+
+    <Grid Margin="24">
+        <Grid.RowDefinitions>
+            <!-- Wizard Stepper Header -->
+            <RowDefinition Height="Auto" />
+            <!-- Step Content Area -->
+            <RowDefinition Height="*" />
+            <!-- Navigation Footer -->
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ================= 1. STEPPER HEADER ================= -->
+        <Border Grid.Row="0"
+                Style="{StaticResource SurfaceCardStyle}"
+                Padding="20,16"
+                Margin="0,0,0,16">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="{Binding StepTitle}" Style="{StaticResource PageTitleStyle}" />
+                        <TextBlock Text="{Binding StepDescription}" Style="{StaticResource SubTitleStyle}" />
+                    </StackPanel>
+
+                    <Border Grid.Column="1"
+                            Background="{DynamicResource SurfaceCardSubtleBrush}"
+                            BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="14"
+                            Padding="12,4"
+                            VerticalAlignment="Center">
+                        <TextBlock FontSize="12" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}">
+                            <Run Text="Step " />
+                            <Run Text="{Binding CurrentStepDisplay, Mode=OneWay}" />
+                            <Run Text=" of " />
+                            <Run Text="{Binding TotalSteps, Mode=OneWay}" />
+                        </TextBlock>
+                    </Border>
+                </Grid>
+
+                <!-- Step Progress Dots / Indicators -->
+                <ProgressBar Grid.Row="1"
+                             Minimum="0"
+                             Maximum="6"
+                             Value="{Binding CurrentStepIndex}"
+                             Height="4"
+                             Margin="0,14,0,0"
+                             Foreground="{DynamicResource PrimaryBrush}"
+                             Background="{DynamicResource SurfaceCardSubtleBrush}" />
+            </Grid>
+        </Border>
+
+        <!-- ================= 2. STEP CONTENT AREA ================= -->
+        <Border Grid.Row="1"
+                Style="{StaticResource SurfaceCardStyle}"
+                Padding="24"
+                Margin="0,0,0,16">
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel MaxWidth="750" HorizontalAlignment="Center">
+
+                    <!-- Notification Banner if Error -->
+                    <Border Background="{DynamicResource DangerBackgroundBrush}"
+                            BorderBrush="{DynamicResource DangerBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="12,8"
+                            Margin="0,0,0,14"
+                            Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                        <TextBlock Text="{Binding ErrorMessage}" Foreground="{DynamicResource DangerBrush}" FontWeight="SemiBold" TextWrapping="Wrap" />
+                    </Border>
+
+                    <!-- Busy Indicator -->
+                    <Border Background="{DynamicResource PrimarySubtleBrush}"
+                            BorderBrush="{DynamicResource PrimaryBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14,10"
+                            Margin="0,0,0,14"
+                            Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <ProgressBar IsIndeterminate="True" Width="20" Height="20" Margin="0,0,10,0" Foreground="{DynamicResource PrimaryBrush}" />
+                            <TextBlock Text="{Binding BusyMessage}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- STEP 0: Welcome -->
+                    <StackPanel Visibility="{Binding IsWelcomeStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Get Started with ShopPOS" FontWeight="Bold" FontSize="18" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6" />
+                        <TextBlock Text="ShopPOS is an offline-first point of sale system. How would you like to initialize this computer?"
+                                   FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,18" TextWrapping="Wrap" />
+
+                        <!-- Option A: New Shop -->
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+                                BorderBrush="{DynamicResource PrimaryBrush}"
+                                BorderThickness="2"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,0,14">
+                            <StackPanel>
+                                <RadioButton Content="Set up a new shop"
+                                             IsChecked="{Binding WelcomeChoice, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=NewShop}"
+                                             FontWeight="Bold"
+                                             FontSize="15"
+                                             Foreground="{DynamicResource TextPrimaryBrush}"
+                                             Margin="0,0,0,6" />
+                                <TextBlock Text="Start fresh with a clean database. Configure store profile, currency, receipts, and optional demo data."
+                                           FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="24,0,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Option B: Restore Backup -->
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+                                BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16">
+                            <StackPanel>
+                                <RadioButton Content="Restore from an existing backup"
+                                             IsChecked="{Binding WelcomeChoice, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=RestoreBackup}"
+                                             FontWeight="Bold"
+                                             FontSize="15"
+                                             Foreground="{DynamicResource TextPrimaryBrush}"
+                                             Margin="0,0,0,6" />
+                                <TextBlock Text="Restore from a previous backup file (.zip or .zip.enc) on a USB flash drive or disk."
+                                           FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="24,0,0,12" TextWrapping="Wrap" />
+
+                                <!-- Restore controls if RestoreBackup selected -->
+                                <StackPanel Margin="24,0,0,0"
+                                            Visibility="{Binding WelcomeChoice, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=RestoreBackup}">
+                                    <TextBlock Text="BACKUP ARCHIVE FILE *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox Grid.Column="0" Text="{Binding SelectedBackupFilePath, Mode=TwoWay}" Style="{StaticResource InputTextBoxStyle}" />
+                                        <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseBackupFileCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="8,0,0,0" />
+                                    </Grid>
+
+                                    <TextBlock Text="PASSWORD (IF ENCRYPTED)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                    <TextBox Text="{Binding RestorePassword, Mode=TwoWay}" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,14" />
+
+                                    <StackPanel Orientation="Horizontal">
+                                        <Button Content="Restore Database &amp; Open ShopPOS"
+                                                Command="{Binding RestoreFromFileCommand}"
+                                                Style="{StaticResource PrimaryButtonStyle}"
+                                                Padding="14,8"
+                                                Margin="0,0,10,0" />
+
+                                        <Button Content="Restore from GitHub..."
+                                                Command="{Binding RestoreFromGitHubCommand}"
+                                                Style="{StaticResource SecondaryButtonStyle}"
+                                                Padding="14,8" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- STEP 1: Shop Profile -->
+                    <StackPanel Visibility="{Binding IsProfileStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Enter Your Store Information" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6" />
+                        <TextBlock Text="This information appears in receipt headers, reports, and purchase orders."
+                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,16" />
+
+                        <TextBlock Text="STORE NAME *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding ShopName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,12" />
+
+                        <TextBlock Text="STORE ADDRESS (OPTIONAL)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding Address, Mode=TwoWay}" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,12" />
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="PHONE NUMBER (OPTIONAL)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding Phone, Mode=TwoWay}" Style="{StaticResource InputTextBoxStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="TAX / VAT REGISTRATION (OPTIONAL)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding TaxNumber, Mode=TwoWay}" Style="{StaticResource InputTextBoxStyle}" />
+                            </StackPanel>
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- STEP 2: Currency & Tax -->
+                    <StackPanel Visibility="{Binding IsCurrencyStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Currency, Rounding &amp; Sales Tax" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6" />
+                        <TextBlock Text="Define financial formatting and pricing rules." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,16" />
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="CURRENCY SYMBOL *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding CurrencySymbol, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="DECIMAL PLACES" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding AllowedDecimals}" SelectedItem="{Binding CurrencyDecimals, Mode=TwoWay}" Style="{StaticResource InputComboBoxStyle}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="DEFAULT TAX PERCENT (%)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <TextBox Text="{Binding DefaultTaxPercent, Mode=TwoWay}" Style="{StaticResource InputTextBoxStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="CASH ROUNDING STEP" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding AllowedRoundingSteps}" SelectedItem="{Binding CashRoundingStep, Mode=TwoWay}" Style="{StaticResource InputComboBoxStyle}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <CheckBox Content="Catalog Selling Prices Already Include Tax"
+                                  IsChecked="{Binding PricesIncludeTax, Mode=TwoWay}"
+                                  FontWeight="SemiBold"
+                                  Margin="0,4,0,0" />
+                    </StackPanel>
+
+                    <!-- STEP 3: Receipt Printer -->
+                    <StackPanel Visibility="{Binding IsPrinterStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Receipt Printer Configuration" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6" />
+                        <TextBlock Text="Configure your point of sale receipt printer. You can skip this and configure it later in Settings."
+                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,16" />
+
+                        <TextBlock Text="PRINTER OUTPUT MODE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                        <ComboBox ItemsSource="{Binding AvailablePrinterModes}" SelectedItem="{Binding PrinterMode, Mode=TwoWay}" Style="{StaticResource InputComboBoxStyle}" Margin="0,0,0,12" />
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="14" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="PRINTER DEVICE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding InstalledPrinters}" SelectedItem="{Binding SelectedPrinter, Mode=TwoWay}" Style="{StaticResource InputComboBoxStyle}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="PAPER WIDTH" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                                <ComboBox ItemsSource="{Binding AllowedWidths}" SelectedItem="{Binding ReceiptWidthMm, Mode=TwoWay}" Style="{StaticResource InputComboBoxStyle}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                            <Button Content="Test Print" Command="{Binding TestPrintCommand}" Style="{StaticResource SecondaryButtonStyle}" Padding="12,6" />
+                            <TextBlock Text="{Binding PrinterTestMessage}" Foreground="{DynamicResource PrimaryBrush}" FontWeight="SemiBold" VerticalAlignment="Center" Margin="12,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- STEP 4: Data Folder -->
+                    <StackPanel Visibility="{Binding IsDataFolderStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Database &amp; Data Storage Location" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6" />
+                        <TextBlock Text="Choose where your local SQLite database, image files, and logs will be saved on this computer."
+                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,16" />
+
+                        <TextBlock Text="DATA FOLDER PATH" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                        <Grid Margin="0,0,0,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0" Text="{Binding DataDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource InputTextBoxStyle}" />
+                            <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseDataFolderCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="8,0,0,0" />
+                        </Grid>
+
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+                                BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="6"
+                                Padding="12,8">
+                            <TextBlock Text="{Binding DataFolderStatusText}"
+                                       FontWeight="SemiBold"
+                                       FontSize="12"
+                                       Foreground="{DynamicResource PrimaryBrush}" />
+                        </Border>
+                    </StackPanel>
+
+                    <!-- STEP 5: Backups -->
+                    <StackPanel Visibility="{Binding IsBackupStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Automated Backup Schedule &amp; Security" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6" />
+                        <TextBlock Text="Configure automated daily disaster recovery archives to protect against hardware failure."
+                                   FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,16" />
+
+                        <CheckBox Content="Enable Daily Automated Backups"
+                                  IsChecked="{Binding BackupEnabled, Mode=TwoWay}"
+                                  FontWeight="Bold"
+                                  Margin="0,0,0,12" />
+
+                        <TextBlock Text="SCHEDULED DAILY TIME (24-HOUR FORMAT HH:mm)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                        <TextBox Text="{Binding BackupTime, Mode=TwoWay}" Style="{StaticResource InputTextBoxStyle}" Margin="0,0,0,12" Width="150" HorizontalAlignment="Left" />
+
+                        <TextBlock Text="SECONDARY FOLDER MIRRORING (OPTIONAL USB DRIVE)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,4" />
+                        <Grid Margin="0,0,0,14">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+
+                            <TextBox Grid.Column="0" Text="{Binding SecondFolderPath, Mode=TwoWay}" Style="{StaticResource InputTextBoxStyle}" />
+                            <Button Grid.Column="1" Content="Browse..." Command="{Binding BrowseSecondFolderCommand}" Style="{StaticResource SecondaryButtonStyle}" Margin="8,0,0,0" />
+                        </Grid>
+                    </StackPanel>
+
+                    <!-- STEP 6: Starting Data -->
+                    <StackPanel Visibility="{Binding IsStartingDataStep, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Initial Catalog &amp; Store Data" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,6" />
+                        <TextBlock Text="Choose how to initialize your store catalog." FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,18" />
+
+                        <!-- Start Empty -->
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+                                BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16"
+                                Margin="0,0,0,12">
+                            <StackPanel>
+                                <RadioButton Content="Start empty (Recommended for production)"
+                                             IsChecked="{Binding StartingData, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=StartEmpty}"
+                                             FontWeight="Bold"
+                                             FontSize="14"
+                                             Foreground="{DynamicResource TextPrimaryBrush}"
+                                             Margin="0,0,0,4" />
+                                <TextBlock Text="Creates default categories and units, but leaves products, purchases, and sales completely blank."
+                                           FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="24,0,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Load Demo Data -->
+                        <Border Background="{DynamicResource SurfaceCardSubtleBrush}"
+                                BorderBrush="{DynamicResource SurfaceCardBorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="16">
+                            <StackPanel>
+                                <RadioButton Content="Load demo data to try the software"
+                                             IsChecked="{Binding StartingData, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=LoadDemoData}"
+                                             FontWeight="Bold"
+                                             FontSize="14"
+                                             Foreground="{DynamicResource TextPrimaryBrush}"
+                                             Margin="0,0,0,4" />
+                                <TextBlock Text="Pre-populates 60 realistic products with EAN-13 barcodes, recent sales, purchases, and expenses for demonstration."
+                                           FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" Margin="24,0,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <!-- ================= 3. NAVIGATION FOOTER ================= -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Back Button -->
+            <Button Grid.Column="0"
+                    Content="&lt; Back"
+                    Command="{Binding BackCommand}"
+                    IsEnabled="{Binding CanGoBack}"
+                    Style="{StaticResource SecondaryButtonStyle}"
+                    Padding="20,8" />
+
+            <!-- Next / Finish Buttons -->
+            <StackPanel Grid.Column="2" Orientation="Horizontal">
+                <Button Content="Next &gt;"
+                        Command="{Binding NextCommand}"
+                        Visibility="{Binding CanGoNext, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Padding="20,8"
+                        Margin="0,0,8,0" />
+
+                <Button Content="Finish &amp; Start ShopPOS"
+                        Command="{Binding FinishCommand}"
+                        IsEnabled="{Binding CanFinish}"
+                        Visibility="{Binding CanFinish, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Padding="24,8" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

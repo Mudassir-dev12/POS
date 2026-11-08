@@ -50,39 +50,77 @@ public class ReceiptPrinterService : IReceiptPrinterService
 
             case PrinterMode.WindowsDriver:
             {
-                if (string.IsNullOrWhiteSpace(settings.ReceiptPrinterName))
+                string? printerName = settings.ReceiptPrinterName;
+                if (string.IsNullOrWhiteSpace(printerName))
                 {
-                    return ReceiptPrintResult.Fail("No Windows printer selected. Please choose a printer in Settings.");
+                    var installed = RawPrinterHelper.GetInstalledPrinters();
+                    printerName = installed.FirstOrDefault(p => p.Contains("TM-T88", StringComparison.OrdinalIgnoreCase) || p.Contains("Receipt", StringComparison.OrdinalIgnoreCase))
+                                  ?? installed.FirstOrDefault() ?? string.Empty;
                 }
 
-                // Format document to plain text for driver printing
-                string receiptText = FormatDocumentAsPlainText(document);
+                if (string.IsNullOrWhiteSpace(printerName))
+                {
+                    return ReceiptPrintResult.Fail("No Windows printer found. Please ensure a printer is installed.");
+                }
+
+                // Render page images for pixel-perfect thermal graphics printing matching preview
+                var pageImages = _pdfReportService.RenderDocumentPageImages(document);
+                bool useImages = pageImages != null && pageImages.Count > 0;
+                string receiptText = string.Empty;
 
                 for (int i = 0; i < copies; i++)
                 {
-                    bool printed = RawPrinterHelper.PrintViaWindowsDriver(
-                        settings.ReceiptPrinterName,
-                        receiptText,
-                        document.PaperWidthMm,
-                        out string? error);
+                    bool printed = false;
+                    string? error = null;
+
+                    if (useImages)
+                    {
+                        printed = RawPrinterHelper.PrintImagesViaWindowsDriver(
+                            printerName,
+                            pageImages!,
+                            document.PaperWidthMm,
+                            out error);
+                    }
 
                     if (!printed)
                     {
-                        return ReceiptPrintResult.Fail(error ?? $"Failed printing to '{settings.ReceiptPrinterName}'.");
+                        if (string.IsNullOrEmpty(receiptText))
+                        {
+                            receiptText = FormatDocumentAsPlainText(document);
+                        }
+
+                        printed = RawPrinterHelper.PrintViaWindowsDriver(
+                            printerName,
+                            receiptText,
+                            document.PaperWidthMm,
+                            out error);
+                    }
+
+                    if (!printed)
+                    {
+                        return ReceiptPrintResult.Fail(error ?? $"Failed printing to '{printerName}'.");
                     }
                 }
 
                 if (kickDrawer)
                 {
-                    _ = OpenCashDrawerAsync(settings.ReceiptPrinterName);
+                    _ = OpenCashDrawerAsync(printerName);
                 }
 
-                return ReceiptPrintResult.Ok(notice: $"Sent {copies} copy(ies) to '{settings.ReceiptPrinterName}'.");
+                return ReceiptPrintResult.Ok(notice: $"Sent {copies} copy(ies) to '{printerName}'.");
             }
 
             case PrinterMode.EscPosRaw:
             {
-                if (string.IsNullOrWhiteSpace(settings.ReceiptPrinterName))
+                string? rawPrinterName = settings.ReceiptPrinterName;
+                if (string.IsNullOrWhiteSpace(rawPrinterName))
+                {
+                    var installed = RawPrinterHelper.GetInstalledPrinters();
+                    rawPrinterName = installed.FirstOrDefault(p => p.Contains("TM-T88", StringComparison.OrdinalIgnoreCase) || p.Contains("Receipt", StringComparison.OrdinalIgnoreCase))
+                                     ?? installed.FirstOrDefault() ?? string.Empty;
+                }
+
+                if (string.IsNullOrWhiteSpace(rawPrinterName))
                 {
                     return ReceiptPrintResult.Fail("No receipt printer selected. Please configure a thermal printer in Settings.");
                 }
@@ -92,17 +130,17 @@ public class ReceiptPrinterService : IReceiptPrinterService
                 for (int i = 0; i < copies; i++)
                 {
                     bool sent = RawPrinterHelper.SendBytesToPrinter(
-                        settings.ReceiptPrinterName,
+                        rawPrinterName,
                         rawBytes,
                         out string? error);
 
                     if (!sent)
                     {
-                        return ReceiptPrintResult.Fail(error ?? $"Failed sending raw ESC/POS bytes to '{settings.ReceiptPrinterName}'.");
+                        return ReceiptPrintResult.Fail(error ?? $"Failed sending raw ESC/POS bytes to '{rawPrinterName}'.");
                     }
                 }
 
-                return ReceiptPrintResult.Ok(notice: $"Sent {copies} copy(ies) to '{settings.ReceiptPrinterName}'.");
+                return ReceiptPrintResult.Ok(notice: $"Sent {copies} copy(ies) to '{rawPrinterName}'.");
             }
 
             default:

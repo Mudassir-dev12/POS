@@ -75,7 +75,7 @@ public partial class SupplierLedgerViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var supRes = await _supplierService.GetFlatListAsync(false, "Owner");
+            var supRes = await _supplierService.GetFlatListAsync(false);
             if (supRes.Success && supRes.Data != null)
             {
                 Suppliers.Clear();
@@ -134,8 +134,7 @@ public partial class SupplierLedgerViewModel : ObservableObject
             var res = await _ledgerService.GetSupplierLedgerReportAsync(
                 SelectedSupplier.Id,
                 FromDate,
-                ToDate,
-                "Owner");
+                ToDate);
 
             if (res.Success && res.Data != null)
             {
@@ -178,7 +177,7 @@ public partial class SupplierLedgerViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var res = await _ledgerService.ExportLedgerPdfAsync(SelectedSupplier.Id, FromDate, ToDate, "Owner");
+            var res = await _ledgerService.ExportLedgerPdfAsync(SelectedSupplier.Id, FromDate, ToDate);
             if (res.Success && res.Data != null)
             {
                 await File.WriteAllBytesAsync(targetPath, res.Data);
@@ -211,7 +210,7 @@ public partial class SupplierLedgerViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var res = await _ledgerService.ExportLedgerCsvAsync(SelectedSupplier.Id, FromDate, ToDate, "Owner");
+            var res = await _ledgerService.ExportLedgerCsvAsync(SelectedSupplier.Id, FromDate, ToDate);
             if (res.Success && res.Data != null)
             {
                 await File.WriteAllBytesAsync(targetPath, res.Data);

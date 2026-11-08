@@ -31,6 +31,7 @@ public class PurchaseConfiguration : IEntityTypeConfiguration<Purchase>
         builder.HasIndex(p => p.SupplierId);
         builder.HasIndex(p => p.PurchaseDate);
         builder.HasIndex(p => p.Status);
+        builder.HasIndex(p => new { p.Status, p.PurchaseDate });
 
         builder.Property(p => p.SubTotal)
             .HasConversion<MoneyConverter>();

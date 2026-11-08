@@ -80,36 +80,113 @@
             </StackPanel>
         </Border>
 
-        <!-- STEP 2: PREVIEW -->
+        <!-- STEP 2: PREVIEW & COLUMN MAPPING -->
         <Grid Grid.Row="1" Visibility="{Binding CurrentStep, Converter={StaticResource StepVisibilityConverter}, ConverterParameter=2}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <Border Grid.Row="0" Style="{StaticResource FilterBarStyle}" Margin="0,0,0,10">
+            <Border Grid.Row="0" Style="{StaticResource FilterBarStyle}" Margin="0,0,0,8">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
-                        <TextBlock Text="Product Data Preview" Style="{StaticResource SectionHeaderStyle}" />
+                        <TextBlock Text="Product Data Preview &amp; Column Mapping" Style="{StaticResource SectionHeaderStyle}" />
                         <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
                             <TextBlock Text="{Binding PreviewRowCount, StringFormat='Found {0} total records in file.  |  Format: '}" Style="{StaticResource MutedLabelStyle}" />
                             <TextBlock Text="{Binding DetectedFileType}" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" />
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Text="{Binding DetectedNameColumn, StringFormat=' Product Name mapped to: {0}'}"
-                                   FontWeight="SemiBold" Foreground="{DynamicResource SuccessTextBrush}" FontSize="12"
-                                   Visibility="{Binding IsNameColumnDetected, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        <TextBlock Text=" Warning: 'Product Name' column not detected!"
-                                   FontWeight="SemiBold" Foreground="{DynamicResource DangerBrush}" FontSize="12"
-                                   Visibility="{Binding IsNameColumnDetected, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                        <TextBlock Text="{Binding SelectedProductNameColumn, StringFormat='Product Name: {0}'}"
+                                   FontWeight="SemiBold" Foreground="{DynamicResource SuccessTextBrush}" FontSize="12" />
                     </StackPanel>
                 </Grid>
             </Border>
-            <Border Grid.Row="1" Style="{StaticResource TableContainerBorderStyle}">
+
+            <!-- Column Mapping Card -->
+            <Border Grid.Row="1" Style="{StaticResource SurfaceCardStyle}" Margin="0,0,0,8" Padding="12,10">
+                <StackPanel>
+                    <TextBlock Text="Field Mapping (Match your file columns to Product attributes):"
+                               FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" FontSize="12" Margin="0,0,0,8" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="12" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Column 1 -->
+                        <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,0,6">
+                            <TextBlock Text="PRODUCT NAME *" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding AvailableColumns}" SelectedItem="{Binding SelectedProductNameColumn, Mode=TwoWay}"
+                                      Style="{StaticResource InputComboBoxStyle}" Height="30" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,0,6">
+                            <TextBlock Text="SKU / MODEL NUMBER" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding AvailableColumns}" SelectedItem="{Binding SelectedSkuColumn, Mode=TwoWay}"
+                                      Style="{StaticResource InputComboBoxStyle}" Height="30" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="0">
+                            <TextBlock Text="BARCODE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding AvailableColumns}" SelectedItem="{Binding SelectedBarcodeColumn, Mode=TwoWay}"
+                                      Style="{StaticResource InputComboBoxStyle}" Height="30" />
+                        </StackPanel>
+
+                        <!-- Column 2 -->
+                        <StackPanel Grid.Row="0" Grid.Column="2" Margin="0,0,0,6">
+                            <TextBlock Text="ACTUAL / COST PRICE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding AvailableColumns}" SelectedItem="{Binding SelectedCostPriceColumn, Mode=TwoWay}"
+                                      Style="{StaticResource InputComboBoxStyle}" Height="30" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="2" Margin="0,0,0,6">
+                            <TextBlock Text="SALE / SELLING PRICE" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding AvailableColumns}" SelectedItem="{Binding SelectedSalePriceColumn, Mode=TwoWay}"
+                                      Style="{StaticResource InputComboBoxStyle}" Height="30" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="2">
+                            <TextBlock Text="STOCK QUANTITY (QTY)" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding AvailableColumns}" SelectedItem="{Binding SelectedStockQuantityColumn, Mode=TwoWay}"
+                                      Style="{StaticResource InputComboBoxStyle}" Height="30" />
+                        </StackPanel>
+
+                        <!-- Column 3 -->
+                        <StackPanel Grid.Row="0" Grid.Column="4" Margin="0,0,0,6">
+                            <TextBlock Text="CATEGORY" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding AvailableColumns}" SelectedItem="{Binding SelectedCategoryColumn, Mode=TwoWay}"
+                                      Style="{StaticResource InputComboBoxStyle}" Height="30" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="1" Grid.Column="4" Margin="0,0,0,6">
+                            <TextBlock Text="BRAND" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding AvailableColumns}" SelectedItem="{Binding SelectedBrandColumn, Mode=TwoWay}"
+                                      Style="{StaticResource InputComboBoxStyle}" Height="30" />
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Grid.Column="4">
+                            <TextBlock Text="UNIT" Style="{StaticResource MutedLabelStyle}" Margin="0,0,0,2" />
+                            <ComboBox ItemsSource="{Binding AvailableColumns}" SelectedItem="{Binding SelectedUnitColumn, Mode=TwoWay}"
+                                      Style="{StaticResource InputComboBoxStyle}" Height="30" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="2" Style="{StaticResource TableContainerBorderStyle}">
                 <DataGrid ItemsSource="{Binding PreviewDataTable}"
                           AutoGenerateColumns="True"
                           IsReadOnly="True"

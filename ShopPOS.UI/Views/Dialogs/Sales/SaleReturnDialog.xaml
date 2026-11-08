@@ -28,9 +28,15 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="Find Sale Invoice:" Style="{DynamicResource FormLabelStyle}" VerticalAlignment="Center" Margin="0,0,12,0" />
                 <TextBox Grid.Column="1" Text="{Binding SearchInvoiceNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                         FontSize="14" Padding="8,5" VerticalAlignment="Center" Margin="0,0,10,0" />
+                         FontSize="14" Height="36" VerticalContentAlignment="Center" Margin="0,0,10,0"
+                         Style="{DynamicResource InputTextBoxStyle}"
+                         Tag="Enter Sale # (e.g. INV-000001)...">
+                    <TextBox.InputBindings>
+                        <KeyBinding Key="Return" Command="{Binding SearchSaleCommand}" />
+                    </TextBox.InputBindings>
+                </TextBox>
                 <Button Grid.Column="2" Content="Find Sale" Command="{Binding SearchSaleCommand}"
-                        Style="{DynamicResource PrimaryButtonStyle}" MinWidth="100" />
+                        Style="{DynamicResource PrimaryButtonStyle}" MinWidth="110" Height="36" />
             </Grid>
         </Border>
 
@@ -94,10 +100,13 @@
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Refund Method:" Style="{DynamicResource FormLabelStyle}" VerticalAlignment="Center" Margin="0,0,8,0" />
                         <ComboBox ItemsSource="{Binding Source={StaticResource PaymentMethods}}" SelectedItem="{Binding RefundMethod, Mode=TwoWay}"
-                                  Width="130" Height="32" Margin="0,0,16,0" VerticalContentAlignment="Center" />
+                                  Width="130" Height="36" Margin="0,0,16,0" VerticalContentAlignment="Center"
+                                  Style="{DynamicResource InputComboBoxStyle}" />
                         <TextBlock Text="Return Reason:" Style="{DynamicResource FormLabelStyle}" VerticalAlignment="Center" Margin="0,0,8,0" />
                         <TextBox Text="{Binding GlobalReason, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                 Width="180" Height="32" Padding="6,2" VerticalContentAlignment="Center" />
+                                 Width="200" Height="36" VerticalContentAlignment="Center"
+                                 Style="{DynamicResource InputTextBoxStyle}"
+                                 Tag="Optional reason for return..." />
                     </StackPanel>
 
                     <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">

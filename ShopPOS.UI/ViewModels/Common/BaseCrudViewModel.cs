@@ -358,7 +358,5 @@ public abstract partial class BaseCrudViewModel<TItemDto> : ObservableObject
 
     [RelayCommand]
     public abstract Task DeleteOrDeactivateAsync();
-
-    protected string? GetCurrentRole() => ShopPOS.Core.Enums.RoleDefaults.Admin;
     protected int? GetCurrentUserId() => 1;
 }

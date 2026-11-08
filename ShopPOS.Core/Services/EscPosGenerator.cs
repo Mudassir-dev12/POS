@@ -58,33 +58,23 @@ public static class EscPosGenerator
         ms.Write(CmdAlignCenter, 0, CmdAlignCenter.Length);
         ms.Write(CmdDoubleHeightOn, 0, CmdDoubleHeightOn.Length);
         ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
-        WriteTextLine(ms, doc.ShopName);
+        string shopName = !string.IsNullOrWhiteSpace(doc.ShopName) ? doc.ShopName : "Gifto Baby World";
+        WriteTextLine(ms, shopName);
         ms.Write(CmdNormalSize, 0, CmdNormalSize.Length);
         ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
 
-        if (!string.IsNullOrWhiteSpace(doc.ShopAddress))
+        string address = !string.IsNullOrWhiteSpace(doc.ShopAddress)
+            ? doc.ShopAddress
+            : "Shop No. B-27, Hydri Bara Market, Block H, North Nazimabad (Near Taimoria Masjid), Karachi, Pakistan";
+        foreach (var line in WordWrap(address, cols))
         {
-            foreach (var line in WordWrap(doc.ShopAddress, cols))
-            {
-                WriteTextLine(ms, line);
-            }
-        }
-        if (!string.IsNullOrWhiteSpace(doc.ShopPhone))
-        {
-            WriteTextLine(ms, $"Tel: {doc.ShopPhone}");
-        }
-        if (!string.IsNullOrWhiteSpace(doc.ShopTaxNumber))
-        {
-            WriteTextLine(ms, $"Tax Reg: {doc.ShopTaxNumber}");
+            WriteTextLine(ms, line);
         }
 
-        // Title
-        ms.Write(CmdLineFeed, 0, CmdLineFeed.Length);
-        ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
-        WriteTextLine(ms, $"--- {doc.DocumentTitle} ---");
-        ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
+        string p1 = !string.IsNullOrWhiteSpace(doc.ShopPhone) ? doc.ShopPhone : "0335-5558359";
+        string p2 = !string.IsNullOrWhiteSpace(doc.ShopPhone2) ? doc.ShopPhone2 : "0334-5373743";
+        WriteTextLine(ms, $"{p1} | {p2}");
 
-        // Duplicate banner
         if (doc.IsDuplicateCopy)
         {
             ms.Write(CmdLineFeed, 0, CmdLineFeed.Length);
@@ -94,108 +84,78 @@ public static class EscPosGenerator
             ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
         }
 
-        // Separator
+        // 3. Metadata 3-column / compact row
+        WriteTextLine(ms, new string('-', cols));
+        WriteTextLine(ms, Justify($"ORDER ID: {doc.InvoiceNumber}", $"TIME: {doc.DateTime:HH:mm}", cols));
+        WriteTextLine(ms, $"DATE: {doc.DateTime:dd-MMM-yyyy}");
+        WriteTextLine(ms, new string('-', cols));
+
+        // 4. Customer Info
+        string custName = !string.IsNullOrWhiteSpace(doc.CustomerName) ? doc.CustomerName : "Mudassir";
+        string custPhone = !string.IsNullOrWhiteSpace(doc.CustomerPhone) ? doc.CustomerPhone : "0312-3456789";
         ms.Write(CmdAlignLeft, 0, CmdAlignLeft.Length);
+        WriteTextLine(ms, $"Customer Name: {custName}");
+        WriteTextLine(ms, $"Contact No:    {custPhone}");
         WriteTextLine(ms, new string('-', cols));
 
-        // Invoice Meta
-        WriteTextLine(ms, Justify($"Doc: {doc.ReceiptNumber}", doc.IssuedAt.ToString("yyyy-MM-dd HH:mm"), cols));
-        WriteTextLine(ms, $"Cashier: {doc.CashierName}");
-        WriteTextLine(ms, new string('-', cols));
-
-        // Lines
+        // 5. Purchase Details Table: QTY, DESCRIPTION, UNIT PRICE, TOTAL
+        WriteTextLine(ms, Justify("QTY  DESCRIPTION", "PRICE   TOTAL", cols));
         foreach (var item in doc.Lines)
         {
-            var nameLines = WordWrap(item.ProductName, cols);
-            foreach (var nl in nameLines)
+            string desc = $"{item.Quantity:0.##}x {item.ItemName}";
+            if (!string.IsNullOrWhiteSpace(item.Sku)) desc += $" ({item.Sku})";
+            foreach (var nl in WordWrap(desc, cols - 16))
             {
                 WriteTextLine(ms, nl);
             }
-
-            string qtyPrice = $"  {item.Quantity:0.##} x {cur}{item.UnitPrice:F2}";
-            string lineTotal = $"{cur}{item.LineTotal:F2}";
-
-            if (item.DiscountAmount > 0m)
-            {
-                qtyPrice += $" (-{cur}{item.DiscountAmount:F2})";
-            }
-
-            WriteTextLine(ms, Justify(qtyPrice, lineTotal, cols));
+            WriteTextLine(ms, Justify($"  {item.Quantity:0.##} @ {cur}{item.UnitPrice:F2}", $"{cur}{item.LineTotal:F2}", cols));
         }
 
         WriteTextLine(ms, new string('-', cols));
 
-        // Totals
-        WriteTextLine(ms, Justify("Subtotal:", $"{cur}{doc.SubTotal:F2}", cols));
-        decimal totalDisc = doc.LineDiscountTotal + doc.BillDiscountAmount;
-        if (totalDisc > 0m)
-        {
-            WriteTextLine(ms, Justify("Discount:", $"-{cur}{totalDisc:F2}", cols));
-        }
-        if (doc.TaxAmount > 0m)
-        {
-            WriteTextLine(ms, Justify("Tax / VAT:", $"{cur}{doc.TaxAmount:F2}", cols));
-        }
-        if (doc.RoundOff != 0m)
-        {
-            WriteTextLine(ms, Justify("Round-off:", $"{cur}{doc.RoundOff:F2}", cols));
-        }
+        // 6. Financial Summary: SUBTOTAL, TAX, BALANCE
+        WriteTextLine(ms, Justify("SUBTOTAL:", $"{cur}{doc.SubTotal:F2}", cols));
+        WriteTextLine(ms, Justify("TAX (0%):", $"{cur}{doc.TaxAmount:F2}", cols));
+        ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
+        WriteTextLine(ms, Justify("BALANCE:", $"{cur}{doc.GrandTotal:F2}", cols));
+        ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
 
         WriteTextLine(ms, new string('=', cols));
 
-        // Grand Total (Bold)
+        // 7. STORE POLICIES
+        ms.Write(CmdAlignCenter, 0, CmdAlignCenter.Length);
         ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
-        WriteTextLine(ms, Justify("GRAND TOTAL:", $"{cur}{doc.GrandTotal:F2}", cols));
+        WriteTextLine(ms, "STORE POLICIES");
+        ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
+        WriteTextLine(ms, "1. No returns or refunds are accepted,");
+        WriteTextLine(ms, "   except for exchange within 3 days.");
+        WriteTextLine(ms, "2. Items must be in original condition with tag.");
+        WriteTextLine(ms, "3. For exchange, bring original receipt/invoice.");
+        WriteTextLine(ms, "4. Thank you for your cooperation!");
+
+        // 8. Thank you message
+        ms.Write(CmdLineFeed, 0, CmdLineFeed.Length);
+        ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
+        WriteTextLine(ms, "Thank you for shopping with us! *");
         ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
 
-        WriteTextLine(ms, new string('-', cols));
-
-        // Payments
-        foreach (var p in doc.Payments)
-        {
-            string payDesc = $"Paid ({p.MethodName}):";
-            if (!string.IsNullOrWhiteSpace(p.Reference))
-            {
-                payDesc += $" #{p.Reference}";
-            }
-            WriteTextLine(ms, Justify(payDesc, $"{cur}{p.Amount:F2}", cols));
-        }
-
-        if (doc.ChangeAmount > 0m)
-        {
-            ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
-            WriteTextLine(ms, Justify("Change Due:", $"{cur}{doc.ChangeAmount:F2}", cols));
-            ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
-        }
-
-        if (doc.DueAmount > 0m)
-        {
-            ms.Write(CmdBoldOn, 0, CmdBoldOn.Length);
-            WriteTextLine(ms, Justify("Balance Due (old):", $"{cur}{doc.DueAmount:F2}", cols));
-            ms.Write(CmdBoldOff, 0, CmdBoldOff.Length);
-        }
-
-        // Footer Text
-        WriteTextLine(ms, new string('-', cols));
-        ms.Write(CmdAlignCenter, 0, CmdAlignCenter.Length);
-        if (!string.IsNullOrWhiteSpace(doc.FooterMessage))
-        {
-            foreach (var line in WordWrap(doc.FooterMessage, cols))
-            {
-                WriteTextLine(ms, line);
-            }
-        }
-
-        // Barcode
-        if (!string.IsNullOrWhiteSpace(doc.BarcodeOrQrValue))
+        // 9. Barcode of Invoice Number + Spaced Text
+        string barcodeVal = !string.IsNullOrWhiteSpace(doc.BarcodeOrQrValue) ? doc.BarcodeOrQrValue : doc.InvoiceNumber;
+        if (!string.IsNullOrWhiteSpace(barcodeVal))
         {
             ms.Write(CmdLineFeed, 0, CmdLineFeed.Length);
-            GenerateCode128Barcode(ms, doc.BarcodeOrQrValue);
+            GenerateCode128Barcode(ms, barcodeVal);
             ms.Write(CmdLineFeed, 0, CmdLineFeed.Length);
-            WriteTextLine(ms, doc.BarcodeOrQrValue);
+            string spaced = "* " + string.Join(" ", barcodeVal.ToCharArray()) + " *";
+            WriteTextLine(ms, spaced);
         }
 
-        // Paper Feed & Cut
+        // 10. In the last of slip: Powered by 7 Experts (No border brackets) + Website
+        ms.Write(CmdLineFeed, 0, CmdLineFeed.Length);
+        WriteTextLine(ms, "Powered by 7 Experts");
+        WriteTextLine(ms, "https://www.7expertspk.com/");
+
+                // Paper Feed & Cut
         ms.Write(CmdLineFeed, 0, CmdLineFeed.Length);
         ms.Write(CmdLineFeed, 0, CmdLineFeed.Length);
         ms.Write(CmdPaperCut, 0, CmdPaperCut.Length);
@@ -238,7 +198,8 @@ public static class EscPosGenerator
         if (string.IsNullOrWhiteSpace(symbol)) return "Rs";
         return symbol switch
         {
-            "Rs" => "Rs",
+            "Rs" => "Rs",
+
             "$" => "$",
             "£" => "\x9C", // CP437 pound
             "¥" => "\x9D", // CP437 yen

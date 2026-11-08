@@ -122,7 +122,7 @@ public class StockAdjustmentAndEditTests : IDisposable
             TrackStock = true
         };
 
-        var res = await _productService.CreateProductAsync(createDto, _adminUser.Id, RoleDefaults.Admin);
+        var res = await _productService.CreateProductAsync(createDto, _adminUser.Id);
         res.Success.Should().BeTrue();
         return res.Data!;
     }
@@ -148,8 +148,7 @@ public class StockAdjustmentAndEditTests : IDisposable
             _unitService,
             _priceLevelServiceMock.Object,
             _dialogServiceMock.Object,
-            _adminUser.Id,
-            RoleDefaults.Admin);
+            _adminUser.Id);
 
         await vm.InitializeAsync(created.Id);
 
@@ -186,7 +185,7 @@ public class StockAdjustmentAndEditTests : IDisposable
             StockAdjustmentNote = null
         };
 
-        var updateRes = await _productService.UpdateProductAsync(updateDto, _adminUser.Id, RoleDefaults.Admin);
+        var updateRes = await _productService.UpdateProductAsync(updateDto, _adminUser.Id);
 
         // Assert
         updateRes.Success.Should().BeTrue();
@@ -223,7 +222,7 @@ public class StockAdjustmentAndEditTests : IDisposable
             StockAdjustmentNote = "Physical stock count - 3 items damaged"
         };
 
-        var updateRes = await _productService.UpdateProductAsync(updateDto, _adminUser.Id, RoleDefaults.Admin);
+        var updateRes = await _productService.UpdateProductAsync(updateDto, _adminUser.Id);
 
         // Assert
         updateRes.Success.Should().BeTrue();
@@ -276,7 +275,7 @@ public class StockAdjustmentAndEditTests : IDisposable
             StockAdjustmentNote = "   " // Whitespace or empty
         };
 
-        var updateRes = await _productService.UpdateProductAsync(updateDto, _adminUser.Id, RoleDefaults.Admin);
+        var updateRes = await _productService.UpdateProductAsync(updateDto, _adminUser.Id);
 
         // Assert
         updateRes.Success.Should().BeFalse();
@@ -313,7 +312,7 @@ public class StockAdjustmentAndEditTests : IDisposable
             StockAdjustmentNote = "User adjusting stock"
         };
 
-        var updateRes = await _productService.UpdateProductAsync(updateDto, 1, "Owner");
+        var updateRes = await _productService.UpdateProductAsync(updateDto, 1);
 
         // Assert
         updateRes.Success.Should().BeTrue();
@@ -348,7 +347,7 @@ public class StockAdjustmentAndEditTests : IDisposable
             NewStockQuantity = 7m,
             StockAdjustmentNote = "First adjustment to 7"
         };
-        var firstRes = await _productService.UpdateProductAsync(firstUpdate, _adminUser.Id, RoleDefaults.Admin);
+        var firstRes = await _productService.UpdateProductAsync(firstUpdate, _adminUser.Id);
         firstRes.Success.Should().BeTrue();
 
         // Act: Second adjustment: from 7 to 12 as Manager
@@ -366,7 +365,7 @@ public class StockAdjustmentAndEditTests : IDisposable
             NewStockQuantity = 12m,
             StockAdjustmentNote = "Found extra box in warehouse"
         };
-        var secondRes = await _productService.UpdateProductAsync(secondUpdate, _adminUser.Id, RoleDefaults.Manager);
+        var secondRes = await _productService.UpdateProductAsync(secondUpdate, _adminUser.Id);
 
         // Assert
         secondRes.Success.Should().BeTrue();
@@ -400,8 +399,7 @@ public class StockAdjustmentAndEditTests : IDisposable
             _unitService,
             _priceLevelServiceMock.Object,
             _dialogServiceMock.Object,
-            _adminUser.Id,
-            RoleDefaults.Admin);
+            _adminUser.Id);
 
         await vm.InitializeAsync(created.Id);
 

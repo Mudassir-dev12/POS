@@ -25,6 +25,8 @@ public class ReceiptBuilder : IReceiptBuilder
             ReceiptNumber = sale.SaleNumber ?? $"INV-{sale.Id:D6}",
             IssuedAt = sale.SaleDate,
             CashierName = "Owner",
+            CustomerName = sale.CustomerName,
+            CustomerPhone = sale.CustomerPhone,
             SubTotal = sale.SubTotal,
             LineDiscountTotal = sale.LineDiscountTotal,
             BillDiscountAmount = sale.BillDiscountAmount,
@@ -71,6 +73,7 @@ public class ReceiptBuilder : IReceiptBuilder
             });
         }
 
+        PopulateBranding(doc, settings);
         return doc;
     }
 
@@ -122,6 +125,7 @@ public class ReceiptBuilder : IReceiptBuilder
             Amount = returnDetail.RefundedAmount
         });
 
+        PopulateBranding(doc, settings);
         return doc;
     }
 
@@ -177,6 +181,26 @@ public class ReceiptBuilder : IReceiptBuilder
             TenderedAmount = 20.00m
         });
 
+        PopulateBranding(doc, settings);
         return doc;
+    }
+
+    private static void PopulateBranding(ReceiptDocument doc, ShopSetting settings)
+    {
+        doc.ShopPhone2 = settings.SecondaryPhone;
+        doc.StorePolicy = settings.StorePolicy;
+        doc.LogoImagePath = settings.LogoImagePath;
+
+        if (!string.IsNullOrWhiteSpace(settings.LogoImagePath) && System.IO.File.Exists(settings.LogoImagePath))
+        {
+            try
+            {
+                doc.LogoImageBytes = System.IO.File.ReadAllBytes(settings.LogoImagePath);
+            }
+            catch
+            {
+                // Ignore image read errors
+            }
+        }
     }
 }

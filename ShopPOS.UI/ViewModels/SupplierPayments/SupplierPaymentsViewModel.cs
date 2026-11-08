@@ -51,7 +51,7 @@ public partial class SupplierPaymentsViewModel : BaseCrudViewModel<SupplierPayme
 
         try
         {
-            var supRes = await _supplierService.GetFlatListAsync(false, GetCurrentRole());
+            var supRes = await _supplierService.GetFlatListAsync(false);
             if (supRes.Success && supRes.Data != null)
             {
                 Suppliers.Clear();
@@ -74,7 +74,7 @@ public partial class SupplierPaymentsViewModel : BaseCrudViewModel<SupplierPayme
 
         try
         {
-            var res = await _paymentService.GetPaymentsAsync(SelectedSupplierId, CurrentPage, PageSize, GetCurrentRole(), cancellationToken);
+            var res = await _paymentService.GetPaymentsAsync(SelectedSupplierId, CurrentPage, PageSize, cancellationToken);
             if (res.Success && res.Data != null)
             {
                 Items.Clear();
@@ -136,7 +136,7 @@ public partial class SupplierPaymentsViewModel : BaseCrudViewModel<SupplierPayme
         IsLoading = true;
         try
         {
-            var res = await _paymentService.CancelPaymentAsync(SelectedItem.Id, reason, GetCurrentUserId(), GetCurrentRole());
+            var res = await _paymentService.CancelPaymentAsync(SelectedItem.Id, reason, GetCurrentUserId());
             if (res.Success)
             {
                 await LoadDataAsync();

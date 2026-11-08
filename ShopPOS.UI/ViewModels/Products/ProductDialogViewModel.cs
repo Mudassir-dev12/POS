@@ -18,8 +18,7 @@ public partial class ProductDialogViewModel : ObservableObject
     private readonly IPriceLevelService _priceLevelService;
     private readonly IDialogService _dialogService;
     private readonly int? _currentUserId;
-    private readonly string? _currentUserRole;
-
+    
     [ObservableProperty]
     private string _dialogTitle = "Add Product";
 
@@ -147,8 +146,7 @@ public partial class ProductDialogViewModel : ObservableObject
         IUnitService unitService,
         IPriceLevelService priceLevelService,
         IDialogService dialogService,
-        int? currentUserId,
-        string? currentUserRole)
+        int? currentUserId)
     {
         _productService = productService;
         _categoryService = categoryService;
@@ -156,9 +154,7 @@ public partial class ProductDialogViewModel : ObservableObject
         _unitService = unitService;
         _priceLevelService = priceLevelService;
         _dialogService = dialogService;
-        _currentUserId = currentUserId;
-        _currentUserRole = currentUserRole;
-    }
+        _currentUserId = currentUserId;    }
 
     public async Task InitializeAsync(int? productId = null)
     {
@@ -430,7 +426,7 @@ public partial class ProductDialogViewModel : ObservableObject
                 ProductPrices = ProductPrices.Where(p => p.Price > 0).ToList()
             };
 
-            var res = await _productService.CreateProductAsync(createDto, _currentUserId, _currentUserRole);
+            var res = await _productService.CreateProductAsync(createDto, _currentUserId);
             if (res.Success)
             {
                 RequestClose?.Invoke(true);
@@ -475,7 +471,7 @@ public partial class ProductDialogViewModel : ObservableObject
                 StockAdjustmentNote = StockAdjustmentNote
             };
 
-            var res = await _productService.UpdateProductAsync(updateDto, _currentUserId, _currentUserRole);
+            var res = await _productService.UpdateProductAsync(updateDto, _currentUserId);
             if (res.Success)
             {
                 RequestClose?.Invoke(true);

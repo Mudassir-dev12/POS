@@ -110,7 +110,7 @@ public class ProductService : IProductService
         return Result.Ok(dto);
     }
 
-    public async Task<Result<ProductDto>> CreateProductAsync(CreateProductDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<ProductDto>> CreateProductAsync(CreateProductDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -239,7 +239,7 @@ public class ProductService : IProductService
         return await GetProductByIdAsync(product.Id, cancellationToken);
     }
 
-    public async Task<Result<ProductDto>> UpdateProductAsync(UpdateProductDto dto, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<ProductDto>> UpdateProductAsync(UpdateProductDto dto, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -331,7 +331,6 @@ public class ProductService : IProductService
                             dto.StockAdjustmentNote.Trim(),
                             StockAdjustmentReason.CountCorrection,
                             userId,
-                            userRole,
                             cancellationToken);
 
                         if (!adjResult.Success)
@@ -409,7 +408,7 @@ public class ProductService : IProductService
         }, cancellationToken);
     }
 
-    public async Task<Result> DeactivateProductAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result> DeactivateProductAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -432,7 +431,7 @@ public class ProductService : IProductService
         return Result.Ok();
     }
 
-    public async Task<Result> DeleteProductAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result> DeleteProductAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -461,7 +460,7 @@ public class ProductService : IProductService
         return Result.Ok();
     }
 
-    public async Task<Result<ProductDto>> DuplicateProductAsync(int id, int? userId, string? userRole, CancellationToken cancellationToken = default)
+    public async Task<Result<ProductDto>> DuplicateProductAsync(int id, int? userId, CancellationToken cancellationToken = default)
     {
         // single-user: no permission check needed
 
@@ -501,7 +500,7 @@ public class ProductService : IProductService
             }).ToList()
         };
 
-        return await CreateProductAsync(createDto, userId, userRole, cancellationToken);
+        return await CreateProductAsync(createDto, userId, cancellationToken);
     }
 
     public async Task<Result<IReadOnlyList<ProductPriceHistoryDto>>> GetPriceHistoryAsync(int productId, CancellationToken cancellationToken = default)

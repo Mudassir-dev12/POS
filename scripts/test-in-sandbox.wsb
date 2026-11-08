@@ -1,0 +1,25 @@
+<Configuration>
+  <VGpu>Default</VGpu>
+  <Networking>Disable</Networking>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>C:\Projects\ShopPOS\dist</HostFolder>
+      <SandboxFolder>C:\dist</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <MappedFolder>
+      <HostFolder>C:\Projects\ShopPOS\scripts</HostFolder>
+      <SandboxFolder>C:\scripts</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <MappedFolder>
+      <HostFolder>C:\Projects\ShopPOS\sandbox-results</HostFolder>
+      <SandboxFolder>C:\results</SandboxFolder>
+      <ReadOnly>false</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <Command>powershell.exe -ExecutionPolicy Bypass -File C:\scripts\sandbox-test.ps1</Command>
+  </LogonCommand>
+</Configuration>
+

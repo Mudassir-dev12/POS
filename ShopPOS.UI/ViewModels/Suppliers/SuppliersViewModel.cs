@@ -51,7 +51,7 @@ public partial class SuppliersViewModel : BaseCrudViewModel<SupplierDto>
                 PageSize = PageSize
             };
 
-            var res = await _supplierService.GetPagedSuppliersAsync(query, GetCurrentRole(), cancellationToken);
+            var res = await _supplierService.GetPagedSuppliersAsync(query, cancellationToken);
             if (res.Success && res.Data != null)
             {
                 Items.Clear();
@@ -62,7 +62,7 @@ public partial class SuppliersViewModel : BaseCrudViewModel<SupplierDto>
 
                 if (_ledgerService != null && Items.Count > 0)
                 {
-                    var balRes = await _ledgerService.GetSupplierBalancesAsync(Items.Select(s => s.Id), GetCurrentRole(), cancellationToken);
+                    var balRes = await _ledgerService.GetSupplierBalancesAsync(Items.Select(s => s.Id), cancellationToken);
                     if (balRes.Success && balRes.Data != null)
                     {
                         foreach (var s in Items)
@@ -96,7 +96,7 @@ public partial class SuppliersViewModel : BaseCrudViewModel<SupplierDto>
     {
         if (!CanAdd) return;
 
-        var dialogVm = new SupplierDialogViewModel(_supplierService, GetCurrentUserId(), GetCurrentRole());
+        var dialogVm = new SupplierDialogViewModel(_supplierService, GetCurrentUserId());
         dialogVm.Initialize(null);
 
         if (_dialogService.ShowSupplierDialog(dialogVm) == true)
@@ -109,7 +109,7 @@ public partial class SuppliersViewModel : BaseCrudViewModel<SupplierDto>
     {
         if (!CanEdit || SelectedItem == null) return;
 
-        var dialogVm = new SupplierDialogViewModel(_supplierService, GetCurrentUserId(), GetCurrentRole());
+        var dialogVm = new SupplierDialogViewModel(_supplierService, GetCurrentUserId());
         dialogVm.Initialize(SelectedItem);
 
         if (_dialogService.ShowSupplierDialog(dialogVm) == true)
@@ -125,7 +125,7 @@ public partial class SuppliersViewModel : BaseCrudViewModel<SupplierDto>
         int id = SelectedItem.Id;
         string name = SelectedItem.Name;
 
-        var delRes = await _supplierService.DeleteSupplierAsync(id, GetCurrentUserId(), GetCurrentRole());
+        var delRes = await _supplierService.DeleteSupplierAsync(id, GetCurrentUserId());
         if (delRes.Success)
         {
             await LoadDataAsync();
@@ -141,7 +141,7 @@ public partial class SuppliersViewModel : BaseCrudViewModel<SupplierDto>
 
             if (result == ConfirmActionResult.Deactivate)
             {
-                await _supplierService.DeactivateSupplierAsync(id, GetCurrentUserId(), GetCurrentRole());
+                await _supplierService.DeactivateSupplierAsync(id, GetCurrentUserId());
                 await LoadDataAsync();
             }
         }

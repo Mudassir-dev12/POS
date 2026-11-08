@@ -1,0 +1,48 @@
+<Window x:Class="ShopPOS.UI.Views.Dialogs.AppCloseBackupDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:ShopPOS.UI.ViewModels.Dialogs"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance vm:AppCloseBackupDialogViewModel}"
+        Title="Shop POS - Backing Up"
+        Width="420"
+        SizeToContent="Height"
+        Style="{DynamicResource DialogWindowStyle}"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize">
+
+    <Border Padding="20" Style="{DynamicResource SurfaceCardStyle}" Margin="10">
+        <StackPanel>
+            <TextBlock Text="Saving Database Backup" Style="{DynamicResource SectionHeaderStyle}" Margin="0,0,0,8" />
+            <TextBlock Text="{Binding StatusMessage}" Style="{DynamicResource SubTitleStyle}" Margin="0,0,0,14" />
+
+            <ProgressBar IsIndeterminate="True"
+                         Height="6"
+                         Background="{DynamicResource SecondaryBackgroundBrush}"
+                         Foreground="{DynamicResource PrimaryBrush}"
+                         Margin="0,0,0,14" />
+
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0"
+                           Text="{Binding SecondsRemaining, StringFormat='Timeout in {0}s...'}"
+                           FontSize="11"
+                           Foreground="{DynamicResource TextMutedBrush}"
+                           VerticalAlignment="Center" />
+
+                <Button Grid.Column="1"
+                        Content="Skip"
+                        Command="{Binding SkipCommand}"
+                        Style="{DynamicResource SecondaryButtonStyle}"
+                        Padding="16,6" />
+            </Grid>
+        </StackPanel>
+    </Border>
+</Window>
+

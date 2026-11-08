@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance vm:ReceiptPreviewDialogViewModel}"
         Title="{Binding Title}"
-        Height="740" Width="680"
+        Height="780" Width="820"
         Style="{DynamicResource DialogWindowStyle}"
         WindowStartupLocation="CenterScreen">
 
@@ -24,33 +24,57 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Top Control Bar -->
-        <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}" Padding="16,12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+        <!-- Top Control Bar (Two-Row Responsive Layout) -->
+        <Border Grid.Row="0" Background="{DynamicResource SurfaceBrush}" Padding="20,12" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
             <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding DocumentTitle}" Style="{DynamicResource SectionHeaderStyle}" />
-                    <TextBlock Text="{Binding Subtitle}" Style="{DynamicResource SubtitleStyle}" Margin="0,2,0,0" />
-                </StackPanel>
+                <!-- Row 0: Document Info Header & Window Actions -->
+                <Grid Grid.Row="0" Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                    <Button Content="Save PDF (Ctrl+S)" Command="{Binding SavePdfCommand}"
-                            Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,8,0" />
-                    <Button Content="Print Document (Enter)" Command="{Binding PrintCommand}"
-                            Style="{DynamicResource PrimaryButtonStyle}" IsDefault="True" Margin="0,0,8,0" />
-                    <Button Content="Close (Esc)" Command="{Binding CloseCommand}"
-                            Style="{DynamicResource SecondaryButtonStyle}" IsCancel="True" />
-                </StackPanel>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="{Binding DocumentTitle}" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                        <Border Background="{DynamicResource PrimaryLightBrush}" CornerRadius="4" Padding="8,3" Margin="12,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Subtitle}" FontSize="12" FontWeight="SemiBold" Foreground="{DynamicResource PrimaryBrush}" />
+                        </Border>
+                    </StackPanel>
+
+                    <Button Grid.Column="1" Content="Close (Esc)" Command="{Binding CloseCommand}"
+                            Style="{DynamicResource SecondaryButtonStyle}" IsCancel="True" MinWidth="90" />
+                </Grid>
+
+                <!-- Row 1: Printer Selection & Print Actions -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Printer:" VerticalAlignment="Center" FontWeight="SemiBold" FontSize="13" Margin="0,0,8,0" Foreground="{DynamicResource TextSecondaryBrush}" />
+                        <ComboBox ItemsSource="{Binding AvailablePrinters}" SelectedItem="{Binding SelectedPrinter}" MinWidth="260" VerticalAlignment="Center" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <Button Content="Save PDF (Ctrl+S)" Command="{Binding SavePdfCommand}"
+                                Style="{DynamicResource SecondaryButtonStyle}" Margin="0,0,10,0" MinWidth="130" />
+                        <Button Content="Print Document (Enter)" Command="{Binding PrintCommand}"
+                                Style="{DynamicResource PrimaryButtonStyle}" IsDefault="True" MinWidth="170" />
+                    </StackPanel>
+                </Grid>
             </Grid>
         </Border>
 
         <!-- Paper Preview Surface -->
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="{DynamicResource MutedBrush}" Padding="20">
-            <ItemsControl ItemsSource="{Binding PageImages}">
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Background="{DynamicResource MutedBrush}" Padding="24">
+            <ItemsControl ItemsSource="{Binding PageImages}" HorizontalAlignment="Center">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <StackPanel HorizontalAlignment="Center" />
@@ -58,11 +82,11 @@
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="White" CornerRadius="2" Margin="0,0,0,20">
+                        <Border Background="White" CornerRadius="2" Margin="0,0,0,24" Width="370" SnapsToDevicePixels="True">
                             <Border.Effect>
-                                <DropShadowEffect BlurRadius="12" ShadowDepth="4" Opacity="0.3" />
+                                <DropShadowEffect BlurRadius="16" ShadowDepth="4" Opacity="0.25" Color="Black" />
                             </Border.Effect>
-                            <Image Source="{Binding}" Stretch="None" RenderOptions.BitmapScalingMode="HighQuality" />
+                            <Image Source="{Binding}" Width="370" Stretch="Uniform" RenderOptions.BitmapScalingMode="HighQuality" />
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
@@ -70,7 +94,7 @@
         </ScrollViewer>
 
         <!-- Status Bottom Bar -->
-        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" Padding="14,8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
+        <Border Grid.Row="2" Background="{DynamicResource SurfaceBrush}" Padding="16,8" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
             <TextBlock Text="{Binding StatusMessage, FallbackValue='Slip Preview Ready. Press Enter or click Print Document to print.'}"
                        FontSize="12" Foreground="{DynamicResource TextSecondaryBrush}" />
         </Border>
